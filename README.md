@@ -13,12 +13,41 @@
 
 ## Ажиллуулах
 
+### Прототип (статик хуудас)
+
 ```bash
 node .claude/dev-server.js
 ```
 
 Дараа нь http://localhost:5173 нээнэ. Зургуудыг `images/` хавтсанд оруулна
 (`images/README.txt`-г үзнэ үү).
+
+### Backend (Django)
+
+Шаардлага: Python 3.14+, [uv](https://docs.astral.sh/uv/).
+
+```bash
+cd backend
+uv sync                                   # сангуудыг суулгана (.venv үүснэ)
+uv run manage.py migrate                  # бааз үүсгэнэ (SQLite)
+uv run manage.py seed_olympiad            # жишээ хуваарь, үр дүн оруулна
+uv run manage.py createsuperuser          # admin хэрэглэгч
+uv run manage.py runserver                # http://127.0.0.1:8000
+```
+
+Windows терминал дээр кирилл текст хэвлэхэд алдаа гарвал командын өмнө
+`PYTHONUTF8=1` (PowerShell: `$env:PYTHONUTF8=1`) тавина.
+
+| Хаяг | Тайлбар |
+|------|---------|
+| `/admin/` | Хуваарь, үр дүн, албумын зураг оруулах |
+| `/api/olympiad/years/` | Хуваарь, үр дүнтэй онуудын жагсаалт |
+| `/api/olympiad/schedule/?year=2026` | Тухайн оны шатууд |
+| `/api/olympiad/results/?year=2025&grade=9` | Тухайн он, ангийн үр дүн (байртай) |
+| `/api/olympiad/album/` | Нийтлэгдсэн албумын зургууд |
+
+Бүтэц: `backend/config/` (тохиргоо), `backend/olympiad/` (model, admin,
+serializer, view, seed команд). Дараагийн app-ууд: `news`, `school`, `students`.
 
 ## Сайтын бүтэц (шаардлага)
 
