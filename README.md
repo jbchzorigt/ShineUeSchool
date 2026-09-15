@@ -49,6 +49,33 @@ Windows терминал дээр кирилл текст хэвлэхэд ал�
 Бүтэц: `backend/config/` (тохиргоо), `backend/olympiad/` (model, admin,
 serializer, view, seed команд). Дараагийн app-ууд: `news`, `school`, `students`.
 
+Нэвтрэлт: `/api/auth/token/` (JWT), `/api/auth/token/refresh/`, `/api/auth/me/`.
+Унших API нээлттэй, бичих (POST/PATCH/DELETE) нь зөвхөн staff хэрэглэгчид.
+
+### Frontend (Next.js + Tailwind CSS)
+
+Шаардлага: Node.js 20+. Backend ажиллаж байх ёстой.
+
+```bash
+cd frontend
+copy .env.example .env.local        # API хаяг (анхдагч: http://127.0.0.1:8000)
+npm install --legacy-peer-deps
+npm run dev                          # http://localhost:3000
+```
+
+| Хаяг | Тайлбар |
+|------|---------|
+| `/` | Түр нүүр хуудас (Маам багшийн хуудсыг энд шилжүүлнэ) |
+| `/admin/login` | Админ нэвтрэх (Django-ийн staff хэрэглэгчээр) |
+| `/admin` | Дашбоард: тоон үзүүлэлт |
+| `/admin/schedule` | Олимпиадын хуваарь: оноор шат нэмэх, засах, устгах |
+| `/admin/results` | Олимпиадын үр дүн: он + ангиар сурагч нэмэх, засах, устгах |
+
+Бүтэц: `src/lib/api.ts` (API клиент, JWT), `src/lib/auth.tsx` (нэвтрэлтийн
+context), `src/lib/useFetch.ts`, `src/components/ui.tsx` (Tailwind бүрдлүүд),
+`src/app/admin/` (дашбоардын хуудсууд). Брэнд өнгө `globals.css`-ийн
+`@theme` дотор: `bg-navy`, `text-gold` гэх мэт.
+
 ## Сайтын бүтэц (шаардлага)
 
 1. **Ү.Маам багшийн хуудас** — animated page ✅ *(одоо хийгдэж байгаа)*

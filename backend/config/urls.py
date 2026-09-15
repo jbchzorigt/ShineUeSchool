@@ -17,6 +17,7 @@ admin.site.index_title = "Удирдлагын самбар"
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("api/auth/", include("config.api_auth")),
     path("api/olympiad/", include("olympiad.urls")),
 ]
 

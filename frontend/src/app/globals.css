@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+/* Сургуулийн логоны өнгө → Tailwind классууд: bg-navy, text-gold, border-navy/30 ... */
+@theme {
+  --color-navy: #1e3a8f;
+  --color-gold: #ffc20e;
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), monospace;
+}
+
+body {
+  background: #ffffff;
+  color: #1d1d1f;
+}

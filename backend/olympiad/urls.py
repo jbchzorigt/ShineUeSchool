@@ -10,5 +10,6 @@ router.register("album", views.AlbumPhotoViewSet, basename="album")
 
 urlpatterns = [
     path("years/", views.years, name="olympiad-years"),
+    path("stats/", views.stats, name="olympiad-stats"),
     path("", include(router.urls)),
 ]
