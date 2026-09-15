@@ -1,0 +1,24 @@
+# Node
+node_modules/
+.next/
+out/
+npm-debug.log*
+
+# Python / Django
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.sqlite3
+media/
+staticfiles/
+.env
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Claude Code local settings (skills-ийг хадгална, session файлуудыг хадгалахгүй)
+.claude/settings.local.json

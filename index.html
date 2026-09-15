@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ү.Маамын нэрэмжит математикийн олимпиад</title>
+  <!-- KaTeX: математикийн томъёог зурна -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ============ NAVIGATION: DrawSVG + MotionPath, логоны өнгө ============ -->
+  <nav class="topbar" id="topbar" aria-label="Үндсэн цэс">
+    <!-- Долгион зам + дагаж хөдлөх дүрсүүд (JS-ээр үүснэ) -->
+    <svg class="nav-art" id="nav-art" aria-hidden="true"></svg>
+
+    <a class="brand" href="#hero">
+      <svg class="brand-mark" viewBox="0 0 48 48" aria-hidden="true">
+        <circle class="m-ring" cx="24" cy="24" r="21" fill="none" stroke="#1E3A8F" stroke-width="3"/>
+        <path class="m-top" d="M3,24 A21,21 0 0 1 45,24 Z" fill="#1E3A8F" fill-opacity="0" stroke="#1E3A8F" stroke-width="2"/>
+        <path class="m-bot" d="M3,24 A21,21 0 0 0 45,24 Z" fill="#FFC20E" fill-opacity="0" stroke="#FFC20E" stroke-width="2"/>
+        <path class="m-shield" d="M24,13 L33,16.5 V25 C33,31 24,35.5 24,35.5 C24,35.5 15,31 15,25 V16.5 Z"
+              fill="#FFFFFF" fill-opacity="0" stroke="#1E3A8F" stroke-width="2" stroke-linejoin="round"/>
+      </svg>
+      <span class="brand-text">
+        <strong>ШИНЭ ҮЕ</strong>
+        <small>СУРГУУЛЬ</small>
+      </span>
+    </a>
+
+    <ul class="nav-links">
+      <li><a href="#hero" class="is-active">Нүүр
+        <svg class="ul" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M2,6 Q25,1 50,6 T98,6"/></svg></a></li>
+      <li><a href="#schedule">Хуваарь
+        <svg class="ul" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M2,6 Q25,1 50,6 T98,6"/></svg></a></li>
+      <li><a href="#results">Үр дүн
+        <svg class="ul" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M2,6 Q25,1 50,6 T98,6"/></svg></a></li>
+    </ul>
+
+    <!-- Баруун талын жижиг "2026" хавтан дүрс (main.js-ээр үүснэ, статик) -->
+    <a class="nav-year-link" href="#section-1" aria-label="2026 хэсэг рүү очих">
+      <svg class="nav-year" id="nav-year" viewBox="0 0 1500 500" aria-hidden="true"></svg>
+    </a>
+  </nav>
+
+  <!-- ScrollSmoother: бүх гүйлгэгдэх агуулга энэ хоёр div дотор байна (nav нь fixed тул гадна) -->
+  <div id="smooth-wrapper">
+  <div id="smooth-content">
+
+  <!-- ============ HEADER: намтар (зүүн) + Ү.Маам багшийн зураг (баруун) ============ -->
+  <header class="hero" id="hero">
+    <!-- Чимэглэлийн дүрсүүд (JS-ээр үүснэ, DrawSVG-ээр зурагдана) -->
+    <svg id="hero-art" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true"></svg>
+
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <p class="eyebrow">Монгол Улсын Ардын багш</p>
+        <h1 class="title">Ү.Маамын нэрэмжит<br />математикийн олимпиад</h1>
+        <!-- ⚠ Намтрын текстийг бодит мэдээллээр солино уу -->
+        <p class="lead bio">
+          Ү.Маам багш нь олон жилийн турш математикийн багшаар ажиллаж, олон
+          үеийн сурагчдыг математикийн олимпиадад бэлтгэн амжилтад хүргэсэн.
+          Түүний хөдөлмөр, зүтгэлийг үнэлж Монгол Улсын Ардын багш цол хүртээсэн.
+          Энэхүү олимпиад нь багшийн нэрийг мөнхжүүлж, залуу үеийнхэнд
+          математикийн хайрыг өвлүүлэх зорилготой.
+        </p>
+        <a class="scroll-hint" href="#album" aria-label="Доош гүйлгэх">
+          <span></span>
+        </a>
+      </div>
+
+      <figure class="hero-photo">
+        <!-- Зургийг тойрсон хүрээ DrawSVG-ээр зурагдана -->
+        <svg class="photo-frame" viewBox="0 0 440 520" aria-hidden="true">
+          <rect class="pf-rect" x="20" y="20" width="400" height="480" rx="28"
+                fill="none" stroke="#1E3A8F" stroke-width="4"/>
+          <circle class="pf-circle" cx="404" cy="56" r="38"
+                  fill="#FFC20E" fill-opacity="0" stroke="#FFC20E" stroke-width="4" data-fill/>
+        </svg>
+        <!-- images/maam.jpg файлыг оруулна; байхгүй бол орлуулагч харагдана -->
+        <img src="images/maam.jpg" alt="Монгол Улсын Ардын багш Ү.Маам"
+             onerror="this.parentElement.classList.add('no-img')" />
+        <figcaption>Монгол Улсын Ардын багш <strong>Ү.Маам</strong></figcaption>
+      </figure>
+    </div>
+  </header>
+
+  <!-- ============ АЛБУМ: слайд бүрт тайлбар өгүүлбэртэй ============ -->
+  <section class="section section-album" id="album">
+    <div class="section-inner">
+      <p class="eyebrow">Дурсамжийн албум</p>
+      <h2 class="h2">Маам багшийн он жилүүд</h2>
+
+      <div class="album" id="album">
+        <div class="album-stage" id="album-stage">
+          <!-- ⚠ images/album-N.jpg зургууд болон data-caption тайлбарыг солино уу -->
+          <figure class="slide" data-n="1"
+                  data-caption="Маам багш анхны хичээлээ заасан сургуулийн ангид. Энэ өдрөөс түүний багшийн зам эхэлсэн.">
+            <img src="images/album-1.jpg" alt="" onerror="this.parentElement.classList.add('no-img')" /></figure>
+          <figure class="slide" data-n="2"
+                  data-caption="Математикийн олимпиадад бэлтгэж буй сурагчидтайгаа хамт. Бодлого бүрийг хамтдаа сэтгэн бодох агшин.">
+            <img src="images/album-2.jpg" alt="" onerror="this.parentElement.classList.add('no-img')" /></figure>
+          <figure class="slide" data-n="3"
+                  data-caption="Монгол Улсын Ардын багш цол хүртсэн ёслолын үеэр. Олон жилийн хөдөлмөрийн үнэлгээ.">
+            <img src="images/album-3.jpg" alt="" onerror="this.parentElement.classList.add('no-img')" /></figure>
+          <figure class="slide" data-n="4"
+                  data-caption="Шавь нартайгаа уулзалтын үеэр. Багшийн заасан хичээл олон үеийн зүрх сэтгэлд үлджээ.">
+            <img src="images/album-4.jpg" alt="" onerror="this.parentElement.classList.add('no-img')" /></figure>
+          <figure class="slide" data-n="5"
+                  data-caption="Ү.Маамын нэрэмжит анхны олимпиадын нээлт. Багшийн нэр залуу үеийнхэнтэй хамт үргэлжилнэ.">
+            <img src="images/album-5.jpg" alt="" onerror="this.parentElement.classList.add('no-img')" /></figure>
+        </div>
+
+        <!-- Слайд бүрийн тайлбар өгүүлбэр (үг үгээр гарч ирнэ) -->
+        <p class="album-caption" id="album-caption" aria-live="polite"></p>
+
+        <div class="album-ui">
+          <button class="album-btn" id="album-prev" type="button" aria-label="Өмнөх зураг">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="album-dots" id="album-dots" role="tablist" aria-label="Зургууд"></div>
+          <button class="album-btn" id="album-next" type="button" aria-label="Дараагийн зураг">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+        <div class="album-progress" aria-hidden="true"><span id="album-bar"></span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ХУВААРЬ: олимпиадын шатууд, босоо timeline ============ -->
+  <section class="section section-schedule" id="schedule">
+    <div class="formula f4-a" data-tex="\frac{a}{b} = \frac{c}{d} \Rightarrow ad = bc" data-grade="7-р анги" data-speed="0.7"></div>
+    <div class="formula f4-b" data-tex="S = \frac{a \cdot h}{2}" data-grade="7-р анги" data-speed="1.2"></div>
+    <div class="formula f4-c" data-tex="a^m \cdot a^n = a^{m+n}" data-grade="8-р анги" data-speed="0.9"></div>
+    <div class="formula f4-d" data-tex="\sqrt{a \cdot b} = \sqrt{a} \cdot \sqrt{b}" data-grade="8-р анги" data-speed="1.4"></div>
+
+    <div class="section-inner">
+      <p class="eyebrow">Хуваарь</p>
+      <h2 class="h2">Олимпиад хэрхэн явагдах вэ</h2>
+      <p class="lead">6–12-р ангийн сурагчид гурван шаттай оролцоно. Оноо сонгоод тухайн жилийн хуваарийг харна уу.</p>
+
+      <!-- Оны табууд (schedule.js-ээр үүснэ: 2024, 2025, 2026) -->
+      <div class="year-tabs" id="schedule-years" role="tablist" aria-label="Он"></div>
+
+      <!-- "Могой" timeline: агуулга schedule.js дахь SCHEDULES объектоос үүснэ -->
+      <div class="snake" id="snake">
+        <!-- Шугам, эхлэл/төгсгөлийн цэг, дагаж явах үзүүр — JS-ээр тооцоолно -->
+        <svg class="snake-svg" aria-hidden="true">
+          <defs>
+            <linearGradient id="snake-grad" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="1200">
+              <stop offset="0%"   stop-color="#FF3F33"/>
+              <stop offset="33%"  stop-color="#9FC87E"/>
+              <stop offset="66%"  stop-color="#FF9800"/>
+              <stop offset="100%" stop-color="#FF6666"/>
+            </linearGradient>
+          </defs>
+          <path class="snake-path" d="M0,0" fill="none" stroke="url(#snake-grad)"/>
+          <g class="snake-start"><circle r="9" fill="#1E3A8F"/><circle r="4" fill="#fff"/></g>
+          <g class="snake-end"><circle r="9" fill="#FFC20E"/><circle r="4" fill="#1E3A8F"/></g>
+          <g class="snake-tip"><circle r="7" fill="#1E3A8F"/><circle r="12" fill="none" stroke="#1E3A8F" stroke-width="2" opacity="0.4"/></g>
+        </svg>
+        <div class="snake-rows"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ҮР ДҮН: ангиар нь байр эзлэлт ============ -->
+  <section class="section section-results" id="results">
+    <div class="formula f5-a" data-tex="\log_a (xy) = \log_a x + \log_a y" data-grade="10-р анги" data-speed="0.8"></div>
+    <div class="formula f5-b" data-tex="C_n^k = \frac{n!}{k!\,(n-k)!}" data-grade="11-р анги" data-speed="1.1"></div>
+    <div class="formula f5-c" data-tex="S_n = \frac{n(a_1 + a_n)}{2}" data-grade="9-р анги" data-speed="0.6"></div>
+    <div class="formula f5-d" data-tex="\cos 2\alpha = 1 - 2\sin^2\alpha" data-grade="10-р анги" data-speed="1.3"></div>
+
+    <div class="section-inner">
+      <p class="eyebrow">Үр дүн</p>
+      <h2 class="h2">Байр эзлэлт</h2>
+      <p class="lead">Он болон ангиа сонгоод тухайн жилийн шилдэг сурагчдыг харна уу.</p>
+
+      <!-- Оны табууд (results.js-ээр үүснэ: 2024, 2025) -->
+      <div class="year-tabs" id="results-years" role="tablist" aria-label="Он"></div>
+      <!-- Ангийн табууд (results.js-ээр үүснэ) -->
+      <div class="grade-tabs" id="grade-tabs" role="tablist" aria-label="Анги"></div>
+
+      <div class="results-wrap">
+        <table class="results" id="results-table">
+          <thead>
+            <tr><th>Байр</th><th>Сурагч</th><th>Сургууль</th><th>Оноо</th></tr>
+          </thead>
+          <tbody id="results-body"></tbody>
+        </table>
+      </div>
+      <p class="results-note">⚠ Одоогоор жишээ мэдээлэл. Бодит үр дүнг results.js файлд оруулна.</p>
+    </div>
+  </section>
+
+  <!-- ============ SECTION 1: "2026" хавтан дүрс + 6–8-р ангийн томъёо ============ -->
+  <section class="section section-1" id="section-1">
+    <!-- Математикийн томъёонууд (data-tex → KaTeX-ээр зурагдана, scroll-оор амилна) -->
+    <div class="formula f1-a" data-tex="S = a \cdot b" data-grade="6-р анги" data-speed="0.6"></div>
+    <div class="formula f1-b" data-tex="\frac{a}{b} + \frac{c}{d} = \frac{ad + bc}{bd}" data-grade="6-р анги" data-speed="1.1"></div>
+    <div class="formula f1-c" data-tex="a^2 - b^2 = (a - b)(a + b)" data-grade="7-р анги" data-speed="0.8"></div>
+    <div class="formula f1-d" data-tex="P = 2(a + b)" data-grade="6-р анги" data-speed="1.3"></div>
+
+    <div class="section-inner">
+      <svg id="year" viewBox="0 0 1500 500" role="img" aria-label="2026"></svg>
+
+      <div class="controls">
+        <button id="replay" type="button">Дахин тоглуулах</button>
+        <button id="shuffle" type="button">Хээ солих</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SECTION 2: Олимпиадын тухай + 8–10-р ангийн томъёо ============ -->
+  <section class="section section-2" id="about">
+    <div class="formula f2-a" data-tex="x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}" data-grade="9-р анги" data-speed="0.7"></div>
+    <div class="formula f2-b" data-tex="a^2 + b^2 = c^2" data-grade="8-р анги" data-speed="1.2"></div>
+    <div class="formula f2-c" data-tex="S = \pi r^2" data-grade="8-р анги" data-speed="0.9"></div>
+    <div class="formula f2-d" data-tex="\sin^2\alpha + \cos^2\alpha = 1" data-grade="10-р анги" data-speed="1.4"></div>
+    <div class="formula f2-e" data-tex="(a + b)^2 = a^2 + 2ab + b^2" data-grade="8-р анги" data-speed="0.5"></div>
+
+    <div class="section-inner narrow">
+      <p class="eyebrow">Олимпиадын тухай</p>
+      <h2 class="h2">Математикт дурлах<br />залуу үеийг дэмжинэ</h2>
+      <p class="lead">
+        Ү.Маамын нэрэмжит математикийн олимпиад нь 6–12-р ангийн сурагчдын
+        дунд жил бүр зохион байгуулагдаж, математикийн сэтгэлгээ, бодлого
+        бодох чадварыг хөгжүүлэхэд чиглэнэ.
+      </p>
+      <ul class="stats">
+        <li><strong>2026</strong><span>Олимпиадын жил</span></li>
+        <li><strong>6–12</strong><span>Анги</span></li>
+        <li><strong>3</strong><span>Шат</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ SECTION 3: Холбоо барих + 11–12-р ангийн томъёо ============ -->
+  <section class="section section-3" id="contact">
+    <div class="formula f3-a" data-tex="\lim_{x \to 0} \frac{\sin x}{x} = 1" data-grade="11-р анги" data-speed="0.8"></div>
+    <div class="formula f3-b" data-tex="\int_a^b f(x)\,dx = F(b) - F(a)" data-grade="12-р анги" data-speed="1.2"></div>
+    <div class="formula f3-c" data-tex="\frac{d}{dx}\, x^n = n x^{n-1}" data-grade="12-р анги" data-speed="0.6"></div>
+    <div class="formula f3-d" data-tex="\log_a b = \frac{\ln b}{\ln a}" data-grade="11-р анги" data-speed="1.0"></div>
+    <div class="formula f3-e" data-tex="V = \frac{4}{3}\pi r^3" data-grade="11-р анги" data-speed="1.4"></div>
+
+    <div class="section-inner narrow">
+      <p class="eyebrow">Холбоо барих</p>
+      <h2 class="h2">Бидэнтэй холбогдоорой</h2>
+      <ul class="contact-list">
+        <li><span>Хаяг</span><strong>Улаанбаатар хот</strong></li>
+        <li><span>Утас</span><strong>+976 0000-0000</strong></li>
+        <li><span>И-мэйл</span><strong>info@shine-ue.edu.mn</strong></li>
+      </ul>
+    </div>
+  </section>
+
+  </div><!-- /#smooth-content -->
+  </div><!-- /#smooth-wrapper -->
+
+  <!-- GSAP core + plugin-ууд (бүгд үнэгүй, CDN-ээс шууд) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/DrawSVGPlugin.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/MotionPathPlugin.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/ScrollTrigger.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/ScrollSmoother.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/SplitText.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/katex.min.js"></script>
+  <!-- smooth.js хамгийн түрүүнд: ScrollSmoother-ийг бусад ScrollTrigger-ээс өмнө үүсгэнэ -->
+  <script src="smooth.js"></script>
+  <!-- main.js дараа нь: nav дахь жижиг "2026"-г үүсгэдэг buildYear() энд байна -->
+  <script src="main.js"></script>
+  <script src="nav.js"></script>
+  <script src="hero.js"></script>
+  <script src="album.js"></script>
+  <script src="schedule.js"></script>
+  <script src="results.js"></script>
+  <script src="headings.js"></script>
+  <script src="formulas.js"></script>
+</body>
+</html>
