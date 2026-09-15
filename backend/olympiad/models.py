@@ -2,7 +2,7 @@
 Олимпиадын өгөгдлийн загварууд.
 
 - Stage      : нэг жилийн олимпиадын нэг шат (бүртгэл, I шат, ... , шагнал)
-- Result     : нэг жил, нэг ангийн нэг сурагчийн үр дүн
+- Result     : нэг жил, нэг ангиллын нэг оролцогчийн үр дүн (Excel-ийн нэг мөр)
 - AlbumPhoto : Маам багшийн албумын зураг + тайлбар
 """
 
@@ -37,29 +37,60 @@ class Stage(models.Model):
         return f"{self.year} · {self.order}. {self.title}"
 
 
-class Result(models.Model):
-    """Нэг сурагчийн үр дүн. Байрыг оноогоор нь API талд тооцно."""
+class Category(models.TextChoices):
+    """Оролцогчийн ангилал. Excel-ийн sheet бүр нэг ангилал."""
 
-    GRADE_CHOICES = [(g, f"{g}-р анги") for g in range(6, 13)]
+    G6 = "6", "VI анги"
+    G7 = "7", "VII анги"
+    G8 = "8", "VIII анги"
+    G9 = "9", "IX анги"
+    G10 = "10", "X анги"
+    G11 = "11", "XI анги"
+    G12 = "12", "XII анги"
+    TEACHER_PRIMARY = "teacher_primary", "Бага ангийн багш"
+    TEACHER_SECONDARY = "teacher_secondary", "Дунд ангийн багш"
+
+
+class Result(models.Model):
+    """Нэг оролцогчийн үр дүн. Байрыг оноогоор нь API талд тооцно."""
+
+    RANK_LABELS = [("", "—"), ("I", "I байр"), ("II", "II байр"), ("III", "III байр")]
+    MEDALS = [("", "—"), ("АЛТ", "Алт"), ("МӨНГӨ", "Мөнгө"), ("ХҮРЭЛ", "Хүрэл")]
 
     year = models.PositiveIntegerField("Олимпиадын он", db_index=True)
-    grade = models.PositiveSmallIntegerField("Анги", choices=GRADE_CHOICES, db_index=True)
-    student = models.CharField("Сурагчийн нэр", max_length=120)
-    school = models.CharField("Сургууль", max_length=160)
-    score = models.DecimalField("Оноо", max_digits=6, decimal_places=2)
+    category = models.CharField("Ангилал", max_length=20, choices=Category.choices, db_index=True)
+    last_name = models.CharField("Овог", max_length=80, blank=True)
+    first_name = models.CharField("Нэр", max_length=80)
+    school = models.CharField("Сургууль", max_length=160, blank=True)
+    code = models.CharField("Шифр", max_length=30, blank=True, help_text="Багш нарын ангилалд ашиглагдана.")
+    scores = models.JSONField("Бодлого бүрийн оноо", default=list, blank=True, help_text="Жишээ: [7, 7, 0, 7, 5]")
+    score = models.DecimalField("Нийт оноо", max_digits=6, decimal_places=2, null=True, blank=True)
+    rank_label = models.CharField("Байр (I/II/III)", max_length=4, blank=True, choices=RANK_LABELS)
+    medal = models.CharField("Медаль", max_length=10, blank=True, choices=MEDALS)
     rank = models.PositiveSmallIntegerField(
-        "Байр", null=True, blank=True,
+        "Байр (тоогоор)", null=True, blank=True,
         help_text="Хоосон бол оноогоор автоматаар тооцно.",
     )
     note = models.CharField("Тэмдэглэл", max_length=200, blank=True)
 
     class Meta:
-        ordering = ["year", "grade", "-score", "student"]
+        ordering = ["year", "category", models.F("score").desc(nulls_last=True), "last_name", "first_name"]
         verbose_name = "Үр дүн"
         verbose_name_plural = "Үр дүн"
 
+    @property
+    def student(self) -> str:
+        """Харуулах нэр: Овгийн эхний үсэг + нэр (жишээ: Б.Мухулай)."""
+        if self.last_name and self.last_name != "*":
+            return f"{self.last_name[0]}.{self.first_name}"
+        return self.first_name
+
+    @property
+    def full_name(self) -> str:
+        return f"{self.last_name} {self.first_name}".strip()
+
     def __str__(self):
-        return f"{self.year} · {self.grade}-р анги · {self.student} ({self.score})"
+        return f"{self.year} · {self.get_category_display()} · {self.full_name} ({self.score})"
 
 
 class AlbumPhoto(models.Model):

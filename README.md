@@ -52,6 +52,21 @@ serializer, view, seed команд). Дараагийн app-ууд: `news`, `sc
 Нэвтрэлт: `/api/auth/token/` (JWT), `/api/auth/token/refresh/`, `/api/auth/me/`.
 Унших API нээлттэй, бичих (POST/PATCH/DELETE) нь зөвхөн staff хэрэглэгчид.
 
+#### Excel-ээс үр дүн импортлох
+
+Олимпиадын дүнгийн Excel файл (sheet бүр нэг ангилал: `suragch_VI` … `suragch_XII`,
+`bagsh_baga`, `bagsh_dund`; толгой мөр `№ | Овог | Нэр | Сургууль | [Шифр] | 1 | 2 | … | Нийт оноо | Байр | Медаль`):
+
+```bash
+uv run manage.py import_results "C:/path/Олимпиадын дүн.xlsx" --year 2026 --dry-run   # шалгах
+uv run manage.py import_results "C:/path/Олимпиадын дүн.xlsx" --year 2026             # импортлох
+```
+
+Эсвэл админ дашбоардын `/admin/results/import` хуудас, API нь
+`POST /api/olympiad/results/import/` (multipart: `file`, `year`, `dry_run`, `replace`).
+Импорт нь тухайн он + ангиллын хуучин мөрүүдийг устгаж шинээр бичнэ (`replace=false` бол нэмнэ).
+Уншигч: `backend/olympiad/importer.py`.
+
 ### Frontend (Next.js + Tailwind CSS)
 
 Шаардлага: Node.js 20+. Backend ажиллаж байх ёстой.
@@ -69,7 +84,8 @@ npm run dev                          # http://localhost:3000
 | `/admin/login` | Админ нэвтрэх (Django-ийн staff хэрэглэгчээр) |
 | `/admin` | Дашбоард: тоон үзүүлэлт |
 | `/admin/schedule` | Олимпиадын хуваарь: оноор шат нэмэх, засах, устгах |
-| `/admin/results` | Олимпиадын үр дүн: он + ангиар сурагч нэмэх, засах, устгах |
+| `/admin/results` | Олимпиадын үр дүн: он + ангиллаар (VI–XII анги, багш нар) оролцогч нэмэх, засах, устгах |
+| `/admin/results/import` | Excel файлаас үр дүн бөөнөөр оруулах (шалгах → импортлох) |
 
 Бүтэц: `src/lib/api.ts` (API клиент, JWT), `src/lib/auth.tsx` (нэвтрэлтийн
 context), `src/lib/useFetch.ts`, `src/components/ui.tsx` (Tailwind бүрдлүүд),

@@ -12,7 +12,8 @@ import { Spinner } from "@/components/ui";
 const NAV = [
   { href: "/admin", label: "Нүүр", icon: "▦" },
   { href: "/admin/schedule", label: "Олимпиадын хуваарь", icon: "◷" },
-  { href: "/admin/results", label: "Олимпиадын үр дүн", icon: "★" },
+  { href: "/admin/results", label: "Олимпиадын үр дүн", icon: "★", exact: true },
+  { href: "/admin/results/import", label: "Excel-ээс оруулах", icon: "⇪" },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -39,7 +40,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
         <nav className="flex-1 space-y-1 px-3">
           {NAV.map((n) => {
-            const active = n.href === "/admin" ? path === "/admin" : path.startsWith(n.href);
+            const active = n.href === "/admin" || n.exact ? path === n.href : path.startsWith(n.href);
             return (
               <Link key={n.href} href={n.href}
                 className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition ${active ? "bg-navy text-white" : "text-slate-700 hover:bg-navy/10"}`}>

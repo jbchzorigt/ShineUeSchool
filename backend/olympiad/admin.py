@@ -19,10 +19,10 @@ class StageAdmin(admin.ModelAdmin):
 
 @admin.register(Result)
 class ResultAdmin(admin.ModelAdmin):
-    list_display = ("year", "grade", "student", "school", "score", "rank")
-    list_filter = ("year", "grade")
-    search_fields = ("student", "school")
-    ordering = ("-year", "grade", "-score")
+    list_display = ("year", "category", "last_name", "first_name", "school", "score", "rank_label", "medal")
+    list_filter = ("year", "category", "medal")
+    search_fields = ("last_name", "first_name", "school", "code")
+    ordering = ("-year", "category", "-score")
     list_per_page = 50
 
 

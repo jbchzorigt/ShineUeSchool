@@ -5,7 +5,7 @@
    - Алдааг ApiError болгон шиднэ (status + backend-ийн JSON).
    ===================================================================== */
 
-import type { Result, ResultInput, Stage, StageInput, Stats, User, Years } from "./types";
+import type { CategoryItem, ImportResponse, Result, ResultInput, Stage, StageInput, Stats, User, Years } from "./types";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
 const TOKEN_KEY = "shineue.tokens";
@@ -108,10 +108,20 @@ export const api = {
   },
 
   /* ---- үр дүн ---- */
+  categories: (year?: number) => request<CategoryItem[]>(`/api/olympiad/categories/${q({ year })}`, { auth: false }),
   results: {
-    list: (year?: number, grade?: number) => request<Result[]>(`/api/olympiad/results/${q({ year, grade })}`, { auth: false }),
+    list: (year?: number, category?: string) => request<Result[]>(`/api/olympiad/results/${q({ year, category })}`, { auth: false }),
     create: (d: ResultInput) => request<Result>("/api/olympiad/results/", { method: "POST", body: d }),
     update: (id: number, d: Partial<ResultInput>) => request<Result>(`/api/olympiad/results/${id}/`, { method: "PATCH", body: d }),
     remove: (id: number) => request<void>(`/api/olympiad/results/${id}/`, { method: "DELETE" }),
+    /** Excel импорт. dryRun=true бол зөвхөн шалгаад тайлан буцаана. */
+    importExcel: (file: File, year: number | "", dryRun: boolean, replace = true) => {
+      const fd = new FormData();
+      fd.append("file", file);
+      if (year !== "") fd.append("year", String(year));
+      fd.append("dry_run", String(dryRun));
+      fd.append("replace", String(replace));
+      return request<ImportResponse>("/api/olympiad/results/import/", { method: "POST", body: fd });
+    },
   },
 };

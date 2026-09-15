@@ -79,10 +79,16 @@ class Command(BaseCommand):
         Stage.objects.bulk_create(stages)
 
         results = [
-            Result(year=year, grade=grade, student=s, school=sc, score=score)
+            Result(
+                year=year, category=str(grade),
+                last_name=s.split(" ", 1)[0], first_name=s.split(" ", 1)[1] if " " in s else s,
+                school=sc, score=score,
+                rank_label=["I", "II", "III"][i] if i < 3 else "",
+                medal=["АЛТ", "МӨНГӨ", "ХҮРЭЛ"][i] if i < 3 else "",
+            )
             for year, grades in RESULTS.items()
             for grade, rows in grades.items()
-            for s, sc, score in rows
+            for i, (s, sc, score) in enumerate(rows)
         ]
         Result.objects.bulk_create(results)
 

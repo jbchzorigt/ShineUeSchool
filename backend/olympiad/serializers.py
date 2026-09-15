@@ -1,11 +1,10 @@
 """
-DRF serializer-ууд. JSON бүтэц нь прототипийн JS объектуудтай (SCHEDULES, RESULTS)
-аль болох ижил байхаар хийсэн тул frontend-ийн код бага өөрчлөгдөнө.
+DRF serializer-ууд. JSON бүтэц нь frontend/src/lib/types.ts-тэй тохирно.
 """
 
 from rest_framework import serializers
 
-from .models import AlbumPhoto, Result, Stage
+from .models import AlbumPhoto, Category, Result, Stage
 
 
 class StageSerializer(serializers.ModelSerializer):
@@ -17,11 +16,18 @@ class StageSerializer(serializers.ModelSerializer):
 class ResultSerializer(serializers.ModelSerializer):
     # Байрыг view талд оноогоор тооцоод annotate хийж өгнө.
     rank = serializers.IntegerField(read_only=True)
-    score = serializers.FloatField()
+    score = serializers.FloatField(allow_null=True, required=False)
+    student = serializers.CharField(read_only=True)          # Б.Мухулай
+    full_name = serializers.CharField(read_only=True)        # Бат Мухулай
+    category_label = serializers.CharField(source="get_category_display", read_only=True)
 
     class Meta:
         model = Result
-        fields = ["id", "year", "grade", "rank", "student", "school", "score", "note"]
+        fields = [
+            "id", "year", "category", "category_label", "rank", "rank_label", "medal",
+            "last_name", "first_name", "student", "full_name", "school", "code",
+            "scores", "score", "note",
+        ]
 
 
 class AlbumPhotoSerializer(serializers.ModelSerializer):
@@ -35,3 +41,15 @@ class AlbumPhotoSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         url = obj.image.url
         return request.build_absolute_uri(url) if request else url
+
+
+class ImportRequestSerializer(serializers.Serializer):
+    """POST /api/olympiad/results/import/ — multipart."""
+
+    file = serializers.FileField()
+    year = serializers.IntegerField(required=False, min_value=2000, max_value=2100)
+    dry_run = serializers.BooleanField(required=False, default=False)
+    replace = serializers.BooleanField(required=False, default=True)
+
+
+CATEGORIES = [{"value": c.value, "label": c.label} for c in Category]
