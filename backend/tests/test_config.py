@@ -25,3 +25,13 @@ def test_insecure_secret_key_rejected_outside_localhost():
 
 def test_insecure_secret_key_allowed_on_localhost():
     Settings(secret_key="dev-insecure-x", database_url="postgresql+asyncpg://u:p@localhost/x", _env_file=None)
+
+
+def test_database_url_scheme_normalized():
+    """Railway/Heroku маягийн postgresql:// (эсвэл postgres://) хаягийг asyncpg драйвер руу хөрвүүлнэ."""
+    s = Settings(secret_key="x" * 40, database_url="postgresql://u:p@db.example.com:5432/x", _env_file=None)
+    assert s.database_url == "postgresql+asyncpg://u:p@db.example.com:5432/x"
+    s = Settings(secret_key="x" * 40, database_url="postgres://u:p@db.example.com/x", _env_file=None)
+    assert s.database_url == "postgresql+asyncpg://u:p@db.example.com/x"
+    s = Settings(secret_key="x" * 40, database_url="postgresql+asyncpg://u:p@db.example.com/x", _env_file=None)
+    assert s.database_url == "postgresql+asyncpg://u:p@db.example.com/x"

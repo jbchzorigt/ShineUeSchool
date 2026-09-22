@@ -57,6 +57,16 @@ class Settings(BaseSettings):
     def mail_enabled(self) -> bool:
         return bool(self.smtp_host and self.smtp_from)
 
+    @field_validator("database_url", "database_url_test", mode="before")
+    @classmethod
+    def _asyncpg_scheme(cls, v):
+        """Railway/Heroku-ийн postgresql:// эсвэл postgres:// хаягийг SQLAlchemy asyncpg драйверт тааруулна."""
+        if isinstance(v, str):
+            for prefix in ("postgresql://", "postgres://"):
+                if v.startswith(prefix):
+                    return "postgresql+asyncpg://" + v[len(prefix):]
+        return v
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def _split(cls, v):

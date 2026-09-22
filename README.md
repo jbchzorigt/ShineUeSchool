@@ -179,7 +179,11 @@ Backend + PostgreSQL-ийг `docker-compose.prod.yml`-ээр ажиллуулн�
 4. Superuser: `docker compose -f docker-compose.prod.yml exec backend python scripts/create_admin.py admin "Нууц үг" --name "Админ" --email admin@example.com`.
 5. HTTPS (VPS, өөрийн домэйн): `docker compose -f docker-compose.prod.yml --profile proxy up -d --build` — Caddy 80/443 дээр автоматаар сертификат авч `backend:8000` руу дамжуулна.
 
-Өгөгдөл: `pgdata` (Postgres), `media` (оруулсан зургууд) volume-д хадгалагдана — backup хийхдээ хоёуланг нь. Railway/Render дээр бол `backend/Dockerfile`-ийг шууд ашиглаж, Postgres-ийг тэдний үйлчилгээгээр өгч `DATABASE_URL`, `MEDIA_DIR` (volume mount) тохируулна.
+Өгөгдөл: `pgdata` (Postgres), `media` (оруулсан зургууд) volume-д хадгалагдана — backup хийхдээ хоёуланг нь.
+
+### Railway
+
+`backend/railway.json` build (Dockerfile) ба healthcheck (`/health`) тохиргоог өгнө. Project-д **Postgres** нэмээд backend сервисийг GitHub repo-оос үүсгэнэ (Settings → **Root Directory = `backend`**). Variables: `DATABASE_URL=${{Postgres.DATABASE_URL}}` (`postgresql://` хэлбэрийг код өөрөө asyncpg руу хөрвүүлнэ), `SECRET_KEY`, `CORS_ORIGINS`, `PUBLIC_SITE_URL`, `MEDIA_BASE_URL` (сервисийн public домэйн), `SMTP_*`, `RAILWAY_RUN_UID=0` (volume-д бичих эрх). **Volume** нэмж mount path `/app/media` (оруулсан зургууд). Public Networking → Generate Domain (порт 8000). Эхний superuser: сервисийн Shell/`railway run`-аар `python scripts/create_admin.py …`.
 
 ## Сайтын бүтэц (шаардлага)
 
