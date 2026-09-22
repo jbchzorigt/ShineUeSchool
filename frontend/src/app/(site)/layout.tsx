@@ -3,11 +3,13 @@
 
 import { SiteHeader } from "@/components/home/SiteHeader";
 import { SmoothScroll } from "@/components/site/SmoothScroll";
+import { Splash } from "@/components/site/Splash";
 
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <SmoothScroll />
+      <Splash />
       <SiteHeader />
       <div id="smooth-wrapper">
         <div id="smooth-content" className="flex min-h-screen flex-col pt-16 lg:pt-20">{children}</div>
