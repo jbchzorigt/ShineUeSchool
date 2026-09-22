@@ -19,6 +19,6 @@ RUN chmod +x /entrypoint.sh && useradd -m -u 1000 app && mkdir -p /app/media && 
 ENV PATH="/app/.venv/bin:$PATH" MEDIA_DIR=/app/media
 USER app
 EXPOSE 8000
-VOLUME ["/app/media"]
+# Media volume-ийг Dockerfile-д биш compose/Railway-ийн тохиргоогоор өгнө (Railway VOLUME зааврыг зөвшөөрдөггүй)
 
 ENTRYPOINT ["/entrypoint.sh"]
