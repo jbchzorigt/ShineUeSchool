@@ -1,14 +1,58 @@
 @import "tailwindcss";
 
-/* Сургуулийн логоны өнгө → Tailwind классууд: bg-navy, text-gold, border-navy/30 ... */
+/* Дизайны системийн токенууд ("математикийн дэвтэр" санаа).
+   Tailwind классууд: bg-navy, text-gold, text-muted, border-line, bg-paper-2, font-display ... */
 @theme {
+  /* Сургуулийн логоны өнгө */
   --color-navy: #1e3a8f;
+  --color-navy-deep: #12245c;
   --color-gold: #ffc20e;
-  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+
+  /* Дэвтрийн цаас, бэх, харандаа */
+  --color-ink: #1d1d1f;
+  --color-muted: #4a5068;
+  --color-line: #c9d2ea;
+  --color-grid: #e4e9f5;
+  --color-paper-2: #f6f8fc;
+  --color-paper-3: #e6ebf6;
+
+  /* Фонт: гарчигт Piazzolla, биед Golos Text (layout.tsx-д ачаална) */
+  --font-sans: var(--font-body), system-ui, sans-serif;
+  --font-display: var(--font-display), Georgia, serif;
   --font-mono: var(--font-geist-mono), monospace;
 }
 
 body {
   background: #ffffff;
-  color: #1d1d1f;
+  color: var(--color-ink);
 }
+
+/* Дэвтрийн нүд: 32px-ийн grid дэвсгэр */
+.paper-grid {
+  background-color: #ffffff;
+  background-image:
+    linear-gradient(var(--color-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-grid) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+@media (max-width: 767px) {
+  .paper-grid {
+    background-size: 24px 24px;
+  }
+}
+
+/* Гарчгийн фонтын optical size */
+.font-display {
+  font-variation-settings: "opsz" 30;
+}
+
+/* Мэдээний бие: админ засварлагч ба олон нийтийн хуудас хоёулаа */
+.news-body h2 { font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; margin: 1.25em 0 .5em; }
+.news-body h3 { font-family: var(--font-display); font-size: 1.2rem; font-weight: 800; margin: 1em 0 .4em; }
+.news-body p { margin: 0 0 .9em; line-height: 1.65; }
+.news-body ul, .news-body ol { margin: 0 0 .9em 1.4em; }
+.news-body ul { list-style: disc; } .news-body ol { list-style: decimal; }
+.news-body blockquote { border-left: 3px solid var(--color-navy); padding-left: 1em; color: var(--color-muted); margin: 1em 0; }
+.news-body a { color: var(--color-navy); text-decoration: underline; text-underline-offset: 3px; }
+.news-body img { max-width: 100%; height: auto; border-radius: 10px; margin: 1em 0; }

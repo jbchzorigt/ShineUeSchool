@@ -1,0 +1,66 @@
+# Production: PostgreSQL + backend (FastAPI). Frontend нь Vercel дээр (эсвэл тусдаа).
+#   1. cp backend/.env.example backend/.env — production утгуудаа бичнэ (SECRET_KEY, CORS_ORIGINS, PUBLIC_SITE_URL,
+#      MEDIA_BASE_URL, SMTP_*). DATABASE_URL-ийг доорх db сервистэй тааруулна:
+#      DATABASE_URL=postgresql+asyncpg://shineue:${POSTGRES_PASSWORD}@db:5432/shineue
+#   2. Энэ файлын хажууд .env үүсгэж POSTGRES_PASSWORD=... (урт санамсаргүй) бичнэ.
+#   3. docker compose -f docker-compose.prod.yml up -d --build
+#   4. Эхний удаа superuser: docker compose -f docker-compose.prod.yml exec backend python scripts/create_admin.py admin "Нууц үг" --name "Админ" --email admin@example.com
+#   HTTPS хэрэгтэй бол (VPS дээр өөрийн домэйнтой): API_DOMAIN=api.example.mn гэж .env-д нэмээд
+#   docker compose -f docker-compose.prod.yml --profile proxy up -d --build  (Caddy автоматаар сертификат авна)
+
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: shineue
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD .env-д тохируулна уу}
+      POSTGRES_DB: shineue
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shineue -d shineue"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    env_file: ./backend/.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://shineue:${POSTGRES_PASSWORD}@db:5432/shineue
+      MEDIA_DIR: /app/media
+    volumes:
+      - media:/app/media
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # Сонголттой: HTTPS reverse proxy (--profile proxy). API_DOMAIN .env-д.
+  caddy:
+    image: caddy:2
+    profiles: ["proxy"]
+    restart: unless-stopped
+    environment:
+      API_DOMAIN: ${API_DOMAIN:-}   # --profile proxy үед .env-д заавал (хоосон бол Caddy асахгүй)
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./backend/docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
+  media:
+  caddy-data:

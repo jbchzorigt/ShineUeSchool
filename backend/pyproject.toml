@@ -1,20 +1,40 @@
 [project]
 name = "shineue-backend"
-version = "0.1.0"
-description = "Шинэ Үе сургуулийн вэб сайтын backend (Django + DRF)"
+version = "0.2.0"
+description = "Шинэ Үе сургуулийн вэб сайтын backend (FastAPI + PostgreSQL)"
 authors = [
     { name = "jbchzorigt", email = "zorigtchristian0721@gmail.com" }
 ]
 requires-python = ">=3.14"
 dependencies = [
-    "django>=5.2",
-    "django-cors-headers>=4.9.0",
-    "django-filter>=26.1",
-    "djangorestframework>=3.18.1",
-    "djangorestframework-simplejwt>=5.5.1",
-    "pillow>=12.3.0",
+    "fastapi>=0.120",
+    "uvicorn[standard]>=0.36",
+    "sqlalchemy[asyncio]>=2.0.44",
+    "asyncpg>=0.31",
+    "alembic>=1.16",
+    "pydantic-settings>=2.10",
+    "pyjwt>=2.10",
+    "python-multipart>=0.0.20",
     "python-calamine>=0.8.2",
+    "pillow>=12.3.0",
+    "nh3>=0.2",
+    "httpx>=0.28",
+    "reportlab>=4.2",
+    "openpyxl>=3.1",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4",
+    "pytest-asyncio>=1.1",
+    "httpx>=0.28",
 ]
 
 [tool.uv]
 package = false
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
+testpaths = ["tests"]

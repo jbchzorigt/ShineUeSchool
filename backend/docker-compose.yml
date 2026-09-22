@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:17
+    container_name: shineue-db
+    environment:
+      POSTGRES_USER: shineue
+      POSTGRES_PASSWORD: shineue
+      POSTGRES_DB: shineue
+    ports:
+      - "5432:5432"
+    volumes:
+      - shineue-pgdata:/var/lib/postgresql/data
+      - ./docker/init-test-db.sql:/docker-entrypoint-initdb.d/10-test-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shineue -d shineue"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  shineue-pgdata:

@@ -1,0 +1,5 @@
+# API-ийн HTTPS reverse proxy (docker-compose.prod.yml --profile proxy). Сертификатыг Let's Encrypt-ээс автоматаар авна.
+{$API_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy backend:8000
+}

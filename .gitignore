@@ -4,14 +4,12 @@ node_modules/
 out/
 npm-debug.log*
 
-# Python / Django
+# Python
 __pycache__/
 *.pyc
 .venv/
 venv/
-*.sqlite3
 media/
-staticfiles/
 .env
 
 # Editor / OS
@@ -22,3 +20,4 @@ Thumbs.db
 
 # Claude Code local settings (skills-ийг хадгална, session файлуудыг хадгалахгүй)
 .claude/settings.local.json
+.claude/worktrees/

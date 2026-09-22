@@ -2,7 +2,7 @@
 
 /* Жижиг UI бүрдлүүд — Tailwind классуудыг нэг газар хадгална. */
 
-import { useEffect, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react";
+import { useEffect, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type Ref, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react";
 
 const cx = (...c: (string | false | undefined | null)[]) => c.filter(Boolean).join(" ");
 
@@ -46,7 +46,7 @@ export function Input({ className, ...p }: InputHTMLAttributes<HTMLInputElement>
 export function Textarea({ className, ...p }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return <textarea {...p} className={cx(field, "min-h-24", className)} />;
 }
-export function Select({ className, ...p }: SelectHTMLAttributes<HTMLSelectElement>) {
+export function Select({ className, ...p }: SelectHTMLAttributes<HTMLSelectElement> & { ref?: Ref<HTMLSelectElement> }) {
   return <select {...p} className={cx(field, className)} />;
 }
 
@@ -54,12 +54,13 @@ export function Select({ className, ...p }: SelectHTMLAttributes<HTMLSelectEleme
 export function Card({ className, children }: { className?: string; children: ReactNode }) {
   return <div className={cx("rounded-2xl border border-slate-200 bg-white p-5 shadow-sm", className)}>{children}</div>;
 }
-export function Badge({ children, tone = "navy" }: { children: ReactNode; tone?: "navy" | "gold" | "green" | "slate" }) {
+export function Badge({ children, tone = "navy" }: { children: ReactNode; tone?: "navy" | "gold" | "green" | "slate" | "red" }) {
   const tones = {
     navy: "bg-navy/10 text-navy",
     gold: "bg-gold/30 text-navy",
     green: "bg-emerald-100 text-emerald-800",
     slate: "bg-slate-100 text-slate-700",
+    red: "bg-red-100 text-red-800",
   };
   return <span className={cx("inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold", tones[tone])}>{children}</span>;
 }

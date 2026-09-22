@@ -8,12 +8,15 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useAuth } from "@/lib/auth";
 import { Spinner } from "@/components/ui";
+import type { RoleCode } from "@/lib/types";
 
-const NAV = [
+const NAV: { href: string; label: string; icon: string; exact?: boolean; superuser?: boolean; role?: RoleCode }[] = [
   { href: "/admin", label: "Нүүр", icon: "▦" },
-  { href: "/admin/schedule", label: "Олимпиадын хуваарь", icon: "◷" },
-  { href: "/admin/results", label: "Олимпиадын үр дүн", icon: "★", exact: true },
-  { href: "/admin/results/import", label: "Excel-ээс оруулах", icon: "⇪" },
+  { href: "/admin/olympiad", label: "Олимпиад", icon: "★" },
+  { href: "/admin/timetable", label: "Хичээлийн хуваарь", icon: "▤", role: "manager" },
+  { href: "/admin/clubs", label: "Дугуйлан", icon: "◎", role: "manager" },
+  { href: "/admin/news", label: "Мэдээ", icon: "✎", role: "news" },
+  { href: "/admin/users", label: "Хэрэглэгчид", icon: "♟", superuser: true },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -27,6 +30,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return <div className="grid min-h-screen place-items-center bg-slate-50"><Spinner className="h-8 w-8" /></div>;
   }
 
+  const nav = NAV.filter((n) => (!n.superuser || user.is_superuser) && (!n.role || user.is_superuser || user.roles.includes(n.role)));
+
   return (
     <div className="flex min-h-screen bg-slate-50 text-slate-900">
       {/* Хажуугийн цэс */}
@@ -39,7 +44,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </div>
         <nav className="flex-1 space-y-1 px-3">
-          {NAV.map((n) => {
+          {nav.map((n) => {
             const active = n.href === "/admin" || n.exact ? path === n.href : path.startsWith(n.href);
             return (
               <Link key={n.href} href={n.href}
@@ -49,16 +54,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             );
           })}
         </nav>
-        <div className="border-t border-slate-200 p-4 text-xs text-slate-500">
-          <a href={`${process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000"}/admin/`} target="_blank" rel="noreferrer" className="hover:text-navy">Django admin ↗</a>
-        </div>
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Дээд мөр */}
         <header className="flex h-16 items-center justify-between border-b border-slate-200 bg-white px-4 md:px-8">
           <nav className="flex gap-2 md:hidden">
-            {NAV.map((n) => <Link key={n.href} href={n.href} className="rounded-md px-2 py-1 text-xs font-semibold text-navy hover:bg-navy/10">{n.label}</Link>)}
+            {nav.map((n) => <Link key={n.href} href={n.href} className="rounded-md px-2 py-1 text-xs font-semibold text-navy hover:bg-navy/10">{n.label}</Link>)}
           </nav>
           <div className="ml-auto flex items-center gap-3">
             <span className="text-sm text-slate-600">{user.full_name}</span>

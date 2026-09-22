@@ -51,7 +51,7 @@ export default function LoginPage() {
           </Field>
           {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
           <Button type="submit" className="w-full" disabled={busy}>{busy ? "Шалгаж байна…" : "Нэвтрэх"}</Button>
-          <p className="text-center text-xs text-slate-500">Django admin-ийн staff хэрэглэгчийн нэр, нууц үгээ ашиглана.</p>
+          <p className="text-center text-xs text-slate-500">Superuser эсвэл эрхийн бүлэгтэй хэрэглэгчийн нэвтрэх нэр, нууц үг.</p>
         </form>
       </div>
     </main>

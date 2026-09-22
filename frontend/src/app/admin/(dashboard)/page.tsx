@@ -15,10 +15,10 @@ export default function DashboardHome() {
   useEffect(() => { api.stats().then(setStats).catch(() => setError("Статистик ачаалж чадсангүй.")); }, []);
 
   const tiles = stats ? [
-    { label: "Олимпиадын шат", value: stats.stages, href: "/admin/schedule" },
-    { label: "Үр дүнгийн мөр", value: stats.results, href: "/admin/results" },
-    { label: "Албумын зураг", value: stats.photos, href: "#" },
-    { label: "Сүүлийн олимпиад", value: stats.latest_year ?? "—", href: "/admin/schedule" },
+    { label: "Олимпиадын шат", value: stats.stages, href: "/admin/olympiad/schedule" },
+    { label: "Үр дүнгийн мөр", value: stats.results, href: "/admin/olympiad/results" },
+    { label: "Албумын зураг", value: stats.photos, href: "/admin/olympiad/album" },
+    { label: "Сүүлийн олимпиад", value: stats.latest_year ?? "—", href: "/admin/olympiad/schedule" },
   ] : [];
 
   const max = Math.max(1, ...(stats?.results_by_year.map((r) => r.count) ?? [1]));
@@ -66,12 +66,12 @@ export default function DashboardHome() {
             <Card>
               <h2 className="font-bold text-navy">Хуваарь оруулах</h2>
               <p className="mt-1 text-sm text-slate-600">Он сонгоод шатуудыг нэмэх, засах, устгах.</p>
-              <Link href="/admin/schedule" className="mt-3 inline-block text-sm font-semibold text-navy hover:underline">Хуваарь руу →</Link>
+              <Link href="/admin/olympiad/schedule" className="mt-3 inline-block text-sm font-semibold text-navy hover:underline">Хуваарь руу →</Link>
             </Card>
             <Card>
               <h2 className="font-bold text-navy">Үр дүн оруулах</h2>
               <p className="mt-1 text-sm text-slate-600">Он, анги сонгоод сурагчдын оноог оруулах. Байр автоматаар тооцогдоно.</p>
-              <Link href="/admin/results" className="mt-3 inline-block text-sm font-semibold text-navy hover:underline">Үр дүн рүү →</Link>
+              <Link href="/admin/olympiad/results" className="mt-3 inline-block text-sm font-semibold text-navy hover:underline">Үр дүн рүү →</Link>
             </Card>
           </div>
         </>
