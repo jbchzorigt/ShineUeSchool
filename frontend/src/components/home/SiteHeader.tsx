@@ -6,24 +6,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
+import { YearTiles } from "./YearTiles";
 import { NAV_LINKS, OLYMPIAD_HREF } from "@/lib/home-data";
-import { buildYear } from "@/lib/yearTiles";
 
 const PAGE_LINKS = NAV_LINKS.filter((l) => l.href !== OLYMPIAD_HREF);
 const OLYMPIAD = NAV_LINKS.find((l) => l.href === OLYMPIAD_HREF)!;
-
-/** Оны хавтан (viewBox 1500×500, 3:1): client дээр buildYear-ээр дүүргэнэ; unmount-д цэвэрлэнэ (StrictMode давхардал). */
-function YearTiles({ year, idPrefix, className }: { year: number; idPrefix: string; className: string }) {
-  const ref = useRef<SVGSVGElement>(null);
-  useEffect(() => {
-    const svg = ref.current;
-    if (!svg) return;
-    buildYear(svg, String(year), idPrefix);
-    return () => { svg.innerHTML = ""; };
-  }, [year, idPrefix]);
-  return <svg ref={ref} viewBox="0 0 1500 500" className={`shrink-0 overflow-visible ${className}`} aria-hidden="true" />;
-}
 
 const isCurrent = (href: string, path: string) => (href === "/" ? path === "/" : path.startsWith(href));
 

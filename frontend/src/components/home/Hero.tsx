@@ -8,6 +8,7 @@
          getBoundingClientRect-ээр тооцно (ScrollSmoother-ийн transform-той ч зөв). Scroll icon хамт бүдгэрнэ.
        · Курсор (зөвхөн fine pointer): гарчиг/тайлбар/товч гүнээрээ ялгаатай (±14/±9/±6px) курсор руу зөөлөн хазайна —
          gsap.quickTo, pointermove бүрт tween үүсгэхгүй. Хэсгээс гарахад төв рүү буцна.
+   - Товч: "Олимпиад" + оны хавтан (header-тэй ижил YearTiles), /olympiad руу. Оныг page.tsx server дээр татаж дамжуулна.
    - Хуудас ачаалахад гарчгийн доорх шар шугам DrawSVG-ээр нэг удаа зурагдана; scroll icon-ы цэг гулсаж бөмбөлзөнө
      (#programs руу гүйлгэнэ — SmoothScroll анкорыг барина).
    - prefers-reduced-motion: parallax, шугам, icon бүгд хөдөлгөөнгүй; canvas ч хөдөлгөөнгүй.
@@ -20,13 +21,15 @@ import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { DrawSVGPlugin } from "gsap/DrawSVGPlugin";
 import { MathematicalCanvas } from "@/components/site/MathematicalCanvas";
+import { OLYMPIAD_HREF } from "@/lib/home-data";
+import { YearTiles } from "./YearTiles";
 
 gsap.registerPlugin(useGSAP, DrawSVGPlugin);
 
 const SCROLL_SHIFT = 0.35;   // гүйлгэхэд текст хэсгийн өндрийн хэдэн хувиар хоцорч дээшлэх
 const DEPTH = { h1: 14, p: 9, cta: 6 };   // курсорын parallax-ийн дээд шилжилт (px)
 
-export function Hero() {
+export function Hero({ olympiadYear }: { olympiadYear: number }) {
   const root = useRef<HTMLElement>(null);
   const text = useRef<HTMLDivElement>(null);
 
@@ -102,15 +105,22 @@ export function Hero() {
         <svg className="-mt-2 h-[14px] w-[220px] lg:h-[18px] lg:w-[360px]" viewBox="0 0 360 18" aria-hidden="true">
           <path className="hero-underline" d="M3,12 Q70,2 150,9 T290,7 T357,10" fill="none" stroke="#ffc20e" strokeWidth="4" strokeLinecap="round" />
         </svg>
-        <p className="max-w-[30em] text-[17px] leading-relaxed lg:text-[22px]">
-          Математикийн уламжлалтай, сурагч бүрийг хөгжүүлдэг сургууль. Мэдээ, олимпиад, түүх, хаягийг эндээс.
+        {/* Ү.Маам багшийн ишлэл: гар бичмэл фонт (font-hand = Caveat), гол хэллэг шар */}
+        <p className="max-w-[24em] font-hand text-[26px] font-medium leading-snug lg:text-[36px]">
+          Чадварлаг хамт олон бүрдүүлэн ажилласнаар сурагчдаа{" "}
+          <span className="whitespace-nowrap font-semibold text-gold">жигд сайн сургах</span>{" "}
+          нөхцөл бүрдэнэ.
+          <span className="mt-1 block text-[22px] text-gold/90 lg:text-[28px]">— Ү. Маам</span>
         </p>
-        <div className="hero-cta mt-1 flex flex-col items-center gap-4 lg:flex-row lg:gap-7">
-          <Link href="/#news" className="inline-flex h-[52px] items-center rounded-lg bg-white px-7 text-[17px] font-semibold text-navy hover:bg-paper-3">
-            Мэдээ үзэх
-          </Link>
-          <Link href="/olympiad" className="text-[17px] font-semibold text-white underline decoration-2 underline-offset-[5px] hover:text-gold">
-            Ү.Маамын нэрэмжит олимпиад
+        {/* Товч: header-ийн "Олимпиад 2026"-тай ижил (текст + оны Bauhaus хавтан), цагаан pill */}
+        <div className="hero-cta mt-2">
+          <Link
+            href={OLYMPIAD_HREF}
+            aria-label={`Олимпиад ${olympiadYear}`}
+            className="inline-flex h-[56px] items-center gap-3 rounded-full bg-white pl-7 pr-5 text-[17px] font-semibold text-navy shadow-lg shadow-black/20 transition hover:bg-paper-3 lg:h-[60px] lg:text-[18px]"
+          >
+            Олимпиад
+            <YearTiles year={olympiadYear} idPrefix="hero" className="h-7 w-[84px] lg:h-8 lg:w-[96px]" />
           </Link>
         </div>
       </div>

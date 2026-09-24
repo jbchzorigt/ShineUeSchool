@@ -8,14 +8,16 @@ import { LocationSection } from "@/components/home/LocationSection";
 import { SiteFooter } from "@/components/home/SiteFooter";
 import { Reveal } from "@/components/site/Reveal";
 import { fetchPrograms } from "@/lib/programs-api";
+import { fetchOlympiadYears, latestYear } from "@/lib/olympiad-api";
 
 export default async function Home() {
-  const programs = (await fetchPrograms()) ?? [];
+  const [programs, years] = await Promise.all([fetchPrograms(), fetchOlympiadYears()]);
+  const olympiadYear = latestYear(years);
   return (
     <>
       <main className="paper-grid flex flex-1 flex-col">
-        <Hero />
-        <ProgramsSection programs={programs} />
+        <Hero olympiadYear={olympiadYear} />
+        <ProgramsSection programs={programs ?? []} />
         <Reveal><NewsSection /></Reveal>
         <Reveal><HistoryTimeline /></Reveal>
         <Reveal><LocationSection /></Reveal>

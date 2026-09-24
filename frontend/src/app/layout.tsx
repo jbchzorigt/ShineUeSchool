@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist_Mono } from "next/font/google";
+import { Caveat, Geist_Mono } from "next/font/google";
 import localFont from "next/font/local";
 import Script from "next/script";
 import { VisitorProvider } from "@/lib/visitor";
@@ -19,6 +19,8 @@ const ttNorms = localFont({
   display: "swap",
 });
 const mono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
+/* Гар бичмэл фонт (нүүрний Ү.Маам багшийн ишлэл): Caveat — кирилл Ө/Ү (cyrillic-ext) дэмжинэ, үсэг тод танигдана */
+const hand = Caveat({ variable: "--font-caveat", subsets: ["cyrillic", "cyrillic-ext", "latin"], weight: ["500", "600"], display: "swap" });
 
 export const metadata: Metadata = {
   title: "Шинэ Үе сургууль",
@@ -27,7 +29,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="mn" className={`${ttNorms.variable} ${mono.variable} h-full antialiased`}>
+    <html lang="mn" className={`${ttNorms.variable} ${mono.variable} ${hand.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans">
         {/* Splash-ийг энэ session-д аль хэдийн үзсэн бол render-ийн өмнө нуух (components/site/Splash.tsx) */}
         <Script id="splash-seen-check" strategy="beforeInteractive">{`try{if(sessionStorage.getItem('shineue.splash')==='1'&&!document.getElementById('splash-seen')){var s=document.createElement('style');s.id='splash-seen';s.textContent='.site-splash{display:none}';document.head.appendChild(s)}}catch(e){}`}</Script>

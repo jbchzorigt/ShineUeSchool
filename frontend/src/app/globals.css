@@ -20,6 +20,7 @@
   --font-sans: var(--font-body), system-ui, sans-serif;
   --font-display: var(--font-body), system-ui, sans-serif;   /* гарчиг мөн TT Norms Pro (700/800) */
   --font-mono: var(--font-geist-mono), monospace;
+  --font-hand: var(--font-caveat), "Segoe Script", cursive;   /* гар бичмэл ишлэл (Caveat, layout.tsx) */
 }
 
 body {
