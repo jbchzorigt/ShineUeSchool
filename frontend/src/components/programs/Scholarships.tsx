@@ -1,8 +1,10 @@
-/* Тэтгэлэгт хамрагдсан сурагчид: нийт дүн (шар), оноор бүлэглэсэн (шинэ эхэнд — backend year DESC-ээр ирнэ) мөрүүд. */
+/* Тэтгэлэгт хамрагдсан сурагчид: нийт дүн (шар), жилээрх дүнгийн график (ScholarshipChart, ApexCharts),
+   оноор бүлэглэсэн (шинэ эхэнд — backend year DESC-ээр ирнэ) мөрүүд. */
 
 import Image from "next/image";
 import type { Scholarship } from "@/lib/types";
 import { formatUsd } from "./money";
+import { ScholarshipChart } from "./ScholarshipChart";
 
 export function Scholarships({ items, total }: { items: Scholarship[]; total: number }) {
   const years = [...new Set(items.map((s) => s.year))];
@@ -13,6 +15,7 @@ export function Scholarships({ items, total }: { items: Scholarship[]; total: nu
         <span className="font-display text-4xl font-extrabold text-gold lg:text-[48px]">{formatUsd(total)}</span>
         <span className="text-sm text-white/80 lg:text-base">нийт тэтгэлэг · {items.length} сурагч</span>
       </div>
+      <ScholarshipChart items={items} />
       {years.map((y) => (
         <section key={y} aria-labelledby={`sch-${y}`} className="flex flex-col gap-2">
           <h3 id={`sch-${y}`} className="text-sm font-semibold uppercase tracking-wider text-muted">{y} он</h3>

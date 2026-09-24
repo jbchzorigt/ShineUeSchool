@@ -8,7 +8,7 @@
          getBoundingClientRect-ээр тооцно (ScrollSmoother-ийн transform-той ч зөв). Scroll icon хамт бүдгэрнэ.
        · Курсор (зөвхөн fine pointer): гарчиг/тайлбар/товч гүнээрээ ялгаатай (±14/±9/±6px) курсор руу зөөлөн хазайна —
          gsap.quickTo, pointermove бүрт tween үүсгэхгүй. Хэсгээс гарахад төв рүү буцна.
-   - Товч: "Олимпиад" + оны хавтан (header-тэй ижил YearTiles), /olympiad руу. Оныг page.tsx server дээр татаж дамжуулна.
+   - Товч: зөвхөн оны хавтан (header-тэй ижил YearTiles, текстгүй), /olympiad руу. Оныг page.tsx server дээр татаж дамжуулна.
    - Хуудас ачаалахад гарчгийн доорх шар шугам DrawSVG-ээр нэг удаа зурагдана; scroll icon-ы цэг гулсаж бөмбөлзөнө
      (#programs руу гүйлгэнэ — SmoothScroll анкорыг барина).
    - prefers-reduced-motion: parallax, шугам, icon бүгд хөдөлгөөнгүй; canvas ч хөдөлгөөнгүй.
@@ -112,15 +112,14 @@ export function Hero({ olympiadYear }: { olympiadYear: number }) {
           нөхцөл бүрдэнэ.
           <span className="mt-1 block text-[22px] text-gold/90 lg:text-[28px]">— Ү. Маам</span>
         </p>
-        {/* Товч: header-ийн "Олимпиад 2026"-тай ижил (текст + оны Bauhaus хавтан), цагаан pill */}
+        {/* Товч: зөвхөн оны Bauhaus хавтан (header-тэй ижил YearTiles), цагаан pill; aria-label "Олимпиад 2026" */}
         <div className="hero-cta mt-2">
           <Link
             href={OLYMPIAD_HREF}
             aria-label={`Олимпиад ${olympiadYear}`}
-            className="inline-flex h-[56px] items-center gap-3 rounded-full bg-white pl-7 pr-5 text-[17px] font-semibold text-navy shadow-lg shadow-black/20 transition hover:bg-paper-3 lg:h-[60px] lg:text-[18px]"
+            className="inline-flex h-[56px] items-center rounded-full bg-white px-6 shadow-lg shadow-black/20 transition hover:bg-paper-3 lg:h-[60px]"
           >
-            Олимпиад
-            <YearTiles year={olympiadYear} idPrefix="hero" className="h-7 w-[84px] lg:h-8 lg:w-[96px]" />
+            <YearTiles year={olympiadYear} idPrefix="hero" className="h-8 w-[96px] lg:h-9 lg:w-[108px]" />
           </Link>
         </div>
       </div>

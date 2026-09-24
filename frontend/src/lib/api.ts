@@ -14,6 +14,7 @@ import type {
   ProgramWork, PublishResult, Result, ResultInput, Role, Room, RoomInput, Scholarship, ScholarshipInput, Stage, StageInput, Stats,
   Subject, SubjectInput, Teacher, TeacherInput, TimetableImportResponse, TimetableStats, User, UserInput, VisitorAdmin, WorkInput,
   Years,
+  CountryCatalogueItem, GraduateDestination, GraduateDestinationInput, GraduateStats,
 } from "./types";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
@@ -86,6 +87,17 @@ async function refresh(refreshToken: string): Promise<boolean> {
     return false;
   }
 }
+
+/** Админ хадгалсны дараа нүүр зэрэг хуудасны ISR cache-ийг шууд цэвэрлэнэ (Next route handler app/api/revalidate).
+    Fire-and-forget: амжилтгүй бол чимээгүй — cache 60 сек дараа өөрөө шинэчлэгдэнэ. */
+export async function revalidateCache(tags: string[], paths: string[] = ["/"]): Promise<void> {
+  const t = tokens.get();
+  if (!t) return;
+  try {
+    await fetch("/api/revalidate", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${t.access}` }, body: JSON.stringify({ tags, paths }) });
+  } catch { /* ignore */ }
+}
+const afterSave = <T,>(p: Promise<T>, tags: string[]): Promise<T> => p.then((r) => { void revalidateCache(tags); return r; });
 
 const q = (params: Record<string, string | number | boolean | undefined>) => {
   const s = new URLSearchParams();
@@ -391,6 +403,19 @@ export const api = {
       setPhoto: (id: number, file: File) => { const fd = new FormData(); fd.append("photo", file); return request<Scholarship>(`/api/programs/admin/scholarships/${id}/photo/`, { method: "POST", body: fd }); },
       removePhoto: (id: number) => request<Scholarship>(`/api/programs/admin/scholarships/${id}/photo/`, { method: "DELETE" }),
       reorder: (programId: number, ids: number[]) => request<ProgramAdminDetail>(`/api/programs/admin/programs/${programId}/scholarships/order/`, { method: "PUT", body: { ids } }),
+    },
+  },
+  /* Төгсөгчид: улс (каталогоос) + сургуулиуд — manager */
+  graduates: {
+    catalogue: () => request<CountryCatalogueItem[]>("/api/graduates/admin/catalogue/"),
+    list: () => request<GraduateDestination[]>("/api/graduates/admin/countries/"),
+    create: (d: GraduateDestinationInput) => afterSave(request<GraduateDestination>("/api/graduates/admin/countries/", { method: "POST", body: d }), ["graduates"]),
+    update: (id: number, universities: string[]) => afterSave(request<GraduateDestination>(`/api/graduates/admin/countries/${id}/`, { method: "PATCH", body: { universities } }), ["graduates"]),
+    remove: (id: number) => afterSave(request<void>(`/api/graduates/admin/countries/${id}/`, { method: "DELETE" }), ["graduates"]),
+    reorder: (ids: number[]) => afterSave(request<GraduateDestination[]>("/api/graduates/admin/countries/order/", { method: "PUT", body: { ids } }), ["graduates"]),
+    stats: {
+      get: () => request<GraduateStats>("/api/graduates/admin/stats/"),
+      update: (d: Partial<GraduateStats>) => afterSave(request<GraduateStats>("/api/graduates/admin/stats/", { method: "PATCH", body: d }), ["graduates"]),
     },
   },
 };

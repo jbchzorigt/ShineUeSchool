@@ -282,3 +282,10 @@ export interface ProgramAdminDetail extends ProgramAdmin { works: ProgramWork[];
 export interface ProgramInput { name: string; badge: string; summary: string; grade_from: number; grade_to: number; body_html: string; is_published: boolean }
 export interface WorkInput { title: string; student: string; caption: string }
 export interface ScholarshipInput { student_name: string; university: string; year: number; amount_usd: number }
+
+/* ---- Төгсөгчид: улс + сургуулиуд (backend/app/graduates/schemas.py) ---- */
+export type Continent = "asia" | "europe" | "north_america" | "oceania" | "other";
+export interface CountryCatalogueItem { code: string; name: string; numeric: string; continent: Continent; coords: [number, number] }
+export interface GraduateDestination extends CountryCatalogueItem { id: number; universities: string[]; order: number }
+export interface GraduateDestinationInput { code: string; universities: string[] }
+export interface GraduateStats { total_graduates: number; university_percent: number; university_count: number; abroad_count: number }

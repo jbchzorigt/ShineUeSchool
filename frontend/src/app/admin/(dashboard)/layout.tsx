@@ -17,6 +17,7 @@ const NAV: { href: string; label: string; icon: string; exact?: boolean; superus
   { href: "/admin/clubs", label: "Дугуйлан", icon: "◎", role: "manager" },
   { href: "/admin/about", label: "Бидний тухай", icon: "◈", role: "manager" },
   { href: "/admin/programs", label: "Хөтөлбөр", icon: "◆", role: "manager" },
+  { href: "/admin/graduates", label: "Төгсөгч", icon: "✈", role: "manager" },
   { href: "/admin/news", label: "Мэдээ", icon: "✎", role: "news" },
   { href: "/admin/users", label: "Хэрэглэгчид", icon: "♟", superuser: true },
 ];

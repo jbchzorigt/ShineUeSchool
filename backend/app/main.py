@@ -14,6 +14,8 @@ from .config import settings
 from .news.router_admin import router as news_admin_router
 from .news.router_public import router as news_public_router
 from .olympiad.router import router as olympiad_router
+from .graduates.router_admin import router as graduates_admin_router
+from .graduates.router_public import router as graduates_public_router
 from .programs.router_admin import router as programs_admin_router
 from .programs.router_public import router as programs_public_router
 from .social.router import router as social_router
@@ -51,6 +53,8 @@ app.include_router(about_public_router)
 app.include_router(about_admin_router)
 app.include_router(programs_public_router)
 app.include_router(programs_admin_router)
+app.include_router(graduates_public_router)
+app.include_router(graduates_admin_router)
 
 settings.media_dir.mkdir(parents=True, exist_ok=True)
 app.mount("/media", StaticFiles(directory=settings.media_dir), name="media")

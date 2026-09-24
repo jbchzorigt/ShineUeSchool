@@ -8,7 +8,7 @@
      getBoundingClientRect-ээр прогресс тооцно (ScrollSmoother-ийн transform дор ScrollTrigger найдваргүй байсан).
    - Үе шат бүр дэлгэцэнд орж ирэхэд IntersectionObserver-оор гарч ирнэ (дээшээ гүйлгэж алга болбол буцна).
    - Өргөн өөрчлөгдвөл багана дахин тооцоолж зам дахин барина. prefers-reduced-motion: зам бүтэн, бүгд шууд харагдана.
-   - Нүүр (/#history) болон /about хоёулаа ашиглана. Өгөгдөл: lib/home-data.ts HISTORY.
+   - /about хуудас ашиглана (нүүрэнд оронд нь Graduation.tsx). Өгөгдөл: lib/home-data.ts HISTORY.
    CSS: globals.css ".history-snake" блок. ===================================================================== */
 
 import { useRef, useState } from "react";

@@ -34,6 +34,11 @@ SMTP тохиргоо (`backend/.env`): `SMTP_HOST`, `SMTP_PORT` (587), `SMTP_US
 Нүүрний "Хөтөлбөрүүд" картууд (IBDP, Cambridge …) ба хөтөлбөр бүрийн хуудас: хэрэгжилт (rich text), хэрэгжих анги, сурагчдын бүтээлийн булан (зураг + гарчиг + сурагч, lightbox), тэтгэлэгт хамрагдсан сурагчид (нэр, их сургууль, он, USD дүн, нийт).
 Менежер `/admin/programs`-аас удирдана (жагсаалт/форм; ☷ → бүтээл, тэтгэлэг). API: `GET /api/programs/`, `GET /api/programs/{slug}/` (нээлттэй, зөвхөн нийтлэгдсэн), `/api/programs/admin/*` (manager). Зураг `MEDIA_DIR/programs/`. Модуль `backend/app/programs/`, migration `0011_programs`.
 
+### Төгсөгчид (нүүрний «Төгсөлт» газрын зураг)
+
+Нүүрний «Төгсөлт» хэсэг: тоонууд (нийт төгсөгч, их дээд сургуульд элссэн хувь/тоо, гадаадын их сургууль — админаас, `GET /api/graduates/stats/`, GSAP counter) ба дэлхийн зураг — Монголоос төгсөгчид элссэн улс руу нислэгийн нум, улс дарахад тухайн улсын сургуулиудын жагсаалт (bullet тивийн өнгөөр).
+Менежер `/admin/graduates`-аас улсыг каталогоос сонгоно (тив автоматаар, каталог `backend/app/graduates/countries.py`), сургуулиудыг мөр мөрөөр бичнэ. API: `GET /api/graduates/` (нээлттэй), `/api/graduates/admin/*` (manager). Модуль `backend/app/graduates/`, migration `0012_graduates`, `0013_graduate_stats`. Газрын зургийн path-ууд server дээр `d3-geo` + `world-atlas`-аар (`frontend/src/lib/world-map.ts`).
+
 ### Backend (FastAPI + PostgreSQL)
 
 Шаардлага: Python 3.14+, [uv](https://docs.astral.sh/uv/), Docker Desktop.
@@ -47,6 +52,7 @@ uv run alembic upgrade head                   # хүснэгтүүдийг үү�
 uv run python scripts/create_admin.py admin "нууц үг" --name "Админ"
 uv run python scripts/seed.py                 # жишээ хуваарь, үр дүн (сонголттой)
 uv run python scripts/seed_timetable.py       # жишээ цагийн хуваарь, календарь (сонголттой)
+uv run python scripts/seed_graduates.py       # жишээ төгсөгчдийн тоо, улс, сургуулиуд (сонголттой)
 uv run uvicorn app.main:app --reload          # http://127.0.0.1:8000, баримт: /docs
 uv run pytest                                 # тест (shineue_test бааз дээр)
 ```

@@ -108,3 +108,6 @@ body {
 .history-snake .snake-card p { margin: 0; color: var(--color-muted); font-size: 0.92rem; line-height: 1.5; }
 @media (max-width: 1023px) { .history-snake .snake-row { grid-template-columns: repeat(2, 1fr); padding: 0 48px; } }
 @media (max-width: 639px)  { .history-snake .snake-row { grid-template-columns: 1fr; padding: 0 32px; margin-bottom: 56px; } }
+
+/* Тэтгэлгийн график (components/programs/ScholarshipChart.tsx): Apex-ийн анхдагч tooltip хүрээ/дэвсгэрийг арилгана — агуулга нь custom navy карт */
+.scholarship-chart .apexcharts-tooltip { background: transparent; border: 0; box-shadow: none; }
