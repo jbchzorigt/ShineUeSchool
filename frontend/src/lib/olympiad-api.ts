@@ -19,3 +19,7 @@ export const fetchOlympiadYears = () => getJson<Years>("/api/olympiad/years/");
 export const fetchOlympiadStages = () => getJson<Stage[]>("/api/olympiad/schedule/");
 export const fetchOlympiadResults = () => getJson<Result[]>("/api/olympiad/results/");
 export const fetchOlympiadAlbum = () => getJson<AlbumPhoto[]>("/api/olympiad/album/");
+
+/** Сүүлийн олимпиадын он: хуваарийн онуудын хамгийн их нь; өгөгдөлгүй бол энэ он (олимпиадын хуудас, сайтын header хоёулаа ашиглана). */
+export const latestYear = (years: Years | null) =>
+  years && years.schedule.length ? Math.max(...years.schedule) : new Date().getFullYear();

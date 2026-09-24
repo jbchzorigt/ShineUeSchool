@@ -260,3 +260,25 @@ export interface ClubRegistrationAdmin {
   created_at: string;
   removed_at: string | null;
 }
+
+/* ---- Бидний тухай (backend/app/about/schemas.py) ---- */
+export interface AboutStat { value: string; label: string }
+export interface AboutPage { intro_title: string; intro_html: string; stats: AboutStat[] }
+export type AboutPageInput = AboutPage;
+export interface AboutLeader { id: number; full_name: string; position: string; level: number; photo: string | null }
+export interface AboutLeaderInput { full_name: string; position: string; level: number }
+export interface AboutTeacher { id: number; full_name: string; role: string; is_head: boolean }
+export interface AboutTeacherInput { full_name: string; role: string; is_head: boolean }
+export interface AboutDepartment { id: number; name: string; teachers: AboutTeacher[] }
+export interface AboutData { page: AboutPage; leaders: AboutLeader[]; departments: AboutDepartment[] }
+
+/* ---- Хөтөлбөрүүд (backend/app/programs/schemas.py) ---- */
+export interface ProgramCard { id: number; slug: string; name: string; badge: string; summary: string; cover_image: string | null; grade_from: number; grade_to: number }
+export interface ProgramWork { id: number; image: string; title: string; student: string; caption: string }
+export interface Scholarship { id: number; student_name: string; photo: string | null; university: string; year: number; amount_usd: number }
+export interface ProgramDetail extends ProgramCard { body_html: string; works: ProgramWork[]; scholarships: Scholarship[]; scholarship_total_usd: number; scholarship_count: number }
+export interface ProgramAdmin extends ProgramCard { body_html: string; is_published: boolean; order: number; works_count: number; scholarships_count: number }
+export interface ProgramAdminDetail extends ProgramAdmin { works: ProgramWork[]; scholarships: Scholarship[] }
+export interface ProgramInput { name: string; badge: string; summary: string; grade_from: number; grade_to: number; body_html: string; is_published: boolean }
+export interface WorkInput { title: string; student: string; caption: string }
+export interface ScholarshipInput { student_name: string; university: string; year: number; amount_usd: number }

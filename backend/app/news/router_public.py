@@ -3,6 +3,7 @@
   GET /api/news/categories/                → [{id,name,slug,order,post_count}]
   GET /api/news/posts/?page=&page_size=&category=  → {items,total,page,page_size}
   GET /api/news/posts/{slug}/              → PostDetail
+  GET /api/news/posts/{slug}/related/?limit= → [PostCard] агуулгаар ойр мэдээ (related.py), дутууг шинэ мэдээгээр нөхнө
   GET /api/news/posts/{slug}/comments/     → [CommentOut]
 """
 
@@ -21,6 +22,7 @@ from ..social.deps import current_visitor, optional_visitor
 from ..social.facebook import get_facebook
 from ..social.models import Visitor
 from .models import Category, Comment, Like, Post
+from .related import doc_tokens, rank
 from .schemas import CategoryOut, CommentIn, CommentOut, ImageOut, LikeOut, PostCard, PostDetail, PostPage, VisitorOut
 
 router = APIRouter(prefix="/api/news", tags=["news"])
@@ -112,6 +114,30 @@ async def post_get(slug: str, request: Request, db: DB, v: Annotated[Visitor | N
     counts = await counts_for(db, [p.id])
     liked = v is not None and (await db.get(Like, (p.id, v.id))) is not None
     return post_detail(request, p, *counts[p.id], liked=liked)
+
+
+RELATED_MAX = 10
+
+
+@router.get("/posts/{slug}/related/", response_model=list[PostCard])
+async def post_related(slug: str, request: Request, db: DB, limit: int = 3):
+    """Агуулгаар ойр мэдээ: бүх нийтлэгдсэн мэдээг уншиж (цөөн тул) TF-IDF cosine-оор эрэмбэлнэ.
+    Ойр (оноо > 0) мэдээ limit хүрэхгүй бол хамгийн шинэ мэдээгээр нөхнө."""
+    limit = max(1, min(limit, RELATED_MAX))
+    target = await get_public_post(db, slug)
+    posts = (await db.execute(
+        select(Post).where(public_filter()).order_by(Post.published_at.desc(), Post.id.desc()))).scalars().all()
+    by_id = {p.id: p for p in posts}
+    docs = {p.id: doc_tokens(p.title, p.excerpt, p.body_html) for p in posts}
+    cats = {p.id: p.category_id for p in posts}
+    chosen = [pid for pid, _ in rank(target.id, docs, cats)[:limit]]
+    for p in posts:                      # нөхөлт: шинэ мэдээгээр
+        if len(chosen) >= limit:
+            break
+        if p.id != target.id and p.id not in chosen:
+            chosen.append(p.id)
+    counts = await counts_for(db, chosen)
+    return [post_card(request, by_id[pid], *counts[pid]) for pid in chosen]
 
 
 @router.get("/posts/{slug}/comments/", response_model=list[CommentOut])

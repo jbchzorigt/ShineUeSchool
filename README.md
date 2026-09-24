@@ -23,6 +23,17 @@ GSAP 3.15 (DrawSVG, MotionPath, ScrollTrigger, ScrollSmoother, SplitText — б�
 
 SMTP тохиргоо (`backend/.env`): `SMTP_HOST`, `SMTP_PORT` (587), `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM`, `SMTP_TLS`. Brevo, Mailgun, SendGrid г.м. үйлчилгээний SMTP relay мэдээллийг бичнэ. `SMTP_HOST`/`SMTP_FROM` хоосон бол код илгээгдэхгүй, backend-ийн логт `Дугуйлангийн код (SMTP тохиргоогүй): ...` гэж хэвлэгдэнэ (хөгжүүлэлт). Домэйн: `CLUB_EMAIL_DOMAIN` (анхдагч `shineue.edu.mn`).
 
+### Бидний тухай (`/about`)
+
+Танилцуулга + тоон үзүүлэлт, удирдлагын шатлалтай бүтэц (түвшин 1–10, admin-аас нэмнэ, зурагтай), тэнхим бүрийн багш нар (эрхлэгч эхэнд), түүх.
+Менежер `/admin/about`-аас удирдана (Танилцуулга · Удирдлага · Тэнхим). API: `GET /api/about/` (нээлттэй),
+`/api/about/admin/*` (manager). Зураг `MEDIA_DIR/about/`. Модуль `backend/app/about/`, migration `0010_about`.
+
+### Хөтөлбөрүүд (`/programs/[slug]`)
+
+Нүүрний "Хөтөлбөрүүд" картууд (IBDP, Cambridge …) ба хөтөлбөр бүрийн хуудас: хэрэгжилт (rich text), хэрэгжих анги, сурагчдын бүтээлийн булан (зураг + гарчиг + сурагч, lightbox), тэтгэлэгт хамрагдсан сурагчид (нэр, их сургууль, он, USD дүн, нийт).
+Менежер `/admin/programs`-аас удирдана (жагсаалт/форм; ☷ → бүтээл, тэтгэлэг). API: `GET /api/programs/`, `GET /api/programs/{slug}/` (нээлттэй, зөвхөн нийтлэгдсэн), `/api/programs/admin/*` (manager). Зураг `MEDIA_DIR/programs/`. Модуль `backend/app/programs/`, migration `0011_programs`.
+
 ### Backend (FastAPI + PostgreSQL)
 
 Шаардлага: Python 3.14+, [uv](https://docs.astral.sh/uv/), Docker Desktop.

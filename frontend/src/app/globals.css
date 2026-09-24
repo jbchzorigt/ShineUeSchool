@@ -56,3 +56,54 @@ body {
 .news-body blockquote { border-left: 3px solid var(--color-navy); padding-left: 1em; color: var(--color-muted); margin: 1em 0; }
 .news-body a { color: var(--color-navy); text-decoration: underline; text-underline-offset: 3px; }
 .news-body img { max-width: 100%; height: auto; border-radius: 10px; margin: 1em 0; }
+
+/* Удирдлагын tab (components/about/LeadershipChart.tsx): tab солиход картууд зөөлөн гарч ирнэ */
+.leaders-panel { animation: leaders-in .35s ease-out; }
+@keyframes leaders-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .leaders-panel { animation: none; } }
+
+/* Математик canvas дэвсгэрийн захиалгат курсор (components/site/MathematicalCanvas.tsx): зөвхөн hover + fine pointer
+   төхөөрөмжид host хэсэг дотор системийн курсорыг нууна (холбоос/товч дээр ч) — хүрэлтийн төхөөрөмжид хамаагүй. */
+@media (hover: hover) and (pointer: fine) {
+  .math-cursor-host, .math-cursor-host a, .math-cursor-host button { cursor: none; }
+}
+
+/* Сургуулийн түүх: "могой" timeline (components/home/HistoryTimeline.tsx; олимпиадын .snake хэв маягийн сайтын хувилбар).
+   Зам SVG-ээр мөр бүрийн дагуу явна; он шугамын дээр сууж дэвсгэрээрээ (--sec-bg) шугамыг таслана. */
+.history-snake {
+  --sec-bg: var(--color-paper-2);
+  position: relative;
+  width: min(1100px, 100%);
+  margin-top: 56px;
+  padding: 0 12px;
+}
+.history-snake .snake-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.history-snake .snake-path { stroke-width: 2.5; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.history-snake .snake-rows { position: relative; z-index: 1; list-style: none; margin: 0; padding: 0; }
+.history-snake .snake-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0 28px;
+  padding: 0 64px;          /* мөрийн захад шугам эргэх зай */
+  margin-bottom: 72px;
+}
+.history-snake .snake-row:last-child { margin-bottom: 0; }
+.history-snake .snake-row.is-rev { direction: rtl; }
+.history-snake .snake-row.is-rev .snake-item { direction: ltr; }
+.history-snake .snake-item { position: relative; text-align: center; --tl-c: var(--color-navy); }
+.history-snake .snake-date {
+  display: inline-flex; flex-direction: column; align-items: center;
+  line-height: 1; padding: 0 12px; background: var(--sec-bg); position: relative; z-index: 2;
+}
+.history-snake .snake-date-big { font-family: var(--font-display); font-size: clamp(1.4rem, 2.6vw, 2.2rem); font-weight: 800; color: var(--tl-c); letter-spacing: -0.01em; }
+.history-snake .snake-date-yr { margin-top: 4px; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; color: var(--color-muted); }
+.history-snake .snake-card {
+  margin-top: 14px; padding: 18px 18px 16px; background: #fff; border-radius: 16px;
+  border-top: 4px solid var(--tl-c);
+  box-shadow: 0 12px 34px color-mix(in srgb, var(--tl-c) 16%, transparent);
+  text-align: left;
+}
+.history-snake .snake-card h3 { margin: 0 0 6px; font-family: var(--font-display); font-size: 1.1rem; font-weight: 800; color: var(--color-ink); }
+.history-snake .snake-card p { margin: 0; color: var(--color-muted); font-size: 0.92rem; line-height: 1.5; }
+@media (max-width: 1023px) { .history-snake .snake-row { grid-template-columns: repeat(2, 1fr); padding: 0 48px; } }
+@media (max-width: 639px)  { .history-snake .snake-row { grid-template-columns: 1fr; padding: 0 32px; margin-bottom: 56px; } }

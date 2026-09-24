@@ -1,11 +1,12 @@
 "use client";
 
-/* Толгой хэсэг (hero.js): зүүн намтар, баруун хөрөг. #hero-art дахь геометр дүрсүүд DrawSVG-ээр зурагдаж/арилж давтагдана,
+/* Толгой хэсэг (hero.js): зүүн намтар (гарчиг, намтар — LineReveal мөр мөрөөр), баруун хөрөг. #hero-art дахь геометр дүрсүүд DrawSVG-ээр зурагдаж/арилж давтагдана,
    MotionPath-аар хөвнө; хүрээ зурагдаж зураг гарч ирнэ, хүрээний дагуу дүрсүүд тойрно. Текст, зураг админаас. */
 
 import { useRef } from "react";
 import type { OlympiadPage as PageSettings } from "@/lib/types";
 import { gsap, MotionPathPlugin, useGSAP } from "./gsap";
+import { LineReveal } from "./LineReveal";
 
 const P = { orange: "#F26B2B", yellow: "#FFD500", blue: "#0A63B2", green: "#8CC63F", red: "#BF1F2E", teal: "#0B8A80", purple: "#8A2B8F", navy: "#2C2F8F" };
 
@@ -119,7 +120,8 @@ export function Hero({ page }: { page: PageSettings | null }) {
         const reduce = !!ctx.conditions?.reduce;
 
         const frame = gsap.utils.toArray<SVGElement>(".photo-frame > *", root.current!);
-        const copy = [".hero .eyebrow", ".hero .title", ".hero .lead", ".hero .scroll-hint"]
+        // .title, .lead — LineReveal (SplitText мөр мөрөөр) өөрөө анимаци хийнэ
+        const copy = [".hero .eyebrow", ".hero .scroll-hint"]
           .map((sel) => root.current!.querySelector<HTMLElement>(sel))
           .filter((el): el is HTMLElement => !!el);
         const heroImg = gsap.utils.toArray<HTMLElement>(".hero-photo img", root.current!);
@@ -287,8 +289,8 @@ export function Hero({ page }: { page: PageSettings | null }) {
       <div className="hero-grid">
         <div className="hero-copy">
           <p className="eyebrow">{page?.eyebrow ?? "Монгол Улсын Ардын багш"}</p>
-          <h1 className="title">{page?.title ?? "Ү.Маамын нэрэмжит математикийн олимпиад"}</h1>
-          {page ? <p className="lead bio">{page.bio}</p> : <p className="section-note">Мэдээлэл түр байхгүй.</p>}
+          <LineReveal as="h1" className="title" text={page?.title ?? "Ү.Маамын нэрэмжит математикийн олимпиад"} immediate delay={0.5} />
+          {page ? <LineReveal as="p" className="lead bio" text={page.bio} variant="rise" immediate delay={0.9} /> : <p className="section-note">Мэдээлэл түр байхгүй.</p>}
           <a className="scroll-hint" href="#album" aria-label="Доош гүйлгэх">
             <span />
           </a>

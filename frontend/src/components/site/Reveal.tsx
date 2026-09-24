@@ -1,6 +1,6 @@
 "use client";
 
-/* Гүйлгэхэд гарч ирэх анимаци: доороос 24px, fade — нэг удаа (start "top 85%"). `stagger` бол шууд хүүхдүүд дараалан.
+/* Гүйлгэхэд гарч ирэх анимаци: доороос 24px, fade — нэг удаа (IntersectionObserver-оор). `stagger` бол шууд хүүхдүүд дараалан.
    Reduced motion үед анимацигүй. Server component-оос ч ашиглаж болно (children дамжуулна). */
 
 import { useRef, type ElementType, type ReactNode } from "react";
@@ -16,12 +16,22 @@ export function Reveal({ as: Tag = "div", className, children, stagger = false, 
     if (!el || reduceMotion()) return;
     const targets = stagger ? Array.from(el.children) : [el];
     if (!targets.length) return;
-    // Аль хэдийн дэлгэцэн дээр байвал шууд тоглуулна (богино хуудсанд гүйлгэлт байхгүй тул ScrollTrigger идэвхжихгүй)
+    gsap.set(targets, { autoAlpha: 0, y: 24 });
+    const play = () => gsap.to(targets, { autoAlpha: 1, y: 0, duration: 0.7, ease: "power2.out", delay, stagger: stagger ? 0.08 : 0 });
+    // Аль хэдийн дэлгэцэн дээр байвал шууд тоглуулна (богино хуудсанд гүйлгэлт байхгүй тул IntersectionObserver идэвхжихгүй)
     const inView = el.getBoundingClientRect().top < window.innerHeight * 0.85;
-    gsap.from(targets, {
-      autoAlpha: 0, y: 24, duration: 0.7, ease: "power2.out", delay, stagger: stagger ? 0.08 : 0,
-      ...(inView ? {} : { scrollTrigger: { trigger: el, start: "top 85%", once: true } }),
-    });
+    if (inView) {
+      play();
+      return;
+    }
+    const io = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) {
+        play();
+        io.disconnect();
+      }
+    }, { rootMargin: "0px 0px -15% 0px", threshold: 0 });
+    io.observe(el);
+    return () => io.disconnect();
   }, { scope: ref });
 
   return <Tag ref={ref} id={id} className={className}>{children}</Tag>;

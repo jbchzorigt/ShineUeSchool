@@ -42,3 +42,8 @@ export async function fetchPost(slug: string): Promise<PostDetail | null> {
 export async function fetchCategories(): Promise<NewsCategory[]> {
   return (await getJson<NewsCategory[]>("/api/news/categories/")) ?? [];
 }
+
+/** Санал болгох мэдээ: backend агуулгаар ойр (TF-IDF cosine, backend/app/news/related.py) мэдээг эрэмбэлж, дутууг шинээр нөхнө. */
+export async function fetchRelatedPosts(post: PostCard, limit = 3): Promise<PostCard[]> {
+  return (await getJson<PostCard[]>(`/api/news/posts/${encodeURIComponent(post.slug)}/related/?limit=${limit}`)) ?? [];
+}

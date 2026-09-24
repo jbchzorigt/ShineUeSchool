@@ -1,40 +1,68 @@
 "use client";
 
-/* Дээд цэс: лого + холбоосууд. Утсан дээр hamburger товчоор нээгдэнэ. */
+/* Дээд цэс: зүүн лого · голд хуудасны холбоосууд · баруунд "Олимпиад" + оны Bauhaus хавтан (олимпиадын nav-year-тэй ижил
+   buildYear). Том дэлгэцэд 3 баганат grid (1fr auto 1fr) тул цэс хуудасны яг голд байрлана. Утсан дээр hamburger товчоор нээгдэнэ. */
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
-import { NAV_LINKS } from "@/lib/home-data";
-import { Logo } from "./Logo";
+import { useEffect, useRef, useState } from "react";
+import { NAV_LINKS, OLYMPIAD_HREF } from "@/lib/home-data";
+import { buildYear } from "@/lib/yearTiles";
 
-export function SiteHeader() {
+const PAGE_LINKS = NAV_LINKS.filter((l) => l.href !== OLYMPIAD_HREF);
+const OLYMPIAD = NAV_LINKS.find((l) => l.href === OLYMPIAD_HREF)!;
+
+/** Оны хавтан (viewBox 1500×500, 3:1): client дээр buildYear-ээр дүүргэнэ; unmount-д цэвэрлэнэ (StrictMode давхардал). */
+function YearTiles({ year, idPrefix, className }: { year: number; idPrefix: string; className: string }) {
+  const ref = useRef<SVGSVGElement>(null);
+  useEffect(() => {
+    const svg = ref.current;
+    if (!svg) return;
+    buildYear(svg, String(year), idPrefix);
+    return () => { svg.innerHTML = ""; };
+  }, [year, idPrefix]);
+  return <svg ref={ref} viewBox="0 0 1500 500" className={`shrink-0 overflow-visible ${className}`} aria-hidden="true" />;
+}
+
+const isCurrent = (href: string, path: string) => (href === "/" ? path === "/" : path.startsWith(href));
+
+export function SiteHeader({ olympiadYear }: { olympiadYear: number }) {
   const [open, setOpen] = useState(false);
   const path = usePathname();
 
   return (
     <header id="site-header" className="fixed inset-x-0 top-0 z-40 border-b border-line bg-white">
-      <div className="mx-auto flex h-16 max-w-[1440px] items-center justify-between px-4 lg:h-20 md:px-10 lg:px-24">
-        <Link href="/" className="flex items-center gap-3 text-ink" aria-label="Шинэ Үе сургууль, нүүр хуудас">
-          <Logo className="h-9 w-9 lg:h-10 lg:w-10" />
-          <span className="flex flex-col leading-none">
-            <span className="font-display text-lg font-extrabold text-navy lg:text-xl">Шинэ Үе</span>
-            <span className="hidden text-xs text-muted lg:block">сургууль</span>
-          </span>
+      <div className="mx-auto flex h-16 max-w-[1440px] items-center justify-between px-4 md:px-10 lg:grid lg:h-20 lg:grid-cols-[1fr_auto_1fr] lg:px-24">
+        <Link href="/" className="flex items-center lg:justify-self-start" aria-label="Шинэ Үе сургууль, нүүр хуудас">
+          {/* Бүтэн лого (сүлд + ШИНЭ ҮЕ СУРГУУЛЬ): public/logo-full.png, 483×143 */}
+          <Image src="/logo-full.png" alt="Шинэ Үе сургууль" width={483} height={143} priority className="h-10 w-auto lg:h-12" />
         </Link>
 
-        <nav aria-label="Үндсэн цэс" className="hidden items-center gap-5 lg:flex xl:gap-8">
-          {NAV_LINKS.map((l) => (
+        {/* Голд: хуудасны холбоосууд */}
+        <nav aria-label="Үндсэн цэс" className="hidden items-center gap-5 lg:flex lg:justify-self-center xl:gap-8">
+          {PAGE_LINKS.map((l) => (
             <Link
               key={l.href}
               href={l.href}
-              aria-current={(l.href === "/" ? path === "/" : l.href.startsWith("/#") ? false : path.startsWith(l.href)) ? "page" : undefined}
+              aria-current={isCurrent(l.href, path) ? "page" : undefined}
               className="whitespace-nowrap border-b-2 border-transparent py-2 text-[15px] font-medium text-ink hover:border-navy hover:text-navy aria-[current]:border-navy aria-[current]:text-navy xl:text-base"
             >
               {l.label}
             </Link>
           ))}
         </nav>
+
+        {/* Баруунд: Олимпиад + оны хавтан */}
+        <Link
+          href={OLYMPIAD.href}
+          aria-current={isCurrent(OLYMPIAD.href, path) ? "page" : undefined}
+          aria-label={`${OLYMPIAD.label} ${olympiadYear}`}
+          className="hidden items-center gap-2.5 whitespace-nowrap border-b-2 border-transparent py-2 text-[15px] font-medium text-ink hover:border-navy hover:text-navy aria-[current]:border-navy aria-[current]:text-navy lg:flex lg:justify-self-end xl:text-base"
+        >
+          {OLYMPIAD.label}
+          <YearTiles year={olympiadYear} idPrefix="hdr" className="h-6 w-[72px]" />
+        </Link>
 
         <button
           type="button"
@@ -56,11 +84,15 @@ export function SiteHeader() {
 
       {open && (
         <nav id="mobile-nav" aria-label="Үндсэн цэс" className="flex flex-col border-t border-line bg-white px-4 py-2 lg:hidden">
-          {NAV_LINKS.map((l) => (
-            <Link key={l.href} href={l.href} onClick={() => setOpen(false)} className="border-b border-line py-3 text-base font-medium text-ink last:border-b-0">
+          {PAGE_LINKS.map((l) => (
+            <Link key={l.href} href={l.href} onClick={() => setOpen(false)} className="border-b border-line py-3 text-base font-medium text-ink">
               {l.label}
             </Link>
           ))}
+          <Link href={OLYMPIAD.href} onClick={() => setOpen(false)} aria-label={`${OLYMPIAD.label} ${olympiadYear}`} className="flex items-center gap-3 py-3 text-base font-medium text-ink">
+            {OLYMPIAD.label}
+            <YearTiles year={olympiadYear} idPrefix="mnav" className="h-6 w-[72px]" />
+          </Link>
         </nav>
       )}
     </header>

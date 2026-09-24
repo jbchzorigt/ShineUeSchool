@@ -2,7 +2,7 @@
 
 /* Жижиг UI бүрдлүүд — Tailwind классуудыг нэг газар хадгална. */
 
-import { useEffect, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type Ref, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react";
+import { useEffect, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type Ref, type SelectHTMLAttributes, type TdHTMLAttributes, type TextareaHTMLAttributes } from "react";
 
 const cx = (...c: (string | false | undefined | null)[]) => c.filter(Boolean).join(" ");
 
@@ -72,7 +72,7 @@ export function Empty({ children }: { children: ReactNode }) {
 }
 
 /* ---------- Modal ---------- */
-export function Modal({ open, title, onClose, children, footer }: { open: boolean; title: string; onClose: () => void; children: ReactNode; footer?: ReactNode }) {
+export function Modal({ open, title, onClose, children, footer, size = "md" }: { open: boolean; title: string; onClose: () => void; children: ReactNode; footer?: ReactNode; size?: "md" | "lg" }) {
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -82,7 +82,7 @@ export function Modal({ open, title, onClose, children, footer }: { open: boolea
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4" onClick={onClose} role="dialog" aria-modal="true">
-      <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
+      <div className={cx("w-full rounded-2xl bg-white shadow-xl", size === "lg" ? "max-w-2xl" : "max-w-lg")} onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
           <h2 className="text-lg font-bold text-navy">{title}</h2>
           <button onClick={onClose} className="rounded-md p-1 text-slate-500 hover:bg-slate-100" aria-label="Хаах">✕</button>
@@ -108,4 +108,4 @@ export function Table({ head, children }: { head: ReactNode; children: ReactNode
   );
 }
 export const Th = ({ children, className }: { children?: ReactNode; className?: string }) => <th className={cx("px-4 py-3 font-semibold", className)}>{children}</th>;
-export const Td = ({ children, className }: { children?: ReactNode; className?: string }) => <td className={cx("px-4 py-3 align-middle", className)}>{children}</td>;
+export const Td = ({ children, className, ...p }: TdHTMLAttributes<HTMLTableCellElement>) => <td {...p} className={cx("px-4 py-3 align-middle", className)}>{children}</td>;

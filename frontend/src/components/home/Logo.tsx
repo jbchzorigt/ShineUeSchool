@@ -1,5 +1,5 @@
 /* Сургуулийн сүлд (бодит лого): public/logo-emblem.png — дугуй эмблем (ШИНЭ ҮЕ · СУРГУУЛЬ).
-   Бүтэн лого (сүлд + цагаан үг) public/logo-full.png — бараан дэвсгэр дээр ашиглана. */
+   Бүтэн лого (сүлд + navy үг, цагаан дэвсгэрт) public/logo-full.png — header-т (SiteHeader.tsx). Favicon: src/app/icon.png, favicon.ico. */
 
 import Image from "next/image";
 

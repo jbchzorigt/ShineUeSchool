@@ -3,6 +3,7 @@
 /* Олимпиадын хуудасны client root: .olympiad дизайны хүрээ, ScrollSmoother wrapper, секцүүдийн дараалал.
    Nav (T4), Hero (T5), Album (T6), Schedule (T7), Results (T8), YearTiles (T9) тус тусын task-д нэмэгдэнэ. */
 
+import { latestYear } from "@/lib/olympiad-api";
 import type { AlbumPhoto, OlympiadPage as PageSettings, Result, Stage, Years } from "@/lib/types";
 import { About } from "./About";
 import { Album } from "./Album";
@@ -23,9 +24,6 @@ export interface OlympiadData {
 }
 
 /** "2026" хавтан ба хуваарийн анхдагч он: хуваарийн хамгийн сүүлийн жил, байхгүй бол одоогийн он. */
-export const latestYear = (years: Years | null) =>
-  years && years.schedule.length ? Math.max(...years.schedule) : new Date().getFullYear();
-
 export function OlympiadPage({ page, years, stages, results, album }: OlympiadData) {
   return (
     <div className="olympiad">

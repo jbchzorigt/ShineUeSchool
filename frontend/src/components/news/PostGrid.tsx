@@ -59,7 +59,8 @@ function SideCard({ post }: { post: PostCardData }) {
   );
 }
 
-function SmallCard({ post }: { post: PostCardData }) {
+/** Жижиг карт: grid-ийн доод мөр ба мэдээний дэлгэрэнгүйн "Санал болгох мэдээ" (RelatedPosts.tsx) ашиглана. */
+export function SmallCard({ post }: { post: PostCardData }) {
   return (
     <Link href={`/news/${post.slug}`} className="group flex flex-col gap-2 text-ink lg:gap-2.5">
       <NewsImage src={post.cover_image} className="h-[120px] rounded-lg lg:h-[190px] lg:rounded-[10px]" />

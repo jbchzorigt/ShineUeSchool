@@ -4,10 +4,11 @@ import Link from "next/link";
 
 // Хөлийн холбоосууд: зөвхөн тусдаа хуудсууд (анкор байхгүй), дээд цэстэй ижил дараалал
 const LINKS = [
+  { href: "/about", label: "Бидний тухай" },
   { href: "/news", label: "Мэдээ" },
   { href: "/calendar", label: "Календарь, хуваарь" },
   { href: "/clubs", label: "Дугуйлан" },
-  { href: "/olympiad", label: "Ү.Маамын нэрэмжит олимпиад" },
+  { href: "/olympiad", label: "Олимпиад" },
 ];
 
 export function SiteFooter() {

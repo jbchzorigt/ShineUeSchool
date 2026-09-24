@@ -1,5 +1,5 @@
 /* /news/[slug] — мэдээний дэлгэрэнгүй: ковер, ангилал/огноо-цаг, гарчиг, бие
-   (backend цэвэрлэсэн HTML), галерей, лайк/share, зочны нэвтрэлт, сэтгэгдэл. */
+   (backend цэвэрлэсэн HTML), галерей, лайк/share, зочны нэвтрэлт, сэтгэгдэл, санал болгох мэдээ. */
 
 import type { Metadata } from "next";
 import Image from "next/image";
@@ -11,9 +11,10 @@ import { Comments } from "@/components/news/Comments";
 import { formatDateTime } from "@/components/news/format";
 import { Gallery } from "@/components/news/Gallery";
 import { LikeButton } from "@/components/news/LikeButton";
+import { RelatedPosts } from "@/components/news/RelatedPosts";
 import { ShareButtons } from "@/components/news/ShareButtons";
 import { VisitorBar } from "@/components/news/VisitorBar";
-import { fetchPost } from "@/lib/news-api";
+import { fetchPost, fetchRelatedPosts } from "@/lib/news-api";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
@@ -38,6 +39,7 @@ export default async function NewsPostPage({ params }: { params: Promise<{ slug:
   const { slug } = await params;
   const post = await fetchPost(slug);
   if (!post) notFound();
+  const related = await fetchRelatedPosts(post);
 
   return (
     <>
@@ -79,6 +81,8 @@ export default async function NewsPostPage({ params }: { params: Promise<{ slug:
             <VisitorBar />
             <Comments slug={post.slug} initialCount={post.comments_count} />
           </div>
+
+          <RelatedPosts posts={related} />
         </Reveal>
       </main>
       <SiteFooter />

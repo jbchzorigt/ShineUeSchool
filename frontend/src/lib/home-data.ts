@@ -9,41 +9,9 @@ export interface HistoryEvent {
   year: number | null;
   title: string;
   text: string;
-  /** Слайдын дэвсгэр зураг, /public доторх зам (жишээ: /history/1995.jpg); байхгүй бол хөх дэвсгэр */
+  /** (Одоо ашиглагдахгүй — хуучин слайдер timeline-ийн дэвсгэр зураг; snake timeline зураг харуулдаггүй) */
   image?: string;
 }
-
-export interface ProgramLogo {
-  name: string;
-  /** /public доторх зам; байхгүй бол нэрийг нь харуулна */
-  src?: string;
-}
-
-export const PROGRAM_LOGOS: ProgramLogo[] = [
-  { name: "Cambridge International" },
-  { name: "IB Diploma Programme" },
-];
-
-/* "Давуу тал" хэсэг: 4 үзүүлэлт + 3 карт. Icon нэрс components/home/Advantages.tsx-ийн ICONS-оос. */
-export type IconName = "students" | "teachers" | "trophy" | "clubs" | "cap" | "chart" | "star" | "book" | "layers" | "user" | "check" | "target" | "report" | "room" | "map" | "medal";
-
-export interface Stat { icon: IconName; value: string; label: string }
-export const STATS: Stat[] = [
-  { icon: "students", value: "[1200+]", label: "Суралцагчид" },
-  { icon: "teachers", value: "[80+]", label: "Багш нар" },
-  { icon: "trophy", value: "3", label: "Олимпиадын шат" },
-  { icon: "clubs", value: "[12]", label: "Дугуйлан" },
-];
-
-export interface Advantage { icon: IconName; title: string; items: { icon: IconName; text: string }[]; href: string }
-export const ADVANTAGES: Advantage[] = [
-  { icon: "cap", title: "Сургалтын давуу тал", href: "/olympiad", items: [
-    { icon: "book", text: "Математикийн уламжлал" }, { icon: "layers", text: "Олимпиадын бэлтгэл" }, { icon: "user", text: "Гүнзгийрүүлсэн хөтөлбөр" } ] },
-  { icon: "chart", title: "Хөгжлийг хэмжих", href: "/calendar", items: [
-    { icon: "check", text: "Улирлын үнэлгээ" }, { icon: "target", text: "Олимпиадын үр дүн" }, { icon: "report", text: "Хөгжлийн тайлан" } ] },
-  { icon: "star", title: "Орчин ба боломж", href: "/clubs", items: [
-    { icon: "clubs", text: "Дугуйлангууд" }, { icon: "room", text: "Стандарт анги, лаборатори" }, { icon: "medal", text: "Тэмцээн, арга хэмжээ" } ] },
-];
 
 export const HISTORY: HistoryEvent[] = [
   { year: null, title: "Сургууль үүсгэн байгуулагдав", text: "[Хэн, хаана, хэдэн сурагчтай эхэлсэн. 2–3 өгүүлбэр.]" },
@@ -64,11 +32,14 @@ export const CONTACT = {
   mapEmbedUrl: "",
 };
 
-// Дээд цэс: зөвхөн тусдаа хуудсууд (нүүрний #хэсэг рүү анкор байхгүй)
+// Дээд цэс: зөвхөн тусдаа хуудсууд (нүүрний #хэсэг рүү анкор байхгүй).
+// /olympiad нь header-т баруун талд "Олимпиад" + оны Bauhaus хавтантай тусдаа гарна (SiteHeader.tsx).
+export const OLYMPIAD_HREF = "/olympiad";
 export const NAV_LINKS = [
   { href: "/", label: "Нүүр" },
+  { href: "/about", label: "Бидний тухай" },
   { href: "/news", label: "Мэдээ" },
   { href: "/calendar", label: "Календарь" },
   { href: "/clubs", label: "Дугуйлан" },
-  { href: "/olympiad", label: "Ү.Маамын нэрэмжит олимпиад" },
+  { href: OLYMPIAD_HREF, label: "Олимпиад" },
 ];

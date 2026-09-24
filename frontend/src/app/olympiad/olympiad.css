@@ -174,8 +174,11 @@
 .olympiad .hero-copy .lead { margin-left: 0; max-width: 560px; }
 .olympiad .hero .title { font-size: clamp(2.2rem, 5.2vw, 4.4rem); text-wrap: balance; }
 .olympiad .bio { line-height: 1.6; }
-/* Админ засварласан олон мөрт текст: шинэ мөрийг харуулна */
+/* Админ засварласан олон мөрт текст: шинэ мөрийг харуулна (LineReveal-тэй үед "
+" → <br>) */
 .olympiad .bio, .olympiad .section-2 .lead { white-space: pre-line; }
+/* LineReveal (SplitText mask): маскын overflow:hidden descender (у, р, д …) тайрахгүй байхаар доош нэмэлт зай */
+.olympiad .lr-line-mask { padding-bottom: 0.14em; margin-bottom: -0.14em; }
 
 /* ---- Ү.Маам багшийн зураг + DrawSVG хүрээ ---- */
 .olympiad .hero-photo {

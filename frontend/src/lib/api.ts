@@ -6,12 +6,14 @@
    ===================================================================== */
 
 import type {
+  AboutDepartment, AboutLeader, AboutLeaderInput, AboutPage, AboutPageInput, AboutTeacher, AboutTeacherInput,
   AcademicYear, AcademicYearInput, AlbumPhoto, CalendarEvent, CalendarEventInput, CategoryItem, ClassGroup, ClassGroupInput,
   ClubAdmin, ClubInput, ClubRegistration, ClubRegistrationAdmin, ClubRegistrationInput, ClubRound, ClubsResponse,
   CommentAdmin, CurriculumCheck, CurriculumEntry, FbStatus, GridCell, ImportResponse, Lesson, NewsCategory, NewsImage, OlympiadPage,
-  OlympiadPageInput, Paged, Period, PeriodInput, PeriodSet, PostAdmin, PostInput, PublishResult, Result, ResultInput, Role, Room,
-  RoomInput, Stage, StageInput, Stats, Subject, SubjectInput, Teacher, TeacherInput, TimetableImportResponse, TimetableStats, User,
-  UserInput, VisitorAdmin, Years,
+  OlympiadPageInput, Paged, Period, PeriodInput, PeriodSet, PostAdmin, PostInput, ProgramAdmin, ProgramAdminDetail, ProgramInput,
+  ProgramWork, PublishResult, Result, ResultInput, Role, Room, RoomInput, Scholarship, ScholarshipInput, Stage, StageInput, Stats,
+  Subject, SubjectInput, Teacher, TeacherInput, TimetableImportResponse, TimetableStats, User, UserInput, VisitorAdmin, WorkInput,
+  Years,
 } from "./types";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
@@ -321,6 +323,74 @@ export const api = {
       list: (clubId: number) => request<ClubRegistrationAdmin[]>(`/api/clubs/admin/clubs/${clubId}/registrations/`),
       remove: (id: number) => request<ClubRegistrationAdmin>(`/api/clubs/admin/registrations/${id}/remove/`, { method: "POST" }),
       setPaid: (id: number, is_paid_marked: boolean) => request<ClubRegistrationAdmin>(`/api/clubs/admin/registrations/${id}/`, { method: "PATCH", body: { is_paid_marked } }),
+    },
+  },
+
+  /* ---- Бидний тухай (менежер) ---- */
+  about: {
+    page: {
+      get: () => request<AboutPage>("/api/about/admin/page/"),
+      update: (d: Partial<AboutPageInput>) => request<AboutPage>("/api/about/admin/page/", { method: "PATCH", body: d }),
+      uploadImage: (file: File) => { const fd = new FormData(); fd.append("image", file); return request<{ url: string }>("/api/about/admin/upload-image/", { method: "POST", body: fd }); },
+    },
+    leaders: {
+      list: () => request<AboutLeader[]>("/api/about/admin/leaders/"),
+      create: (d: AboutLeaderInput, photo: File | null) => {
+        const fd = new FormData();
+        fd.append("full_name", d.full_name); fd.append("position", d.position); fd.append("level", String(d.level));
+        if (photo) fd.append("photo", photo);
+        return request<AboutLeader>("/api/about/admin/leaders/", { method: "POST", body: fd });
+      },
+      update: (id: number, d: Partial<AboutLeaderInput>) => request<AboutLeader>(`/api/about/admin/leaders/${id}/`, { method: "PATCH", body: d }),
+      remove: (id: number) => request<void>(`/api/about/admin/leaders/${id}/`, { method: "DELETE" }),
+      setPhoto: (id: number, file: File) => { const fd = new FormData(); fd.append("photo", file); return request<AboutLeader>(`/api/about/admin/leaders/${id}/photo/`, { method: "POST", body: fd }); },
+      removePhoto: (id: number) => request<AboutLeader>(`/api/about/admin/leaders/${id}/photo/`, { method: "DELETE" }),
+      reorder: (items: { id: number; level: number; order: number }[]) => request<AboutLeader[]>("/api/about/admin/leaders/order/", { method: "PUT", body: { items } }),
+    },
+    departments: {
+      list: () => request<AboutDepartment[]>("/api/about/admin/departments/"),
+      create: (name: string) => request<AboutDepartment>("/api/about/admin/departments/", { method: "POST", body: { name } }),
+      update: (id: number, name: string) => request<AboutDepartment>(`/api/about/admin/departments/${id}/`, { method: "PATCH", body: { name } }),
+      remove: (id: number) => request<void>(`/api/about/admin/departments/${id}/`, { method: "DELETE" }),
+      reorder: (ids: number[]) => request<AboutDepartment[]>("/api/about/admin/departments/order/", { method: "PUT", body: { ids } }),
+    },
+    teachers: {
+      create: (deptId: number, d: AboutTeacherInput) => request<AboutTeacher>(`/api/about/admin/departments/${deptId}/teachers/`, { method: "POST", body: d }),
+      update: (id: number, d: Partial<AboutTeacherInput>) => request<AboutTeacher>(`/api/about/admin/teachers/${id}/`, { method: "PATCH", body: d }),
+      remove: (id: number) => request<void>(`/api/about/admin/teachers/${id}/`, { method: "DELETE" }),
+      reorder: (deptId: number, ids: number[]) => request<AboutDepartment>(`/api/about/admin/departments/${deptId}/teachers/order/`, { method: "PUT", body: { ids } }),
+    },
+  },
+
+  /* ---- Хөтөлбөрүүд (менежер) ---- */
+  programs: {
+    list: () => request<ProgramAdmin[]>("/api/programs/admin/programs/"),
+    get: (id: number) => request<ProgramAdminDetail>(`/api/programs/admin/programs/${id}/`),
+    create: (d: ProgramInput) => request<ProgramAdmin>("/api/programs/admin/programs/", { method: "POST", body: d }),
+    update: (id: number, d: Partial<ProgramInput>) => request<ProgramAdmin>(`/api/programs/admin/programs/${id}/`, { method: "PATCH", body: d }),
+    remove: (id: number) => request<void>(`/api/programs/admin/programs/${id}/`, { method: "DELETE" }),
+    reorder: (ids: number[]) => request<ProgramAdmin[]>("/api/programs/admin/programs/order/", { method: "PUT", body: { ids } }),
+    setCover: (id: number, file: File) => { const fd = new FormData(); fd.append("image", file); return request<ProgramAdmin>(`/api/programs/admin/programs/${id}/cover/`, { method: "POST", body: fd }); },
+    removeCover: (id: number) => request<ProgramAdmin>(`/api/programs/admin/programs/${id}/cover/`, { method: "DELETE" }),
+    uploadImage: (file: File) => { const fd = new FormData(); fd.append("image", file); return request<{ url: string }>("/api/programs/admin/upload-image/", { method: "POST", body: fd }); },
+    works: {
+      create: (programId: number, d: WorkInput, image: File) => {
+        const fd = new FormData();
+        fd.append("title", d.title); fd.append("student", d.student); fd.append("caption", d.caption); fd.append("image", image);
+        return request<ProgramWork>(`/api/programs/admin/programs/${programId}/works/`, { method: "POST", body: fd });
+      },
+      update: (id: number, d: Partial<WorkInput>) => request<ProgramWork>(`/api/programs/admin/works/${id}/`, { method: "PATCH", body: d }),
+      setImage: (id: number, file: File) => { const fd = new FormData(); fd.append("image", file); return request<ProgramWork>(`/api/programs/admin/works/${id}/image/`, { method: "POST", body: fd }); },
+      remove: (id: number) => request<void>(`/api/programs/admin/works/${id}/`, { method: "DELETE" }),
+      reorder: (programId: number, ids: number[]) => request<ProgramAdminDetail>(`/api/programs/admin/programs/${programId}/works/order/`, { method: "PUT", body: { ids } }),
+    },
+    scholarships: {
+      create: (programId: number, d: ScholarshipInput) => request<Scholarship>(`/api/programs/admin/programs/${programId}/scholarships/`, { method: "POST", body: d }),
+      update: (id: number, d: Partial<ScholarshipInput>) => request<Scholarship>(`/api/programs/admin/scholarships/${id}/`, { method: "PATCH", body: d }),
+      remove: (id: number) => request<void>(`/api/programs/admin/scholarships/${id}/`, { method: "DELETE" }),
+      setPhoto: (id: number, file: File) => { const fd = new FormData(); fd.append("photo", file); return request<Scholarship>(`/api/programs/admin/scholarships/${id}/photo/`, { method: "POST", body: fd }); },
+      removePhoto: (id: number) => request<Scholarship>(`/api/programs/admin/scholarships/${id}/photo/`, { method: "DELETE" }),
+      reorder: (programId: number, ids: number[]) => request<ProgramAdminDetail>(`/api/programs/admin/programs/${programId}/scholarships/order/`, { method: "PUT", body: { ids } }),
     },
   },
 };
