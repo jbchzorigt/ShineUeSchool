@@ -10,7 +10,7 @@ export async function NewsSection() {
   if (!data) return null;
 
   return (
-    <section id="news" className="mx-auto flex max-w-[1440px] scroll-mt-20 flex-col gap-8 px-4 pt-10 lg:gap-10 md:px-10 lg:px-24 lg:pt-[72px]">
+    <section id="news" className="mx-auto flex max-w-[1440px] scroll-mt-20 flex-col gap-8 px-4 pb-10 pt-10 lg:gap-10 md:px-10 lg:px-24 lg:pb-[72px] lg:pt-[72px]">
       <h2 className="font-display text-[32px] font-extrabold text-navy lg:text-[44px]">Мэдээ</h2>
 
       {data.items.length === 0 ? (

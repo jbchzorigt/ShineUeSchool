@@ -122,10 +122,12 @@ export default function SchedulePage() {
               <Field label="Дараалал" error={errors.order}><Input type="number" min={1} value={d.order} onChange={(e) => set({ order: Number(e.target.value) })} required /></Field>
             </div>
             <Field label="Шатны нэр" error={errors.title}><Input value={d.title} onChange={(e) => set({ title: e.target.value })} placeholder="I шат — Сургуулийн" required /></Field>
-            <Field label="Огноо (текстээр)" error={errors.date_text} hint="Хуудсан дээр яг ингэж харагдана: 2026 · 10 сарын 1–20">
+            <Field label="Огноо (текстээр)" error={errors.date_text} hint="Хэлбэр: 2026 · 10 сарын 1–20 — доорх огноо хоосон бол календарийн карт (сар, өдөр, он) үүнээс үүснэ">
               <Input value={d.date_text} onChange={(e) => set({ date_text: e.target.value })} required />
             </Field>
-            <Field label="Огноо (тооцоолоход)" error={errors.date}><Input type="date" value={d.date ?? ""} onChange={(e) => set({ date: e.target.value || null })} /></Field>
+            <Field label="Огноо (яг өдөр)" error={errors.date} hint="Оруулбал карт дээр гараг + өдөр (жишээ: Мя 07) гарна; хугацааны муж бол хоосон үлдээнэ">
+              <Input type="date" value={d.date ?? ""} onChange={(e) => set({ date: e.target.value || null })} />
+            </Field>
             <Field label="Тайлбар" error={errors.text}><Textarea value={d.text} onChange={(e) => set({ text: e.target.value })} /></Field>
             <Field label="Тагууд" error={errors.tags} hint="Таслалаар тусгаарлана: 90 минут, 5 бодлого">
               <Input value={d.tags.join(", ")} onChange={(e) => set({ tags: e.target.value.split(",").map((t) => t.trim()).filter(Boolean) })} />

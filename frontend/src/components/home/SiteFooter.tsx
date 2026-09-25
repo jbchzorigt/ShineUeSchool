@@ -8,6 +8,8 @@ const LINKS = [
   { href: "/news", label: "Мэдээ" },
   { href: "/calendar", label: "Календарь, хуваарь" },
   { href: "/clubs", label: "Дугуйлан" },
+  { href: "/survey", label: "Судалгаа" },
+  { href: "/admission", label: "Элсэлт" },
   { href: "/olympiad", label: "Олимпиад" },
 ];
 

@@ -33,7 +33,7 @@ export function LocationSection() {
             <span className="font-display text-xl font-extrabold leading-snug lg:text-2xl">{CONTACT.address}</span>
           </Item>
           <Item label="Утас">
-            <a href={`tel:${CONTACT.phone}`} className="text-[17px] font-medium text-navy lg:text-lg">{CONTACT.phone}</a>
+            <a href={`tel:${CONTACT.phone.replace(/[^\d+]/g, "")}`} className="text-[17px] font-medium text-navy lg:text-lg">{CONTACT.phone}</a>
           </Item>
           <Item label="И-мэйл">
             <a href={`mailto:${CONTACT.email}`} className="text-[17px] font-medium text-navy lg:text-lg">{CONTACT.email}</a>

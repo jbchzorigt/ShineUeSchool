@@ -1,7 +1,10 @@
 "use client";
 
-/* Хуваарь (schedule.js): оны табууд; шатууд "могой" мөрөнд (3/2/1 багана responsive); нэг SVG зам мөрийн дагуу явж
-   булангаар доош эргэнэ — гүйлгэхэд DrawSVG scrub, үзүүрийн цэг MotionPath-аар дагана; шат бүр ScrollTrigger-ээр гарч ирнэ. */
+/* Хуваарь: босоо төв шугамтай timeline. Оны табууд; шат бүр ээлжлэн зүүн/баруун талд; шугамын дэргэд календарийн карт
+   (гарагийн товчлол + өдрийн тоо, гурвалжин заагч → төв шугамын цэг рүү); "он – гарчиг" тод, доор тайлбар, tag-ууд.
+   Гүйлгэхэд төв шугам дээрээс доош ургана (ScrollTrigger scrub, scaleY), шат бүр өөрийн талаасаа гулсаж орж ирнэ
+   (он солиход шууд дараалан). Утсанд шугам зүүн талд, бүх шат баруун талд. Огноо: stage.date (YYYY-MM-DD) байвал гараг/өдөр,
+   үгүй бол date_text-ээс ("2026 · 10 сарын 1–20") сар, өдөр, оныг задалж, задрахгүй бол текстийг картад бичнэ. Reduced motion: анимацигүй. CSS: olympiad.css ".tl" блок. */
 
 import { useState, useRef } from "react";
 import type { Stage } from "@/lib/types";
@@ -10,123 +13,59 @@ import { gsap, ScrollTrigger, reduceMotion, useGSAP } from "./gsap";
 import { Formulas } from "./Formulas";
 import { Heading } from "./Heading";
 
-const TL_COLORS = ["#FF3F33", "#9FC87E", "#FF9800", "#FF6666"];
-const R = 44, LINE_Y = 26;
-const perRow = () => (typeof window === "undefined" ? 3 : innerWidth < 640 ? 1 : innerWidth < 1024 ? 2 : 3);
+const WEEKDAYS = ["Ня", "Да", "Мя", "Лх", "Пү", "Ба", "Бя"];   // JS getDay(): 0 = Ням
+
+interface Cal { top: string; big: string; foot?: string; range?: boolean }
+/** Календарийн карт: stage.date ("YYYY-MM-DD") байвал гараг + өдөр; үгүй бол date_text ("2026 · 10 сарын 1–20") → сар + өдөр (+он);
+    аль нь ч задрахгүй бол null (карт дээр date_text-ийг шууд бичнэ). */
+function calendar(iso: string | null, text: string): Cal | null {
+  const m = iso?.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) {
+    const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+    if (!Number.isNaN(d.getTime())) return { top: WEEKDAYS[d.getDay()], big: m[3], foot: `${Number(m[2])}-р сар ${m[1]}` };
+  }
+  const t = text.match(/^(\d{4})\s*·\s*(\d{1,2})\s*сарын\s*(\d{1,2})(?:\s*[–-]\s*(\d{1,2}))?/);
+  if (t) return { top: `${t[2]}-р сар`, big: t[4] ? `${t[3]}–${t[4]}` : t[3], foot: t[1], range: !!t[4] };
+  return null;
+}
 
 export function Schedule({ stages, currentYear }: { stages: Stage[] | null; currentYear: number }) {
   const root = useRef<HTMLElement>(null);
   const years = Array.from(new Set((stages ?? []).map((s) => s.year))).sort((a, b) => a - b);
   const [year, setYear] = useState<number | null>(null);
-  const [cols, setCols] = useState<number>(3);
   const active = year ?? (years.includes(currentYear) ? currentYear : years[years.length - 1]);
   const items = (stages ?? []).filter((s) => s.year === active).sort((a, b) => a.order - b.order);
   const past = active < currentYear;
-  const rows: Stage[][] = [];
-  for (let i = 0; i < items.length; i += cols) rows.push(items.slice(i, i + cols));
-
-  // ResizeObserver callback дотор setState — effect биш, observer callback тул зөвшөөрөгдөнө
-  const setColsSafe = (c: number) => setCols(c);
 
   useGSAP(() => {
-    const snakeRef = root.current?.querySelector<HTMLElement>("#snake");
-    if (!snakeRef || !items.length) return; // stages null/empty үед #snake render хийгдэхгүй
-    const snake = snakeRef; // nested функцүүдэд null-гүй төрлөөр дамжуулах
-    const svg = snake.querySelector<SVGSVGElement>(".snake-svg")!;
-    const path = svg.querySelector<SVGPathElement>(".snake-path")!;
-    const tip = svg.querySelector<SVGGElement>(".snake-tip")!;
-    const rowsBox = snake.querySelector<HTMLElement>(".snake-rows")!;
-    const reduce = reduceMotion();
-
-    /* ---- schedule.js buildPath() 108–151-р мөрийг хуулна ---- */
-    function buildPath() {
-      const box = snake.getBoundingClientRect();
-      const W = box.width, H = box.height;
-      svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
-
-      const rowEls = gsap.utils.toArray<HTMLElement>(".snake-row", rowsBox);
-      if (!rowEls.length) return;
-
-      const cx = (el: Element) => { const r = el.getBoundingClientRect(); return r.left - box.left + r.width / 2; };
-      const rowY = (row: Element) => row.getBoundingClientRect().top - box.top + LINE_Y;
-      const xR = W - 12, xL = 12;
-
-      let d = "";
-      rowEls.forEach((rowEl, i) => {
-        const rowItems = gsap.utils.toArray<HTMLElement>(".snake-item", rowEl);
-        const y = rowY(rowEl);
-        const rev = i % 2 === 1;
-        const first = cx(rowItems[0]);
-        const last = cx(rowItems[rowItems.length - 1]);
-        const isLast = i === rowEls.length - 1;
-
-        if (i === 0) d += `M${first},${y}`;
-
-        if (isLast) {
-          d += ` L${last},${y}`;
-        } else {
-          const ny = rowY(rowEls[i + 1]);
-          if (!rev) {
-            d += ` L${xR - R},${y} Q${xR},${y} ${xR},${y + R} L${xR},${ny - R} Q${xR},${ny} ${xR - R},${ny}`;
-          } else {
-            d += ` L${xL + R},${y} Q${xL},${y} ${xL},${y + R} L${xL},${ny - R} Q${xL},${ny} ${xL + R},${ny}`;
-          }
-        }
-      });
-      path.setAttribute("d", d);
-
-      const startPt = path.getPointAtLength(0);
-      const endPt = path.getPointAtLength(path.getTotalLength());
-      svg.querySelector(".snake-start")!.setAttribute("transform", `translate(${startPt.x},${startPt.y})`);
-      svg.querySelector(".snake-end")!.setAttribute("transform", `translate(${endPt.x},${endPt.y})`);
-    }
-
-    buildPath();
-    /* ---- schedule.js animate(instant) 154–196-р мөрийг хуулна ---- */
-    const instant = year !== null;
+    const tl = root.current?.querySelector<HTMLElement>(".tl");
+    if (!tl || !items.length) return;
+    const fill = tl.querySelector<HTMLElement>(".tl-line-fill")!;
+    const rows = gsap.utils.toArray<HTMLElement>(".tl-item", tl);
+    if (reduceMotion()) { gsap.set(fill, { scaleY: 1 }); return; }
+    const instant = year !== null;   // он солиход: гүйлгэхийг хүлээлгүй дараалан
     const created: ScrollTrigger[] = [];
-    const instantTls: gsap.core.Timeline[] = [];
+    const tweens: gsap.core.Tween[] = [];
 
-    if (reduce) {
-      gsap.set(path, { drawSVG: "0% 100%" });
-      gsap.set(tip, { autoAlpha: 0 });
-      ScrollTrigger.refresh();
-    } else {
-      const scrub = { trigger: snake, start: "top 70%", end: "bottom 55%", scrub: 0.6 };
-      const drawTween = gsap.fromTo(path, { drawSVG: "0% 0%" }, { drawSVG: "0% 100%", ease: "none", scrollTrigger: scrub });
-      const tipTween = gsap.to(tip, {
-        ease: "none",
-        motionPath: { path, align: path, alignOrigin: [0.5, 0.5] },
-        scrollTrigger: { ...scrub },
-      });
-      if (drawTween.scrollTrigger) created.push(drawTween.scrollTrigger);
-      if (tipTween.scrollTrigger) created.push(tipTween.scrollTrigger);
+    // Төв шугам: хэсгийг гүйлгэх явцад дээрээс доош ургана
+    const draw = gsap.fromTo(fill, { scaleY: 0 }, { scaleY: 1, ease: "none", transformOrigin: "50% 0%",
+      scrollTrigger: { trigger: tl, start: "top 70%", end: "bottom 60%", scrub: 0.6 } });
+    if (draw.scrollTrigger) created.push(draw.scrollTrigger);
 
-      gsap.utils.toArray<HTMLElement>(".snake-item", rowsBox).forEach((item, i) => {
-        const anim = gsap.timeline({ paused: true, defaults: { ease: "power3.out" } })
-          .from(item.querySelector(".snake-date"), { scale: 0.6, autoAlpha: 0, duration: 0.5, ease: "back.out(2)", transformOrigin: "50% 50%" })
-          .from(item.querySelector(".snake-card"), { autoAlpha: 0, y: 24, duration: 0.6 }, "-=0.25")
-          .from(item.querySelectorAll(".tl-tags li"), { autoAlpha: 0, y: 6, duration: 0.3, stagger: 0.08 }, "-=0.3");
-        instantTls.push(anim);
-
-        if (instant) {
-          anim.delay(i * 0.1).play();
-        } else {
-          created.push(ScrollTrigger.create({
-            trigger: item,
-            start: "top 78%",
-            onEnter: () => anim.play(),
-            onLeaveBack: () => anim.reverse(),
-          }));
-        }
-      });
-      ScrollTrigger.refresh();
-    }
-
-    const ro = new ResizeObserver(() => { const c = perRow(); if (c !== cols) setColsSafe(c); else buildPath(); });
-    ro.observe(snake);
-    return () => { ro.disconnect(); created.forEach((t) => t.kill()); instantTls.forEach((tl) => tl.kill()); };
-  }, { scope: root, dependencies: [active, cols, items.length] });
+    rows.forEach((row, i) => {
+      const fromLeft = !row.classList.contains("is-right");
+      const cal = row.querySelector(".tl-cal"), dot = row.querySelector(".tl-dot"), copy = row.querySelector(".tl-copy");
+      const anim = gsap.timeline({ paused: true, defaults: { ease: "power3.out" } })
+        .from(dot, { scale: 0, duration: 0.4, ease: "back.out(2)", transformOrigin: "50% 50%" })
+        .from(cal, { autoAlpha: 0, x: fromLeft ? 24 : -24, duration: 0.5 }, "-=0.2")
+        .from(copy, { autoAlpha: 0, x: fromLeft ? -32 : 32, duration: 0.6 }, "-=0.35");
+      tweens.push(anim as unknown as gsap.core.Tween);
+      if (instant) anim.delay(i * 0.12).play();
+      else created.push(ScrollTrigger.create({ trigger: row, start: "top 82%", onEnter: () => anim.play(), onLeaveBack: () => anim.reverse() }));
+    });
+    ScrollTrigger.refresh();
+    return () => { created.forEach((t) => t.kill()); tweens.forEach((t) => t.kill()); };
+  }, { scope: root, dependencies: [active, items.length] });
 
   return (
     <section ref={root} className="section section-schedule" id="schedule">
@@ -140,39 +79,39 @@ export function Schedule({ stages, currentYear }: { stages: Stage[] | null; curr
             <div className="year-tabs" id="schedule-years" role="tablist" aria-label="Он">
               {years.map((y) => <button key={y} type="button" role="tab" aria-selected={y === active} className={y === active ? "is-active" : undefined} onClick={() => setYear(y)}>{y}</button>)}
             </div>
-            <div className="snake" id="snake">
-              <svg className="snake-svg" aria-hidden="true">
-                <defs>
-                  <linearGradient id="snake-grad" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="1200">
-                    <stop offset="0%" stopColor="#FF3F33" /><stop offset="33%" stopColor="#9FC87E" /><stop offset="66%" stopColor="#FF9800" /><stop offset="100%" stopColor="#FF6666" />
-                  </linearGradient>
-                </defs>
-                <path className="snake-path" d="M0,0" fill="none" stroke="url(#snake-grad)" />
-                <g className="snake-start"><circle r="9" fill="#1E3A8F" /><circle r="4" fill="#fff" /></g>
-                <g className="snake-end"><circle r="9" fill="#FFC20E" /><circle r="4" fill="#1E3A8F" /></g>
-                <g className="snake-tip"><circle r="7" fill="#1E3A8F" /><circle r="12" fill="none" stroke="#1E3A8F" strokeWidth="2" opacity="0.4" /></g>
-              </svg>
-              <div className="snake-rows" key={`${active}-${cols}`}>
-                {rows.map((row, r) => (
-                  <div key={r} className={`snake-row${r % 2 ? " is-rev" : ""}`}>
-                    {row.map((s, j) => {
-                      const i = r * cols + j;
-                      const [yr, rest] = s.date_text.split(" · ");
-                      return (
-                        <article key={s.id} className="snake-item" style={{ ["--tl-c" as string]: TL_COLORS[i % TL_COLORS.length] }}>
-                          <div className="snake-date"><span className="snake-date-big">{rest || s.date_text}</span><span className="snake-date-yr">{rest ? yr : ""}</span></div>
-                          <div className="snake-card">
-                            <span className="snake-step">{i + 1}-р шат{past ? " · явагдсан" : ""}</span>
-                            <h3>{s.title}</h3>
-                            <p>{s.text}</p>
-                            <ul className="tl-tags">{s.tags.map((t, idx) => <li key={`${t}-${idx}`}>{t}</li>)}</ul>
-                          </div>
-                        </article>
-                      );
-                    })}
-                  </div>
-                ))}
-              </div>
+            <div className="tl" key={active}>
+              <div className="tl-line" aria-hidden="true"><span className="tl-line-fill" /></div>
+              <ol className="tl-list">
+                {items.map((s, i) => {
+                  const cal = calendar(s.date, s.date_text);
+                  return (
+                    <li key={s.id} className={`tl-item ${i % 2 ? "is-right" : "is-left"}`}>
+                      <div className="tl-side">
+                        <div className="tl-copy">
+                          <span className="tl-step">{i + 1}-р шат{past ? " · явагдсан" : ""}</span>
+                          <h3><span className="tl-year">{s.year} –</span> {s.title}</h3>
+                          <p>{s.text}</p>
+                          {s.location && <p className="tl-loc">{s.location}</p>}
+                          {s.tags.length > 0 && <ul className="tl-tags">{s.tags.map((t, idx) => <li key={`${t}-${idx}`}>{t}</li>)}</ul>}
+                        </div>
+                        <div className="tl-cal" title={s.date_text}>
+                          {cal ? (
+                            <>
+                              <span className="tl-cal-top">{cal.top}</span>
+                              <span className={`tl-cal-day${cal.range ? " is-range" : ""}`}>{cal.big}</span>
+                              {cal.foot && <span className="tl-cal-foot">{cal.foot}</span>}
+                            </>
+                          ) : (
+                            <><span className="tl-cal-top">Огноо</span><span className="tl-cal-text">{s.date_text}</span></>
+                          )}
+                          <span className="tl-cal-arrow" aria-hidden="true" />
+                        </div>
+                      </div>
+                      <span className="tl-dot" aria-hidden="true" />
+                    </li>
+                  );
+                })}
+              </ol>
             </div>
           </>
         )}

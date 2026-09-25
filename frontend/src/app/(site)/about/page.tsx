@@ -1,4 +1,4 @@
-/* /about — Бидний тухай: танилцуулга + үзүүлэлт, удирдлагын бүтэц, тэнхимүүд, түүх (нүүрийн snake timeline). Server component. */
+/* /about — Бидний тухай: танилцуулга + үзүүлэлт, түүх 2003–2026 (snake timeline), хамт олон (marquee картууд), тэнхимүүд. Server component. */
 
 import type { Metadata } from "next";
 import { Departments } from "@/components/about/Departments";
@@ -27,9 +27,9 @@ export default async function Page() {
             <h1 className="font-display text-[32px] font-extrabold text-navy lg:text-[44px]">Бидний тухай</h1>
           </Reveal>
         )}
+        <Reveal><HistoryTimeline /></Reveal>
         {data && <LeadershipChart leaders={data.leaders} />}
         {data && <Departments departments={data.departments} />}
-        <Reveal><HistoryTimeline /></Reveal>
       </main>
       <SiteFooter />
     </>

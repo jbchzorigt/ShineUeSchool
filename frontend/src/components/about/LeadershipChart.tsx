@@ -1,74 +1,86 @@
 "use client";
 
-/* Удирдлага: түвшин бүр нэг tab (Захирал · Дэд захирлууд · Менежерүүд · 4-р түвшин …), идэвхтэй tab-д тухайн түвшний гишүүд
-   дарааллаараа ижил хэмжээтэй картаар (голлосон flex-wrap: утсанд 2 багана, sm+ 200px карт). Зураггүй бол navy тойрогт эхний үсэг.
-   Өгөгдөл level, order-оор эрэмбэлэгдэж ирнэ; зөвхөн гишүүнтэй түвшин tab болно. Гар: ←/→ tab солино. */
+/* Хамт олон: удирдлага, багш, ажилтнуудын картууд хэвтээ гүйдэг (marquee) — жишээ дизайн: зураг хар-цагаан, hover-д өнгөт
+   болж бага зэрэг томорно (зураггүй орлуулагч ч саарал → өнгөт); картын доод хэсэгт цагаан хайрцагт нэр + албан тушаал. Зураггүй бол navy дэвсгэрт эхний үсэг.
+   - Өгөгдөл level, order-оор эрэмбэлэгдэж ирнэ (админ /admin/about → Удирдлага); бүгд нэг мөрөнд.
+   - Marquee: жагсаалтыг 2 удаа давтаж GSAP-аар xPercent −50 хүртэл тасралтгүй гүйлгэнэ (seamless); hover/фокус дээр зөөлөн зогсоно;
+     хулгана/хуруугаар чирж, хэвтээ wheel/trackpad-аар гүйлгэж болно (tween-ийн прогрессийг шилжүүлнэ, дараа нь автомат гүйлт үргэлжилнэ).
+   - prefers-reduced-motion: гүйлгэхгүй, энгийн хэвтээ scroll-той мөр. */
 
 import Image from "next/image";
-import { useId, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { gsap, reduceMotion, useGSAP } from "@/components/site/gsap";
 import { Reveal } from "@/components/site/Reveal";
 import type { AboutLeader } from "@/lib/types";
 
-const LEVEL_NAME: Record<number, string> = { 1: "Захирал", 2: "Дэд захирлууд", 3: "Менежерүүд" };
-const levelName = (lv: number) => LEVEL_NAME[lv] ?? `${lv}-р түвшин`;
-
-function Avatar({ leader }: { leader: AboutLeader }) {
-  const cls = "h-24 w-24 md:h-28 md:w-28";
-  if (leader.photo) {
-    return (
-      <span className={`relative block shrink-0 overflow-hidden rounded-full border-4 border-white shadow-md ${cls}`}>
-        <Image src={leader.photo} alt="" fill unoptimized sizes="112px" className="object-cover" />
+function Card({ leader }: { leader: AboutLeader }) {
+  return (
+    <li className="group relative h-[300px] w-[220px] shrink-0 overflow-hidden rounded-2xl border border-line bg-paper-3 shadow-sm transition-transform duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-navy/15 md:h-[320px] md:w-[236px]">
+      {leader.photo ? (
+        <Image src={leader.photo} alt="" fill unoptimized sizes="236px" className="object-cover object-top grayscale transition duration-500 group-hover:scale-105 group-hover:grayscale-0" />
+      ) : (
+        <span className="grid h-full w-full place-items-center bg-navy font-display text-6xl font-extrabold text-gold grayscale transition duration-500 group-hover:scale-105 group-hover:grayscale-0" aria-hidden="true">{leader.full_name.trim().charAt(0)}</span>
+      )}
+      {/* Нэр, албан тушаал: доод цагаан хайрцаг */}
+      <span className="absolute inset-x-3 bottom-3 flex flex-col gap-0.5 rounded-xl bg-white/95 px-4 py-3 shadow-md backdrop-blur">
+        <span className="font-display text-[15px] font-extrabold leading-tight text-ink">{leader.full_name}</span>
+        <span className="text-xs text-muted">{leader.position}</span>
       </span>
-    );
-  }
-  return <span className={`grid shrink-0 place-items-center rounded-full bg-navy font-display text-3xl font-extrabold text-gold ${cls}`} aria-hidden="true">{leader.full_name.trim().charAt(0)}</span>;
+    </li>
+  );
 }
 
 export function LeadershipChart({ leaders }: { leaders: AboutLeader[] }) {
-  const levels = [...new Set(leaders.map((l) => l.level))].sort((a, b) => a - b);
-  const [active, setActive] = useState(levels[0] ?? 1);
-  const id = useId();
-  if (leaders.length === 0) return null;
-  const current = levels.includes(active) ? active : levels[0];
-  const row = leaders.filter((l) => l.level === current);
+  const root = useRef<HTMLDivElement>(null);
+  // reduced motion-ийг effect-д уншина (SSR-тэй ижил эхний render → hydration зөрчилгүй)
+  const [reduce, setReduce] = useState(false);
+  useEffect(() => { if (reduceMotion()) setReduce(true); }, []);   // eslint-disable-line react-hooks/set-state-in-effect -- client-only media query
 
-  function onKey(e: React.KeyboardEvent) {
-    const i = levels.indexOf(current);
-    if (e.key === "ArrowRight") { e.preventDefault(); setActive(levels[(i + 1) % levels.length]); }
-    if (e.key === "ArrowLeft") { e.preventDefault(); setActive(levels[(i - 1 + levels.length) % levels.length]); }
-  }
+  useGSAP(() => {
+    const track = root.current?.querySelector<HTMLElement>(".team-track");
+    if (!track || leaders.length === 0 || reduceMotion()) return;
+    // 2 давхар жагсаалт: −50% хүрэхэд яг эхний байрлал → тасралтгүй давталт. Хурд: карт бүрт ~3 сек
+    const tween = gsap.to(track, { xPercent: -50, ease: "none", duration: Math.max(20, leaders.length * 3), repeat: -1 });
+    const wrap = gsap.utils.wrap(0, 1);
+    const slow = () => gsap.to(tween, { timeScale: 0, duration: 0.6, overwrite: true });
+    const go = () => gsap.to(tween, { timeScale: 1, duration: 0.6, overwrite: true });
+    // Чирж гүйлгэх: dx пикселийг давталтын прогресс болгож (хагас өргөн = нэг бүтэн давталт), seamless wrap
+    const shift = (dx: number) => { const half = track.scrollWidth / 2; if (half) tween.progress(wrap(tween.progress() - dx / half)); };
+    let dragging = false, lastX = 0;
+    const down = (e: PointerEvent) => { dragging = true; lastX = e.clientX; track.setPointerCapture(e.pointerId); track.classList.add("is-dragging"); slow(); };
+    const move = (e: PointerEvent) => { if (!dragging) return; shift(e.clientX - lastX); lastX = e.clientX; };
+    const up = (e: PointerEvent) => { if (!dragging) return; dragging = false; track.classList.remove("is-dragging"); if (track.hasPointerCapture(e.pointerId)) track.releasePointerCapture(e.pointerId); go(); };
+    // Хэвтээ wheel / trackpad: гүйлгэнэ (босоо wheel хуудсаа гүйлгэсээр)
+    const wheel = (e: WheelEvent) => { if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) { e.preventDefault(); shift(-e.deltaX); } };
+    track.addEventListener("pointerenter", slow); track.addEventListener("pointerleave", go);
+    track.addEventListener("focusin", slow); track.addEventListener("focusout", go);
+    track.addEventListener("pointerdown", down); track.addEventListener("pointermove", move);
+    track.addEventListener("pointerup", up); track.addEventListener("pointercancel", up);
+    track.addEventListener("wheel", wheel, { passive: false });
+    return () => {
+      track.removeEventListener("pointerenter", slow); track.removeEventListener("pointerleave", go);
+      track.removeEventListener("focusin", slow); track.removeEventListener("focusout", go);
+      track.removeEventListener("pointerdown", down); track.removeEventListener("pointermove", move);
+      track.removeEventListener("pointerup", up); track.removeEventListener("pointercancel", up);
+      track.removeEventListener("wheel", wheel);
+    };
+  }, { scope: root, dependencies: [leaders.length] });
+
+  if (leaders.length === 0) return null;
+  const copies = reduce ? [leaders] : [leaders, leaders];   // reduced motion: нэг л удаа, scroll-оор
 
   return (
-    <section aria-labelledby="leaders-title" className="bg-paper-2">
-      <div className="mx-auto flex max-w-[1440px] flex-col gap-8 px-4 py-12 md:px-10 lg:gap-10 lg:px-24 lg:py-[72px]">
-        <Reveal><h2 id="leaders-title" className="font-display text-[32px] font-extrabold text-navy lg:text-[44px]">Удирдлага</h2></Reveal>
-        <Reveal className="flex flex-col gap-6 lg:gap-8">
-          {/* Түвшний tab-ууд */}
-          <div role="tablist" aria-label="Удирдлагын түвшин" onKeyDown={onKey} className="flex flex-wrap gap-2 border-b border-line">
-            {levels.map((lv) => {
-              const on = lv === current;
-              return (
-                <button key={lv} type="button" role="tab" id={`${id}-tab-${lv}`} aria-selected={on} aria-controls={`${id}-panel-${lv}`} tabIndex={on ? 0 : -1}
-                        onClick={() => setActive(lv)}
-                        className={`-mb-px whitespace-nowrap border-b-2 px-3 py-2.5 text-[15px] font-semibold transition lg:px-4 lg:text-base ${on ? "border-navy text-navy" : "border-transparent text-muted hover:text-navy"}`}>
-                  {levelName(lv)}
-                  <span className="ml-1.5 rounded-full bg-navy/10 px-1.5 py-0.5 text-xs text-navy">{leaders.filter((l) => l.level === lv).length}</span>
-                </button>
-              );
-            })}
-          </div>
-          {/* Идэвхтэй түвшний гишүүд: key-ээр дахин mount → fade-in (globals.css .leaders-panel) */}
-          <ul key={current} role="tabpanel" id={`${id}-panel-${current}`} aria-labelledby={`${id}-tab-${current}`}
-              className="leaders-panel flex flex-wrap justify-center gap-4 md:gap-6">
-            {row.map((l) => (
-              <li key={l.id} className="flex w-[calc(50%-8px)] flex-col items-center gap-3 rounded-2xl border border-line bg-white px-3 py-5 text-center break-words sm:w-[200px] md:px-5 md:py-6">
-                <Avatar leader={l} />
-                <span className="max-w-full font-display text-base font-extrabold leading-tight text-ink md:text-lg">{l.full_name}</span>
-                <span className="max-w-full text-xs text-muted md:text-sm">{l.position}</span>
-              </li>
-            ))}
-          </ul>
-        </Reveal>
+    <section aria-labelledby="team-title" className="overflow-hidden bg-paper-2">
+      <div className="mx-auto flex max-w-[1440px] flex-col items-center gap-3 px-4 pt-12 text-center md:px-10 lg:px-24 lg:pt-[72px]">
+        <Reveal><h2 id="team-title" className="font-display text-[32px] font-extrabold text-navy lg:text-[44px]">Сургуулийн хамт олон</h2></Reveal>
+        <Reveal><p className="max-w-[34em] text-muted lg:text-lg">Удирдлага, багш, ажилтнууд — сурагч бүрийн амжилтын төлөө хамтдаа ажилладаг.</p></Reveal>
+      </div>
+      {/* Marquee: бүтэн өргөнөөр, захууд бүдгэрнэ */}
+      <div ref={root} className={`relative mt-8 pb-12 lg:mt-10 lg:pb-[72px] ${reduce ? "overflow-x-auto px-4" : "overflow-hidden"}`}>
+        {!reduce && <><span aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-paper-2 to-transparent" /><span aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-paper-2 to-transparent" /></>}
+        <ul className={`team-track flex w-max gap-5 px-3 select-none ${reduce ? "" : "cursor-grab touch-pan-y [&.is-dragging]:cursor-grabbing"}`} aria-label="Хамт олон">
+          {copies.map((list, c) => list.map((l) => <Card key={`${c}-${l.id}`} leader={l} />))}
+        </ul>
       </div>
     </section>
   );

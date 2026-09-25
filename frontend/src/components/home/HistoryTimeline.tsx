@@ -4,7 +4,7 @@
    Сургуулийн түүх: "могой" timeline (олимпиадын хуваарийн Schedule.tsx-ийн бүтэц, сайтын хэв маягаар).
    - Үе шатууд мөрөнд (desktop 3 / tablet 2 / утас 1 багана), мөр бүр эсрэг чиглэлд (RTL), нэг SVG зам мөрийн дагуу
      явж булангаар доош эргэнэ. Он шугамын дээр "сууна" (дэвсгэр нь шугамыг таслана), доор нь карт.
-   - Гүйлгэхэд зам DrawSVG-ээр зурагдаж, үзүүрийн цэг замын дагуу явна: gsap.ticker дээр хэсгийн
+   - Гүйлгэхэд зам DrawSVG-ээр зурагдаж, үзүүрт сургуулийн сүлд лого (цагаан дугуйд) замын дагуу явна: gsap.ticker дээр хэсгийн
      getBoundingClientRect-ээр прогресс тооцно (ScrollSmoother-ийн transform дор ScrollTrigger найдваргүй байсан).
    - Үе шат бүр дэлгэцэнд орж ирэхэд IntersectionObserver-оор гарч ирнэ (дээшээ гүйлгэж алга болбол буцна).
    - Өргөн өөрчлөгдвөл багана дахин тооцоолж зам дахин барина. prefers-reduced-motion: зам бүтэн, бүгд шууд харагдана.
@@ -43,7 +43,13 @@ export function HistoryTimeline() {
       const rowEls = gsap.utils.toArray<HTMLElement>(".snake-row", rowsBox);
       if (!rowEls.length) return;
       const cx = (el: Element) => { const r = el.getBoundingClientRect(); return r.left - box.left + r.width / 2; };
-      const rowY = (row: Element) => row.getBoundingClientRect().top - box.top + LINE_Y;
+      // Мөрийн шугамын Y = тухайн мөрийн оны (.snake-date) босоо төв (LINE_Y — оны элемент олдохгүй үеийн нөөц)
+      const rowY = (row: Element) => {
+        const d = row.querySelector(".snake-date");
+        if (!d) return row.getBoundingClientRect().top - box.top + LINE_Y;
+        const r = d.getBoundingClientRect();
+        return r.top - box.top + r.height / 2;
+      };
       const xR = W - 12, xL = 12;
       let d = "";
       rowEls.forEach((rowEl, i) => {
@@ -125,7 +131,7 @@ export function HistoryTimeline() {
     <section ref={root} id="history" className="scroll-mt-20 border-t border-line bg-paper-2">
       <div className="mx-auto flex max-w-[1440px] flex-col items-center px-4 py-10 md:px-10 lg:px-24 lg:py-[72px]">
         <h2 className="font-display text-[32px] font-extrabold text-navy lg:text-[44px]">Сургуулийн түүх</h2>
-        <p className="mt-3 max-w-[32em] text-center text-muted lg:text-lg">Үүсгэн байгуулагдсанаас өнөөдрийг хүртэлх гол үе шатууд.</p>
+        <p className="mt-3 max-w-[32em] text-center text-muted lg:text-lg">2003 онд үүсгэн байгуулагдсанаас 2026 он хүртэлх гол үе шатууд.</p>
 
         <div className="history-snake">
           <svg className="snake-svg" aria-hidden="true">
@@ -137,7 +143,12 @@ export function HistoryTimeline() {
             <path className="snake-path" d="M0,0" fill="none" stroke="url(#history-snake-grad)" />
             <g className="snake-start"><circle r="9" fill="#1E3A8F" /><circle r="4" fill="#fff" /></g>
             <g className="snake-end"><circle r="9" fill="#FFC20E" /><circle r="4" fill="#1E3A8F" /></g>
-            <g className="snake-tip"><circle r="7" fill="#1E3A8F" /><circle r="12" fill="none" stroke="#1E3A8F" strokeWidth="2" opacity="0.4" /></g>
+            {/* Замын дагуу явж буй сүлд лого (public/logo-emblem.png): цагаан дугуй дэвсгэр + бүдэг цагираг */}
+            <g className="snake-tip">
+              <circle r="26" fill="#1E3A8F" opacity="0.12" />
+              <circle r="20" fill="#fff" stroke="#1E3A8F" strokeWidth="1.5" />
+              <image href="/logo-emblem.png" x="-16" y="-16" width="32" height="32" />
+            </g>
           </svg>
           <ol className="snake-rows" key={cols} aria-label="Сургуулийн түүхийн үе шатууд">
             {rows.map((row, r) => (
@@ -146,7 +157,7 @@ export function HistoryTimeline() {
                   const i = r * cols + j;
                   return (
                     <article key={i} className="snake-item" style={{ ["--tl-c" as string]: TL_COLORS[i % TL_COLORS.length] }}>
-                      <div className="snake-date"><span className="snake-date-big">{e.year ?? "[он]"}</span><span className="snake-date-yr">{i + 1}-р үе</span></div>
+                      <div className="snake-date"><span className="snake-date-big">{e.year ?? "[он]"}</span></div>
                       <div className="snake-card">
                         <h3>{e.title}</h3>
                         <p>{e.text}</p>

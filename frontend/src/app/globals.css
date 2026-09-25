@@ -58,10 +58,7 @@ body {
 .news-body a { color: var(--color-navy); text-decoration: underline; text-underline-offset: 3px; }
 .news-body img { max-width: 100%; height: auto; border-radius: 10px; margin: 1em 0; }
 
-/* Удирдлагын tab (components/about/LeadershipChart.tsx): tab солиход картууд зөөлөн гарч ирнэ */
-.leaders-panel { animation: leaders-in .35s ease-out; }
-@keyframes leaders-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-@media (prefers-reduced-motion: reduce) { .leaders-panel { animation: none; } }
+/* (Удирдлагын tab CSS хасагдсан — Бидний тухай: Хамт олон marquee, components/about/LeadershipChart.tsx, Tailwind классаар) */
 
 /* Математик canvas дэвсгэрийн захиалгат курсор (components/site/MathematicalCanvas.tsx): зөвхөн hover + fine pointer
    төхөөрөмжид host хэсэг дотор системийн курсорыг нууна (холбоос/товч дээр ч) — хүрэлтийн төхөөрөмжид хамаагүй. */
@@ -94,7 +91,7 @@ body {
 .history-snake .snake-item { position: relative; text-align: center; --tl-c: var(--color-navy); }
 .history-snake .snake-date {
   display: inline-flex; flex-direction: column; align-items: center;
-  line-height: 1; padding: 0 12px; background: var(--sec-bg); position: relative; z-index: 2;
+  line-height: 1; padding: 8px 14px; border-radius: 12px; background: var(--sec-bg); position: relative; z-index: 2;   /* шугам, явж буй цэгийг бүрэн халхална */
 }
 .history-snake .snake-date-big { font-family: var(--font-display); font-size: clamp(1.4rem, 2.6vw, 2.2rem); font-weight: 800; color: var(--tl-c); letter-spacing: -0.01em; }
 .history-snake .snake-date-yr { margin-top: 4px; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; color: var(--color-muted); }
