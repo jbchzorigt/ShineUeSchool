@@ -3,6 +3,7 @@
   GET/POST /programs/   GET/PATCH/DELETE /programs/{id}/   PUT /programs/order/   POST/DELETE /programs/{id}/cover/
   POST /programs/{id}/works/   PATCH/DELETE /works/{id}/   POST /works/{id}/image/   PUT /programs/{id}/works/order/
   POST /programs/{id}/scholarships/   PATCH/DELETE /scholarships/{id}/   POST/DELETE /scholarships/{id}/photo/   PUT /programs/{id}/scholarships/order/
+  PUT /programs/{id}/radar/  (онооны график: хичээл × цуврал — ЭЕШ; зөвхөн Үндэсний цөм хөтөлбөр, RADAR_SLUGS)
   POST /upload-image/  (rich text дундах зураг)
 """
 
@@ -20,9 +21,10 @@ from ..common.media import delete_file, save_upload
 from ..db import get_db
 from ..news.sanitize import clean_html
 from .models import Program, ProgramWork, Scholarship
-from .schemas import (OrderIn, ProgramAdmin, ProgramAdminDetail, ProgramIn, ProgramPatch, ScholarshipIn, ScholarshipOut, ScholarshipPatch,
-                      WorkOut, WorkPatch)
-from .service import admin_detail_out, admin_out, get_or_404, list_programs, media_url, scholarship_out, unique_slug, work_out
+from .schemas import (OrderIn, ProgramAdmin, ProgramAdminDetail, ProgramIn, ProgramPatch, RadarIn, ScholarshipIn, ScholarshipOut,
+                      ScholarshipPatch, WorkOut, WorkPatch)
+from .service import (RADAR_SLUGS, admin_detail_out, admin_out, clean_radar, get_or_404, list_programs, media_url, scholarship_out,
+                      unique_slug, work_out)
 
 router = APIRouter(prefix="/api/programs/admin", tags=["programs-admin"])
 DB = Annotated[AsyncSession, Depends(get_db)]
@@ -304,6 +306,17 @@ async def scholarships_order(id: int, body: OrderIn, request: Request, db: DB, _
     pos = {sid: i + 1 for i, sid in enumerate(body.ids)}
     for s in p.scholarships:
         s.order = pos[s.id]
+    await db.commit()
+    await db.refresh(p)
+    return admin_detail_out(request, p)
+
+
+@router.put("/programs/{id}/radar/", response_model=ProgramAdminDetail)
+async def program_radar(id: int, body: RadarIn, request: Request, db: DB, _: Manager):
+    p = await get_or_404(db, Program, id)
+    if p.slug not in RADAR_SLUGS:
+        raise FieldError("subjects", "Онооны график зөвхөн Үндэсний цөм хөтөлбөрт байна.")
+    p.radar = clean_radar(body)
     await db.commit()
     await db.refresh(p)
     return admin_detail_out(request, p)

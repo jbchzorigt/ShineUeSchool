@@ -31,8 +31,21 @@ class ScholarshipOut(BaseModel):
     amount_usd: int
 
 
+class RadarSeries(BaseModel):
+    name: str = Field(max_length=40)
+    values: list[float]
+
+
+class RadarIn(BaseModel):
+    """Радар график: хичээлүүд (тэнхлэг) × цуврал (жил г.м.). subjects, series хоёулаа хоосон бол графикийг арилгана."""
+    title: str = Field(default="", max_length=120)
+    subjects: list[str] = Field(default_factory=list)
+    series: list[RadarSeries] = Field(default_factory=list)
+
+
 class ProgramDetail(ProgramCard):
     body_html: str
+    radar: RadarIn | None
     works: list[WorkOut]
     scholarships: list[ScholarshipOut]
     scholarship_total_usd: int
@@ -48,6 +61,7 @@ class ProgramAdmin(ProgramCard):
 
 
 class ProgramAdminDetail(ProgramAdmin):
+    radar: RadarIn | None
     works: list[WorkOut]
     scholarships: list[ScholarshipOut]
 

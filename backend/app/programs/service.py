@@ -5,10 +5,11 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import noload
 
+from ..common.errors import FieldError
 from ..config import settings
 from ..news.slug import slugify
 from .models import Program, ProgramWork, Scholarship
-from .schemas import ProgramAdmin, ProgramAdminDetail, ProgramCard, ProgramDetail, ScholarshipOut, WorkOut
+from .schemas import RadarIn, ProgramAdmin, ProgramAdminDetail, ProgramCard, ProgramDetail, ScholarshipOut, WorkOut
 
 
 def media_url(request: Request, rel: str) -> str:
@@ -65,7 +66,7 @@ def scholarship_out(request: Request, s: Scholarship) -> ScholarshipOut:
 
 
 def detail_out(request: Request, p: Program) -> ProgramDetail:
-    return ProgramDetail(**_card(request, p), body_html=p.body_html,
+    return ProgramDetail(**_card(request, p), body_html=p.body_html, radar=radar_out(p),
                          works=[work_out(request, w) for w in p.works],
                          scholarships=[scholarship_out(request, s) for s in p.scholarships],
                          scholarship_total_usd=sum(s.amount_usd for s in p.scholarships), scholarship_count=len(p.scholarships))
@@ -77,5 +78,43 @@ def admin_out(request: Request, p: Program) -> ProgramAdmin:
 
 
 def admin_detail_out(request: Request, p: Program) -> ProgramAdminDetail:
-    return ProgramAdminDetail(**admin_out(request, p).model_dump(),
+    return ProgramAdminDetail(**admin_out(request, p).model_dump(), radar=radar_out(p),
                               works=[work_out(request, w) for w in p.works], scholarships=[scholarship_out(request, s) for s in p.scholarships])
+
+
+def radar_out(p: Program) -> RadarIn | None:
+    r = p.radar or {}
+    return RadarIn(**r) if r.get("subjects") else None
+
+
+RADAR_MAX_SUBJECTS, RADAR_MAX_SERIES, RADAR_MAX_VALUE = 12, 5, 1000
+RADAR_SLUGS = {"national-core-curriculum"}   # ЭЕШ-ийн онооны график зөвхөн Үндэсний цөм хөтөлбөрт (IBDP, Cambridge-д байхгүй)
+
+
+def clean_radar(data: RadarIn) -> dict:
+    """Радар графикийн шалгалт: хичээл 3–12 (давхардалгүй), цуврал 1–5 (нэр давхардалгүй), утга бүр хичээлийн тоотой тэнцүү, 0–1000.
+    subjects, series хоёулаа хоосон → {} (график арилна)."""
+    subjects = [" ".join(x.split()) for x in data.subjects]
+    subjects = [x for x in subjects if x]
+    series = [(" ".join(sr.name.split()), sr.values) for sr in data.series]
+    if not subjects and not any(n or v for n, v in series):
+        return {}
+    if not 3 <= len(subjects) <= RADAR_MAX_SUBJECTS:
+        raise FieldError("subjects", f"Хичээл 3–{RADAR_MAX_SUBJECTS} байна.")
+    if len({x.casefold() for x in subjects}) != len(subjects):
+        raise FieldError("subjects", "Хичээлийн нэр давхардаж байна.")
+    if not 1 <= len(series) <= RADAR_MAX_SERIES:
+        raise FieldError("series", f"Цуврал 1–{RADAR_MAX_SERIES} байна.")
+    names = [n for n, _ in series]
+    if any(not n for n in names):
+        raise FieldError("series", "Цуврал бүрт нэр (жил) бичнэ үү.")
+    if len({n.casefold() for n in names}) != len(names):
+        raise FieldError("series", "Цувралын нэр давхардаж байна.")
+    out = []
+    for name, values in series:
+        if len(values) != len(subjects):
+            raise FieldError("series", "Цуврал бүрт хичээл бүрийн оноо байх ёстой.")
+        if any(v < 0 or v > RADAR_MAX_VALUE for v in values):
+            raise FieldError("series", f"Оноо 0–{RADAR_MAX_VALUE} байна.")
+        out.append({"name": name, "values": [round(v, 1) for v in values]})
+    return {"title": data.title.strip(), "subjects": subjects, "series": out}

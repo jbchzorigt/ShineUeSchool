@@ -14,7 +14,7 @@ import type {
   ProgramWork, PublishResult, Result, ResultInput, Role, Room, RoomInput, Scholarship, ScholarshipInput, Stage, StageInput, Stats,
   Subject, SubjectInput, Teacher, TeacherInput, TimetableImportResponse, TimetableStats, User, UserInput, VisitorAdmin, WorkInput,
   Years,
-  CountryCatalogueItem, GraduateDestination, GraduateDestinationInput, GraduateStats,
+  CountryCatalogueItem, GraduateDestination, GraduateDestinationInput, GraduateStats, ProgramRadar,
 } from "./types";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
@@ -378,13 +378,15 @@ export const api = {
   programs: {
     list: () => request<ProgramAdmin[]>("/api/programs/admin/programs/"),
     get: (id: number) => request<ProgramAdminDetail>(`/api/programs/admin/programs/${id}/`),
-    create: (d: ProgramInput) => request<ProgramAdmin>("/api/programs/admin/programs/", { method: "POST", body: d }),
-    update: (id: number, d: Partial<ProgramInput>) => request<ProgramAdmin>(`/api/programs/admin/programs/${id}/`, { method: "PATCH", body: d }),
-    remove: (id: number) => request<void>(`/api/programs/admin/programs/${id}/`, { method: "DELETE" }),
-    reorder: (ids: number[]) => request<ProgramAdmin[]>("/api/programs/admin/programs/order/", { method: "PUT", body: { ids } }),
+    create: (d: ProgramInput) => afterSave(request<ProgramAdmin>("/api/programs/admin/programs/", { method: "POST", body: d }), ["programs"]),
+    update: (id: number, d: Partial<ProgramInput>) => afterSave(request<ProgramAdmin>(`/api/programs/admin/programs/${id}/`, { method: "PATCH", body: d }), ["programs"]),
+    remove: (id: number) => afterSave(request<void>(`/api/programs/admin/programs/${id}/`, { method: "DELETE" }), ["programs"]),
+    reorder: (ids: number[]) => afterSave(request<ProgramAdmin[]>("/api/programs/admin/programs/order/", { method: "PUT", body: { ids } }), ["programs"]),
     setCover: (id: number, file: File) => { const fd = new FormData(); fd.append("image", file); return request<ProgramAdmin>(`/api/programs/admin/programs/${id}/cover/`, { method: "POST", body: fd }); },
-    removeCover: (id: number) => request<ProgramAdmin>(`/api/programs/admin/programs/${id}/cover/`, { method: "DELETE" }),
+    removeCover: (id: number) => afterSave(request<ProgramAdmin>(`/api/programs/admin/programs/${id}/cover/`, { method: "DELETE" }), ["programs"]),
     uploadImage: (file: File) => { const fd = new FormData(); fd.append("image", file); return request<{ url: string }>("/api/programs/admin/upload-image/", { method: "POST", body: fd }); },
+    /** Радар график (хичээл × цуврал) — бүхэлд нь солино; хоосон subjects/series → арилгана */
+    setRadar: (id: number, radar: ProgramRadar) => afterSave(request<ProgramAdminDetail>(`/api/programs/admin/programs/${id}/radar/`, { method: "PUT", body: radar }), ["programs"]),
     works: {
       create: (programId: number, d: WorkInput, image: File) => {
         const fd = new FormData();

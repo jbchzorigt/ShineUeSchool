@@ -2,7 +2,7 @@
 
 /* =====================================================================
    Төгсөлт: сургуулийн төгсөгчдийн тоо — GSAP counter. Navy дэвсгэр дээр том gold тоо (нийт төгсөгч) + их дээд сургуульд
-   элссэн хувь/тоо, гадаадын их сургуулийн тоо. Тоонууд админаас (GET /api/graduates/stats/), гарчиг/тайлбар home-data.ts.
+   элссэн хувь/тоо (0 бол карт нуугдана), гадаадын их сургуулийн тоо. Тоонууд админаас (GET /api/graduates/stats/), гарчиг/тайлбар home-data.ts.
    - Хэсэг дэлгэцэнд орж ирэхэд (IntersectionObserver, нэг удаа) тоонууд 0-ээс gsap.to-оор өсч (power2.out, snap),
      мянгатын тусгаарлагчтай форматлагдана; том тоо 2.2с, жижиг нь 1.6с stagger-тэй.
    - Доор нь дэлхийн зураг (GraduationMap.tsx): улсууд админаас (GET /api/graduates/), path-уудыг page.tsx server дээр buildMapData()-аар.
@@ -57,7 +57,7 @@ export function Graduation({ stats, map, destinations }: { stats: GraduateStats;
             <span data-count={stats.total_graduates} data-big="true" className="font-display text-[72px] font-extrabold leading-none text-gold tabular-nums lg:text-[120px]" aria-label={`${fmt.format(stats.total_graduates)} төгсөгч`}>
               {fmt.format(stats.total_graduates)}
             </span>
-            <span className="text-lg font-semibold text-white/80 lg:text-2xl">төгсөгч</span>
+            <span className="text-lg font-semibold text-white/80 lg:text-2xl">төгсөгч (2022–2026)</span>
           </div>
           <Link href="/about#history" className="mt-2 inline-flex w-fit items-center gap-2 text-[15px] font-semibold text-gold underline decoration-2 underline-offset-[5px] hover:text-white">
             Сургуулийн түүх →
@@ -66,6 +66,7 @@ export function Graduation({ stats, map, destinations }: { stats: GraduateStats;
 
         {/* Баруун: их дээд сургуульд элссэн хувь + тоо, гадаадын их сургууль */}
         <ul className="grid flex-1 grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-1 lg:gap-5" aria-label="Төгсөлтийн үзүүлэлт">
+          {(stats.university_percent > 0 || stats.university_count > 0) && (
           <li className="rounded-2xl border border-white/15 bg-white/5 px-6 py-5 lg:flex lg:items-baseline lg:justify-between lg:gap-6">
             <span className="flex items-baseline gap-3">
               <span data-count={stats.university_percent} data-suffix="%" className="font-display text-[40px] font-extrabold leading-none text-white tabular-nums lg:text-[48px]">{stats.university_percent}%</span>
@@ -73,9 +74,10 @@ export function Graduation({ stats, map, destinations }: { stats: GraduateStats;
             </span>
             <span className="mt-2 block text-sm text-white/75 lg:mt-0 lg:text-right lg:text-base">Их, дээд сургуульд элссэн</span>
           </li>
+          )}
           <li className="rounded-2xl border border-white/15 bg-white/5 px-6 py-5 lg:flex lg:items-baseline lg:justify-between lg:gap-6">
             <span data-count={stats.abroad_count} className="block font-display text-[40px] font-extrabold leading-none text-white tabular-nums lg:text-[48px]">{fmt.format(stats.abroad_count)}</span>
-            <span className="mt-2 block text-sm text-white/75 lg:mt-0 lg:text-right lg:text-base">Гадаадын их сургуульд элссэн</span>
+            <span className="mt-2 block text-sm text-white/75 lg:mt-0 lg:text-right lg:text-base">Гадаадын их, дээд сургуульд элссэн (2022–2026)</span>
           </li>
         </ul>
       </div>

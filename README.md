@@ -31,8 +31,8 @@ SMTP тохиргоо (`backend/.env`): `SMTP_HOST`, `SMTP_PORT` (587), `SMTP_US
 
 ### Хөтөлбөрүүд (`/programs/[slug]`)
 
-Нүүрний "Хөтөлбөрүүд" картууд (IBDP, Cambridge …) ба хөтөлбөр бүрийн хуудас: хэрэгжилт (rich text), хэрэгжих анги, сурагчдын бүтээлийн булан (зураг + гарчиг + сурагч, lightbox), тэтгэлэгт хамрагдсан сурагчид (нэр, их сургууль, он, USD дүн, нийт).
-Менежер `/admin/programs`-аас удирдана (жагсаалт/форм; ☷ → бүтээл, тэтгэлэг). API: `GET /api/programs/`, `GET /api/programs/{slug}/` (нээлттэй, зөвхөн нийтлэгдсэн), `/api/programs/admin/*` (manager). Зураг `MEDIA_DIR/programs/`. Модуль `backend/app/programs/`, migration `0011_programs`.
+Нүүрний "Хөтөлбөрүүд" картууд (3 төрөл: IBDP хөтөлбөр, Cambridge хөтөлбөр, Үндэсний цөм хөтөлбөр — `scripts/seed_programs.py`) ба хөтөлбөр бүрийн хуудас: хэрэгжилт (rich text), хэрэгжих анги, сурагчдын бүтээлийн булан (зураг + гарчиг + сурагч, lightbox), тэтгэлэгт хамрагдсан сурагчид (нэр, их сургууль, он, USD дүн, нийт).
+Менежер `/admin/programs`-аас удирдана (жагсаалт/форм; ☷ → бүтээл, тэтгэлэг; Үндэсний цөм хөтөлбөрт нэмэлт "Онооны график (ЭЕШ)" — хичээл × он, ApexCharts slope chart; `PUT /api/programs/admin/programs/{id}/radar/`, migration `0014`). API: `GET /api/programs/`, `GET /api/programs/{slug}/` (нээлттэй, зөвхөн нийтлэгдсэн), `/api/programs/admin/*` (manager). Зураг `MEDIA_DIR/programs/`. Модуль `backend/app/programs/`, migration `0011_programs`.
 
 ### Төгсөгчид (нүүрний «Төгсөлт» газрын зураг)
 
@@ -53,6 +53,8 @@ uv run python scripts/create_admin.py admin "нууц үг" --name "Админ"
 uv run python scripts/seed.py                 # жишээ хуваарь, үр дүн (сонголттой)
 uv run python scripts/seed_timetable.py       # жишээ цагийн хуваарь, календарь (сонголттой)
 uv run python scripts/seed_graduates.py       # жишээ төгсөгчдийн тоо, улс, сургуулиуд (сонголттой)
+uv run python scripts/seed_programs.py        # хөтөлбөрийн 3 төрөл: IBDP, Cambridge, Үндэсний цөм (сонголттой)
+uv run python scripts/seed_profile_2026.py --drop-sample --reset-countries   # БОДИТ өгөгдөл: School Profile 2026-27 + 2022–2026 тайлан (хөтөлбөрийн текст, тэтгэлэг, төгсөлт, улсууд); --radar-sample → ЭЕШ радар графикийн жишээ
 uv run uvicorn app.main:app --reload          # http://127.0.0.1:8000, баримт: /docs
 uv run pytest                                 # тест (shineue_test бааз дээр)
 ```

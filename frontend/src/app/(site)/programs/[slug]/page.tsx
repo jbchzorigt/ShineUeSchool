@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { SiteFooter } from "@/components/home/SiteFooter";
 import { ProgramFacts } from "@/components/programs/ProgramFacts";
 import { ProgramHero } from "@/components/programs/ProgramHero";
+import { ProgramRadar } from "@/components/programs/ProgramRadar";
 import { Scholarships } from "@/components/programs/Scholarships";
 import { WorksGallery } from "@/components/programs/WorksGallery";
 import { Reveal } from "@/components/site/Reveal";
@@ -35,6 +36,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
               </section>
             </Reveal>
           )}
+          {p.radar && <Reveal><ProgramRadar radar={p.radar} /></Reveal>}
           {p.works.length > 0 && <Reveal><WorksGallery works={p.works} /></Reveal>}
           {p.scholarships.length > 0 && <Reveal><Scholarships items={p.scholarships} total={p.scholarship_total_usd} /></Reveal>}
         </div>

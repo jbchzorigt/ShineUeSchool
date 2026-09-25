@@ -7,6 +7,7 @@
    - Монгол: логоны gold дүүргэлт + цагаан хүрээ + гэрэл, Улаанбаатар дээр байнга лугшдаг цагаан цагираг (GSAP repeat).
    - Хэсэг дэлгэцэнд орж ирэхэд нумууд DrawSVG-ээр Монголоос гарч зурагдаж, төгсгөлийн цэгүүд гарч ирнэ (нэг удаа);
      сонгосон улсын нум тод, бусад нь бүдэг. Reduced motion: шууд бүрэн.
+   - Сургуулиуд 8-аас олон бол (АНУ) карт зургийн доор бүтэн өргөнөөр, цагаан толгойн дарааллаар 2–4 баганат сүлжээ; тоо badge-тай.
    - Хүртээмж: цэг бүр <button> (aria-pressed), улсын чипүүд газрын зургийн доор — утсанд гол удирдлага.
    ===================================================================== */
 
@@ -21,6 +22,9 @@ export function GraduationMap({ map, destinations: DESTINATIONS }: { map: MapDat
   const [selected, setSelected] = useState<string>(DESTINATIONS[0]?.code ?? "");
   const dest = DESTINATIONS.find((d) => d.code === selected) ?? DESTINATIONS[0];
   const color = (code: string) => CONTINENTS[DESTINATIONS.find((d) => d.code === code)?.continent ?? "other"].color;
+  // Олон сургуультай улс (АНУ 60+): карт зургийн доор бүтэн өргөнөөр, цагаан толгойн дарааллаар 2–4 баганат сүлжээ
+  const many = (dest?.universities.length ?? 0) > 8;
+  const unis = dest ? (many ? [...dest.universities].sort((a, b) => a.localeCompare(b, "en")) : dest.universities) : [];
 
   useGSAP(() => {
     const el = root.current;
@@ -100,15 +104,22 @@ export function GraduationMap({ map, destinations: DESTINATIONS }: { map: MapDat
         </ul>
       </div>
 
-      {/* Сонгосон улсын сургуулиуд — цагаан жагсаалт */}
-      <div className="rounded-2xl bg-white p-6 text-ink lg:p-7" aria-live="polite">
+      {/* Сонгосон улсын сургуулиуд — цагаан жагсаалт (олон бол бүтэн өргөн, олон багана) */}
+      <div className={`rounded-2xl bg-white p-6 text-ink lg:p-7 ${many ? "lg:col-span-2" : ""}`} aria-live="polite">
         {dest ? (
           <>
-            <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">{CONTINENTS[dest.continent].name}</span>
-            <h3 className="mt-1 font-display text-2xl font-extrabold text-navy">{dest.name}</h3>
-            <p className="mt-1 text-sm text-muted">Манай төгсөгчид элссэн сургуулиуд · {dest.universities.length}</p>
-            <ul className="mt-4 flex flex-col gap-3">
-              {dest.universities.map((u) => (
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">{CONTINENTS[dest.continent].name}</span>
+                <h3 className="mt-1 font-display text-2xl font-extrabold text-navy">{dest.name}</h3>
+                <p className="mt-1 text-sm text-muted">Манай төгсөгчид элссэн сургуулиуд</p>
+              </div>
+              <span className="inline-flex items-baseline gap-1.5 rounded-full px-4 py-1.5 font-display text-2xl font-extrabold text-navy-deep" style={{ background: CONTINENTS[dest.continent].color }}>
+                {dest.universities.length}<span className="text-xs font-semibold uppercase tracking-wider">сургууль</span>
+              </span>
+            </div>
+            <ul className={many ? "mt-5 grid gap-x-8 gap-y-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "mt-4 flex flex-col gap-3"}>
+              {unis.map((u) => (
                 <li key={u} className="flex items-start gap-3 text-[15px] font-medium leading-snug">
                   <span className="mt-1.5 h-3 w-3 shrink-0 rounded-full border-2 border-white shadow-[0_0_0_1.5px_rgba(0,0,0,0.15)]" style={{ background: CONTINENTS[dest.continent].color }} aria-hidden="true" />
                   {u}

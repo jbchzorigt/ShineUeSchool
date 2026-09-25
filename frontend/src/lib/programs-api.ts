@@ -6,7 +6,7 @@ const API = process.env.INTERNAL_API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "
 
 async function getJson<T>(path: string): Promise<T | null> {
   try {
-    const res = await fetch(`${API}${path}`, { next: { revalidate: 60 } });
+    const res = await fetch(`${API}${path}`, { next: { revalidate: 60, tags: ["programs"] } });   // админ хадгалахад revalidateTag("programs")
     if (!res.ok) return null;
     return (await res.json()) as T;
   } catch {

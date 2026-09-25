@@ -176,3 +176,32 @@ async def test_patch_validation_and_edge_cases(client, make_user, tmp_path, monk
     assert r.status_code == 400 and "year" in r.json()
     r = await client.patch(f"{A}/scholarships/{s['id']}/", headers=h, json={"amount_usd": -1})
     assert r.status_code == 400 and "amount_usd" in r.json()
+
+
+async def test_program_radar(client, make_user, tmp_path, monkeypatch):
+    from app.config import settings
+    monkeypatch.setattr(settings, "media_dir", tmp_path)
+    h = await manager_headers(client, make_user)
+    p = await mk(client, h, name="National core curriculum", badge="Үндэсний", grade_from=1, grade_to=12)   # slug → national-core-curriculum
+    assert p["slug"] == "national-core-curriculum" and (await client.get(f"/api/programs/{p['slug']}/")).json()["radar"] is None
+    other = await mk(client, h, name="IB Diploma Programme", badge="IBDP")
+    body = {"title": "ЭЕШ", "subjects": ["Математик", "Монгол хэл", "Англи хэл"], "series": [{"name": "2025", "values": [620, 580.56, 700]}, {"name": "2026", "values": [650, 600, 720]}]}
+    r = await client.put(f"{A}/programs/{p['id']}/radar/", headers=h, json=body)
+    assert r.status_code == 200, r.text
+    assert r.json()["radar"]["series"][0]["values"] == [620, 580.6, 700] and r.json()["radar"]["subjects"][1] == "Монгол хэл"
+    assert (await client.get(f"/api/programs/{p['slug']}/")).json()["radar"]["title"] == "ЭЕШ"
+    # validation
+    bad = dict(body, series=[{"name": "2025", "values": [1, 2]}])
+    r = await client.put(f"{A}/programs/{p['id']}/radar/", headers=h, json=bad)
+    assert r.status_code == 400 and "series" in r.json()
+    r = await client.put(f"{A}/programs/{p['id']}/radar/", headers=h, json=dict(body, subjects=["А", "Б"], series=[{"name": "x", "values": [1, 2]}]))
+    assert r.status_code == 400 and "subjects" in r.json()
+    r = await client.put(f"{A}/programs/{p['id']}/radar/", headers=h, json=dict(body, series=[{"name": "2025", "values": [1, 2, 1001]}]))
+    assert r.status_code == 400 and "series" in r.json()
+    # зөвхөн Үндэсний цөм хөтөлбөрт
+    r = await client.put(f"{A}/programs/{other['id']}/radar/", headers=h, json=body)
+    assert r.status_code == 400 and "subjects" in r.json()
+    # clear
+    r = await client.put(f"{A}/programs/{p['id']}/radar/", headers=h, json={"title": "", "subjects": [], "series": []})
+    assert r.status_code == 200 and r.json()["radar"] is None
+    assert (await client.put(f"{A}/programs/{p['id']}/radar/", headers=await staff_headers(client, make_user), json=body)).status_code == 403
