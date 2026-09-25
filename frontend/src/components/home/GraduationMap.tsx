@@ -6,7 +6,8 @@
    - Улс, сургуулиуд админаас (/admin/graduates → GET /api/graduates/); path-ууд server дээр (lib/world-map.ts) prop-оор ирнэ.
    - Монгол: логоны gold дүүргэлт + цагаан хүрээ + гэрэл, Улаанбаатар дээр байнга лугшдаг цагаан цагираг (GSAP repeat).
    - Хэсэг дэлгэцэнд орж ирэхэд нумууд DrawSVG-ээр Монголоос гарч зурагдаж, төгсгөлийн цэгүүд гарч ирнэ (нэг удаа);
-     сонгосон улсын нум тод, бусад нь бүдэг. Reduced motion: шууд бүрэн.
+     дараа нь "идэвхтэй" эффект: нум бүр дээр Монголоос улс руу урсах тасархай цагаан шугам (dashoffset) + зам дагуу явж буй
+     гэрэлтэй цэг (getPointAtLength, gsap.ticker, нум бүр өөр фазтай). Сонгосон улсын нум тод. Reduced motion: шууд бүрэн, эффектгүй.
    - Газрын зураг бүтэн өргөн; сонгосон улсын карт үргэлж доор нь бүтэн өргөнөөр, сургуулиуд 2–4 баганат сүлжээ (8+ бол цагаан толгойн дарааллаар); тоо badge-тай.
    - Хүртээмж: цэг бүр <button> (aria-pressed), улсын чипүүд газрын зургийн доор — утсанд гол удирдлага.
    ===================================================================== */
@@ -37,16 +38,37 @@ export function GraduationMap({ map, destinations: DESTINATIONS }: { map: MapDat
     gsap.fromTo(pulses, { scale: 1, opacity: 0.9, transformOrigin: "50% 50%" }, { scale: 3.2, opacity: 0, duration: 2, ease: "power1.out", repeat: -1, stagger: 1 });
     gsap.set(arcs, { drawSVG: "0% 0%" });
     gsap.set(dots, { scale: 0, transformOrigin: "50% 50%" });
+    const flows = gsap.utils.toArray<SVGPathElement>(".gm-flow", el);
+    const planes = gsap.utils.toArray<SVGGElement>(".gm-plane", el);
+    gsap.set(flows, { autoAlpha: 0 });
+    gsap.set(planes, { autoAlpha: 0 });
+    let onTick: (() => void) | null = null;
     const play = () => {
       gsap.timeline()
         .to(arcs, { drawSVG: "0% 100%", duration: 1.4, ease: "power2.inOut", stagger: 0.1 })
-        .to(dots, { scale: 1, duration: 0.5, ease: "back.out(2)", stagger: 0.1 }, "-=1.2");
+        .to(dots, { scale: 1, duration: 0.5, ease: "back.out(2)", stagger: 0.1 }, "-=1.2")
+        .to([flows, planes], { autoAlpha: 1, duration: 0.6 }, "-=0.2");
+      // Урсгал: тасархай шугам Монголоос улс руу байнга гүйнэ (dashoffset багасах = замын чиглэлд)
+      gsap.to(flows, { strokeDashoffset: "-=40", duration: 1.2, ease: "none", repeat: -1 });
+      // Явж буй цэг: нум бүр дээр өөр өөр фазтай, зам дагуу 0→1 давтагдана
+      const lens = arcs.map((a) => a.getTotalLength());
+      const t0 = performance.now();
+      onTick = () => {
+        const t = (performance.now() - t0) / 1000;
+        planes.forEach((pl, i) => {
+          const arc = arcs[i]; if (!arc) return;
+          const u = ((t / 6 + i * 0.37) % 1);              // 6 сек-д нэг удаа, нум бүр өөр фаз
+          const pt = arc.getPointAtLength(u * lens[i]);
+          pl.setAttribute("transform", `translate(${pt.x.toFixed(1)},${pt.y.toFixed(1)})`);
+        });
+      };
+      gsap.ticker.add(onTick);
     };
     const io = new IntersectionObserver((entries) => {
       if (entries.some((e) => e.isIntersecting)) { play(); io.disconnect(); }
     }, { rootMargin: "0px 0px -20% 0px", threshold: 0 });
     io.observe(el);
-    return () => io.disconnect();
+    return () => { io.disconnect(); if (onTick) gsap.ticker.remove(onTick); };
   }, { scope: root });
 
   return (
@@ -63,6 +85,10 @@ export function GraduationMap({ map, destinations: DESTINATIONS }: { map: MapDat
           {map.arcs.map((a) => (
             <path key={a.code} d={a.d} className="gm-arc" fill="none" stroke={color(a.code)} strokeWidth={a.code === selected ? 2.4 : 1.2} strokeOpacity={a.code === selected ? 1 : 0.55} strokeLinecap="round" strokeDasharray={a.code === selected ? undefined : "4 3"} />
           ))}
+          {/* Урсгал: нум бүрийн дээр тасархай цагаан шугам (dashoffset GSAP-аар гүйнэ) */}
+          {map.arcs.map((a) => (
+            <path key={`f-${a.code}`} d={a.d} className="gm-flow" fill="none" stroke="#fff" strokeWidth={a.code === selected ? 2 : 1.2} strokeOpacity={a.code === selected ? 0.9 : 0.45} strokeLinecap="round" strokeDasharray="5 15" />
+          ))}
           {/* Монгол: логоны шар (gold) дүүргэлт, цагаан хүрээ, гэрэлтэй; Улаанбаатар дээр лугшдаг цагираг */}
           <path d={map.mongolia} fill="#ffc20e" stroke="#fff" strokeWidth="1.4" strokeLinejoin="round" style={{ filter: "drop-shadow(0 0 6px rgba(255,194,14,0.8))" }} />
           <g transform={`translate(${map.home.x},${map.home.y})`}>
@@ -71,6 +97,16 @@ export function GraduationMap({ map, destinations: DESTINATIONS }: { map: MapDat
             <circle r="4.5" fill="#fff" stroke="#12245c" strokeWidth="1.5" />
             <text y="-14" textAnchor="middle" fontSize="13" fontWeight="800" fill="#fff" stroke="#12245c" strokeWidth="3" paintOrder="stroke">{MONGOLIA.name}</text>
           </g>
+          {/* Зам дагуу явж буй гэрэлтэй цэг (нум бүрт нэг; сонгосон улсынх том) — байрлал GSAP ticker-ээр */}
+          {map.arcs.map((a) => {
+            const on = a.code === selected;
+            return (
+              <g key={`p-${a.code}`} className="gm-plane" style={{ pointerEvents: "none" }}>
+                <circle r={on ? 9 : 5} fill={color(a.code)} fillOpacity="0.35" />
+                <circle r={on ? 4 : 2.5} fill="#fff" />
+              </g>
+            );
+          })}
           {/* Төгсгөлийн цэгүүд (товч) */}
           {map.arcs.map((a) => {
             const d = DESTINATIONS.find((x) => x.code === a.code)!;
