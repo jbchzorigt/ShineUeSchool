@@ -7,7 +7,7 @@
    - Монгол: логоны gold дүүргэлт + цагаан хүрээ + гэрэл, Улаанбаатар дээр байнга лугшдаг цагаан цагираг (GSAP repeat).
    - Хэсэг дэлгэцэнд орж ирэхэд нумууд DrawSVG-ээр Монголоос гарч зурагдаж, төгсгөлийн цэгүүд гарч ирнэ (нэг удаа);
      сонгосон улсын нум тод, бусад нь бүдэг. Reduced motion: шууд бүрэн.
-   - Сургуулиуд 8-аас олон бол (АНУ) карт зургийн доор бүтэн өргөнөөр, цагаан толгойн дарааллаар 2–4 баганат сүлжээ; тоо badge-тай.
+   - Газрын зураг бүтэн өргөн; сонгосон улсын карт үргэлж доор нь бүтэн өргөнөөр, сургуулиуд 2–4 баганат сүлжээ (8+ бол цагаан толгойн дарааллаар); тоо badge-тай.
    - Хүртээмж: цэг бүр <button> (aria-pressed), улсын чипүүд газрын зургийн доор — утсанд гол удирдлага.
    ===================================================================== */
 
@@ -22,7 +22,7 @@ export function GraduationMap({ map, destinations: DESTINATIONS }: { map: MapDat
   const [selected, setSelected] = useState<string>(DESTINATIONS[0]?.code ?? "");
   const dest = DESTINATIONS.find((d) => d.code === selected) ?? DESTINATIONS[0];
   const color = (code: string) => CONTINENTS[DESTINATIONS.find((d) => d.code === code)?.continent ?? "other"].color;
-  // Олон сургуультай улс (АНУ 60+): карт зургийн доор бүтэн өргөнөөр, цагаан толгойн дарааллаар 2–4 баганат сүлжээ
+  // Карт үргэлж зургийн доор бүтэн өргөнөөр; 8-аас олон сургуультай бол (АНУ) цагаан толгойн дарааллаар
   const many = (dest?.universities.length ?? 0) > 8;
   const unis = dest ? (many ? [...dest.universities].sort((a, b) => a.localeCompare(b, "en")) : dest.universities) : [];
 
@@ -50,7 +50,7 @@ export function GraduationMap({ map, destinations: DESTINATIONS }: { map: MapDat
   }, { scope: root });
 
   return (
-    <div ref={root} className="grid gap-6 lg:grid-cols-[1fr_360px] lg:gap-8">
+    <div ref={root} className="flex flex-col gap-6 lg:gap-8">
       {/* Газрын зураг */}
       <div className="flex flex-col gap-4">
         <svg viewBox={`0 0 ${map.width} ${map.height}`} className="w-full" role="img" aria-label="Төгсөгчид элссэн улсуудын газрын зураг">
@@ -104,8 +104,8 @@ export function GraduationMap({ map, destinations: DESTINATIONS }: { map: MapDat
         </ul>
       </div>
 
-      {/* Сонгосон улсын сургуулиуд — цагаан жагсаалт (олон бол бүтэн өргөн, олон багана) */}
-      <div className={`rounded-2xl bg-white p-6 text-ink lg:p-7 ${many ? "lg:col-span-2" : ""}`} aria-live="polite">
+      {/* Сонгосон улсын сургуулиуд — зургийн доор цагаан карт, бүх улсад ижил */}
+      <div className="rounded-2xl bg-white p-6 text-ink lg:p-7" aria-live="polite">
         {dest ? (
           <>
             <div className="flex flex-wrap items-end justify-between gap-3">
@@ -118,7 +118,7 @@ export function GraduationMap({ map, destinations: DESTINATIONS }: { map: MapDat
                 {dest.universities.length}<span className="text-xs font-semibold uppercase tracking-wider">сургууль</span>
               </span>
             </div>
-            <ul className={many ? "mt-5 grid gap-x-8 gap-y-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "mt-4 flex flex-col gap-3"}>
+            <ul className="mt-5 grid gap-x-8 gap-y-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {unis.map((u) => (
                 <li key={u} className="flex items-start gap-3 text-[15px] font-medium leading-snug">
                   <span className="mt-1.5 h-3 w-3 shrink-0 rounded-full border-2 border-white shadow-[0_0_0_1.5px_rgba(0,0,0,0.15)]" style={{ background: CONTINENTS[dest.continent].color }} aria-hidden="true" />

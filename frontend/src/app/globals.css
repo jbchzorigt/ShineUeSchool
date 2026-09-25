@@ -111,3 +111,8 @@ body {
 
 /* Тэтгэлгийн график (components/programs/ScholarshipChart.tsx): Apex-ийн анхдагч tooltip хүрээ/дэвсгэрийг арилгана — агуулга нь custom navy карт */
 .scholarship-chart .apexcharts-tooltip { background: transparent; border: 0; box-shadow: none; }
+
+/* Typewriter (components/site/Typewriter.tsx): бичигдэж буй текстийн ард анивчдаг курсор */
+.tw-cursor { display: inline-block; margin-left: 0.06em; font-weight: 400; color: var(--color-gold); animation: tw-blink 1s steps(2, start) infinite; }
+@keyframes tw-blink { to { visibility: hidden; } }
+@media (prefers-reduced-motion: reduce) { .tw-cursor { animation: none; display: none; } }

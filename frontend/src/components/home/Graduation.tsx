@@ -5,7 +5,7 @@
    элссэн хувь/тоо (0 бол карт нуугдана), гадаадын их сургуулийн тоо. Тоонууд админаас (GET /api/graduates/stats/), гарчиг/тайлбар home-data.ts.
    - Хэсэг дэлгэцэнд орж ирэхэд (IntersectionObserver, нэг удаа) тоонууд 0-ээс gsap.to-оор өсч (power2.out, snap),
      мянгатын тусгаарлагчтай форматлагдана; том тоо 2.2с, жижиг нь 1.6с stagger-тэй.
-   - Доор нь дэлхийн зураг (GraduationMap.tsx): улсууд админаас (GET /api/graduates/), path-уудыг page.tsx server дээр buildMapData()-аар.
+   - Доор нь "Төгсөгчид маань дэлхийн хаана сурч байна" гарчиг Typewriter-ээр (үсэг үсгээр, анивчих курсор), дэлхийн зураг (GraduationMap.tsx): улсууд админаас (GET /api/graduates/), path-уудыг page.tsx server дээр buildMapData()-аар.
    - prefers-reduced-motion: анимацигүй, эцсийн тоо шууд.
    ===================================================================== */
 
@@ -15,6 +15,7 @@ import { GRADUATION } from "@/lib/home-data";
 import type { GraduateDestination, GraduateStats } from "@/lib/types";
 import type { MapData } from "@/lib/world-map";
 import { GraduationMap } from "./GraduationMap";
+import { Typewriter } from "@/components/site/Typewriter";
 import { gsap, reduceMotion, useGSAP } from "@/components/site/gsap";
 
 const fmt = new Intl.NumberFormat("en-US");
@@ -85,7 +86,7 @@ export function Graduation({ stats, map, destinations }: { stats: GraduateStats;
       {/* Дэлхийн зураг: Монголоос очсон улсууд руу нум, улс сонгоход сургуулиудын жагсаалт (админаас улс нэмээгүй бол нуугдана) */}
       {map && destinations.length > 0 && (
         <div className="mx-auto max-w-[1440px] px-4 pb-14 md:px-10 lg:px-24 lg:pb-[88px]">
-          <h3 className="mb-6 font-display text-[24px] font-extrabold lg:text-[30px]">Төгсөгчид маань дэлхийн хаана сурч байна</h3>
+          <Typewriter as="h3" text="ТӨГСӨГЧИД МААНЬ ДЭЛХИЙН ХААНА СУРЧ БАЙНА" className="mb-8 text-center font-display text-[22px] font-extrabold uppercase tracking-wide lg:text-[30px]" />
           <GraduationMap map={map} destinations={destinations} />
         </div>
       )}

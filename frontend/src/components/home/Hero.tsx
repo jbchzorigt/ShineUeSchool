@@ -1,7 +1,8 @@
 "use client";
 
 /* =====================================================================
-   Толгой хэсэг: navy дэвсгэр дээр математик canvas (components/site/MathematicalCanvas.tsx) + голлосон parallax текст.
+   Толгой хэсэг: navy дэвсгэр дээр математик canvas (components/site/MathematicalCanvas.tsx) + голлосон parallax текст
+   (гарчиг: "ШИНЭ ҮЕ" том, доор нь "СУРГУУЛЬ" жижиг, өргөн зайтай — хоёулаа голлосон).
    - Өндөр: header-ийг хассан бүтэн дэлгэц (100svh − 64/80px; svh — утасны хаягийн мөр өөрчлөгдөхөд үсрэхгүй).
    - Parallax (2 давхар):
        · Гүйлгэх: текстийн блок canvas-аас удаан (хэсгийн өндрийн 35%) дээшилж, бүдгэрнэ — gsap.ticker дээр хэсгийн
@@ -101,7 +102,10 @@ export function Hero({ olympiadYear }: { olympiadYear: number }) {
       <MathematicalCanvas tone="dark" />
 
       <div ref={text} className="relative z-10 mx-auto flex w-full max-w-[1440px] flex-1 flex-col items-center justify-center gap-5 px-4 py-16 text-center will-change-transform md:px-10 lg:gap-6 lg:px-24">
-        <h1 className="font-display text-[44px] font-extrabold leading-none tracking-tight lg:text-[76px]">Шинэ Үе сургууль</h1>
+        <h1 className="flex flex-col items-center text-center font-display leading-none">
+          <span className="block text-[56px] font-extrabold uppercase tracking-tight lg:text-[96px]">Шинэ Үе</span>
+          <span className="mt-3 block text-[18px] font-semibold uppercase tracking-[0.35em] text-white/90 lg:mt-4 lg:text-[26px]">сургууль</span>
+        </h1>
         <svg className="-mt-2 h-[14px] w-[220px] lg:h-[18px] lg:w-[360px]" viewBox="0 0 360 18" aria-hidden="true">
           <path className="hero-underline" d="M3,12 Q70,2 150,9 T290,7 T357,10" fill="none" stroke="#ffc20e" strokeWidth="4" strokeLinecap="round" />
         </svg>
