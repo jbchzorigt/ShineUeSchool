@@ -1,7 +1,7 @@
 "use client";
 
 /* Олимпиадын хуудасны client root: .olympiad дизайны хүрээ, ScrollSmoother wrapper, секцүүдийн дараалал.
-   Nav (T4), Hero (T5), Album (T6), Schedule (T7), Results (T8), YearTiles (T9) тус тусын task-д нэмэгдэнэ. */
+   Том "2026" хээний секц (YearTiles) хасагдсан — оны хавтан зөвхөн Nav-д үлдсэн. */
 
 import { latestYear } from "@/lib/olympiad-api";
 import type { AlbumPhoto, OlympiadPage as PageSettings, Result, Stage, Years } from "@/lib/types";
@@ -13,7 +13,6 @@ import { Nav } from "./Nav";
 import { Results } from "./Results";
 import { Schedule } from "./Schedule";
 import { Smoother } from "./Smoother";
-import { YearTiles } from "./YearTiles";
 
 export interface OlympiadData {
   page: PageSettings | null;
@@ -37,7 +36,6 @@ export function OlympiadPage({ page, years, stages, results, album }: OlympiadDa
           <Album photos={album} />
           <Schedule stages={stages} currentYear={latestYear(years)} />
           <Results results={results} />
-          <YearTiles year={latestYear(years)} />
           <About page={page} />
           <Contact page={page} />
         </div>

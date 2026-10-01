@@ -135,7 +135,7 @@ export function Nav({ year }: { year: number }) {
           {RIGHT.map((l) => <li key={l.href}><a href={l.href}>{l.label}<Ul /></a></li>)}
           <li><Link href="/" className="nav-site">← Сургуулийн сайт<Ul /></Link></li>
         </ul>
-        <a className="nav-year-link" href="#section-1" aria-label={`${year} хэсэг рүү очих`}>
+        <a className="nav-year-link" href="#hero" aria-label={`Олимпиад ${year} — дээш очих`}>
           <svg ref={navYear} className="nav-year" id="nav-year" viewBox="0 0 1500 500" aria-hidden="true" />
         </a>
       </div>

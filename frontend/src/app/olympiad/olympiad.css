@@ -155,11 +155,6 @@
   z-index: 1;
   pointer-events: none;
 }
-.olympiad #hero-art * { vector-effect: non-scaling-stroke; }
-
-/* Header-ийн ард зурагдах дүрсүүдийг бүдэгрүүлж, текст, зургийг тодруулна */
-.olympiad #hero-art { opacity: 0.45; }
-
 .olympiad .hero-grid {
   position: relative;
   z-index: 2;
@@ -493,8 +488,12 @@
   display: grid;
   gap: 12px;
   width: 100%;
-  max-width: 460px;
+  max-width: 560px;
 }
+.olympiad .contact-list span { flex-shrink: 0; }
+.olympiad .contact-list strong { text-align: right; }
+.olympiad .contact-list a { color: inherit; text-decoration: none; }
+.olympiad .contact-list a:hover { text-decoration: underline; text-underline-offset: 4px; }
 .olympiad .contact-list li {
   display: flex;
   justify-content: space-between;

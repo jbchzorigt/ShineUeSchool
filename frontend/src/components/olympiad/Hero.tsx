@@ -1,107 +1,59 @@
 "use client";
 
-/* Толгой хэсэг (hero.js): зүүн намтар (гарчиг, намтар — LineReveal мөр мөрөөр), баруун хөрөг. #hero-art дахь геометр дүрсүүд DrawSVG-ээр зурагдаж/арилж давтагдана,
-   MotionPath-аар хөвнө; хүрээ зурагдаж зураг гарч ирнэ, хүрээний дагуу дүрсүүд тойрно. Текст, зураг админаас. */
+/* Толгой хэсэг: зүүн намтар (гарчиг, намтар — LineReveal мөр мөрөөр), баруун хөрөг. #hero-art дахь 8 Bauhaus хавтан (дөрвөн буланд
+   төвлөрсөн нумууд, дунд захаар дэлбээ / цэгэн / шатрын хавтангууд) GSAP-аар эргэж орж ирээд зөөлөн хөвнө: нумууд DrawSVG-ээр
+   долгиолж, цэгүүд лугшиж, шатар/дэлбээ хавтан үе үе 90° эргэнэ. Хөргийн хүрээ зурагдаж, хүрээний дагуу дүрсүүд тойрно (MotionPath).
+   Текст, зураг админаас. prefers-reduced-motion: хавтангууд хөдөлгөөнгүй. */
 
 import { useRef } from "react";
 import type { OlympiadPage as PageSettings } from "@/lib/types";
 import { gsap, MotionPathPlugin, useGSAP } from "./gsap";
 import { LineReveal } from "./LineReveal";
 
-const P = { orange: "#F26B2B", yellow: "#FFD500", blue: "#0A63B2", green: "#8CC63F", red: "#BF1F2E", teal: "#0B8A80", purple: "#8A2B8F", navy: "#2C2F8F" };
+const P = { yellow: "#FFD500", navy: "#2C2F8F" };   // хөргийн хүрээг тойрох дүрсүүд
+const C = { green: "#8CC63F", purple: "#92278F", orange: "#FDB013", red: "#C1272D", blue: "#0066CC" };
 
-/* ---- hero.js-ийн дүрс үүсгэгчид ба `shapes` массивыг hero.js 30–109-р мөрөөс (quarterArcs … shapes массив хаагдах хүртэл)
-   ӨӨРЧЛӨЛТГҮЙ хуулав. ---- */
+/* ---- Хавтангууд: тус бүр 100×100 нэгж талбайд зурагдана ---- */
 
-// Төвлөрсөн дөрөвний нэг нум. cx,cy = төв; dir = нум аль тийш харах вэ.
-function quarterArcs(cx: number, cy: number, dir: string, color: string, radii: number[], sw = 10): string {
-  const sx = dir.includes("r") ? 1 : -1; // x чиглэл
-  const sy = dir.includes("b") ? 1 : -1; // y чиглэл
-  const sweep = sx * sy > 0 ? 1 : 0;
-  return radii
-    .map(
-      (r) =>
-        `<path d="M${cx + sx * r},${cy} A${r},${r} 0 0 ${sweep} ${cx},${cy + sy * r}"
-             fill="none" stroke="${color}" stroke-width="${sw}"/>`,
-    )
-    .join("");
+// Буланд (cx,cy ∈ {0,100}) төвлөрсөн дөрөвний нэг нумууд + дүүрэн цөм
+function arcTile(cx: number, cy: number, color: string): string {
+  const sx = cx === 0 ? 1 : -1, sy = cy === 0 ? 1 : -1, sweep = sx * sy > 0 ? 1 : 0;
+  const core = `<path class="t-core" d="M${cx},${cy} L${cx + sx * 22},${cy} A22,22 0 0 ${sweep} ${cx},${cy + sy * 22} Z" fill="${color}"/>`;
+  return core + [38, 56, 74, 92].map((r) =>
+    `<path class="t-arc" d="M${cx + sx * r},${cy} A${r},${r} 0 0 ${sweep} ${cx},${cy + sy * r}" fill="none" stroke="${color}" stroke-width="10"/>`).join("");
 }
+const dot = (cx: number, cy: number, r: number, color: string) => `<circle class="t-dot" cx="${cx}" cy="${cy}" r="${r}" fill="${color}"/>`;
+const dots4 = (x: number, y: number, color: string) => [14, 36].map((dx) => [14, 36].map((dy) => dot(x + dx, y + dy, 8.5, color)).join("")).join("");
+const sq = (x: number, y: number, color: string) => `<rect x="${x}" y="${y}" width="50" height="50" fill="${color}"/>`;
 
-function ringSet(cx: number, cy: number, color: string, radii: number[], sw = 7): string {
-  return radii.map((r) => `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="${sw}"/>`).join("");
-}
+const TILES = {
+  // Ногоон дөрөвний дугуй + ягаан цэгүүд
+  leaf: `<path d="M50,0 L0,0 A50,50 0 0 0 50,50 Z" fill="${C.green}"/><path d="M50,100 L50,50 A50,50 0 0 1 100,100 Z" fill="${C.green}"/>${dots4(50, 0, C.purple)}${dots4(0, 50, C.purple)}`,
+  // Дөрвөн булангийн дэлбээ → дунд нь од хэлбэрийн зай
+  petals: `<path d="M0,0 L50,0 A50,50 0 0 1 0,50 Z" fill="${C.orange}"/><path d="M100,0 L100,50 A50,50 0 0 1 50,0 Z" fill="${C.red}"/><path d="M0,100 L0,50 A50,50 0 0 1 50,100 Z" fill="${C.red}"/><path d="M100,100 L50,100 A50,50 0 0 1 100,50 Z" fill="${C.orange}"/>`,
+  // Ягаан/ногоон шатар, цагаан дугуйтай
+  checker: sq(0, 0, C.purple) + sq(50, 0, C.green) + sq(0, 50, C.green) + sq(50, 50, C.purple) + [25, 75].map((x) => [25, 75].map((y) => dot(x, y, 16, "#fff")).join("")).join(""),
+  // Хөх шатар: цагаан дугуй + ногоон цэг
+  blue: sq(50, 0, C.blue) + sq(0, 50, C.blue) + dot(75, 25, 17, "#fff") + dot(25, 75, 17, "#fff") + dot(25, 25, 8, C.green) + dot(75, 75, 8, C.green),
+};
 
-// 4 үзүүрт од (Q муруй нь төв рүү татагдсан).
-function star(cx: number, cy: number, s: number, color: string, sw = 6): string {
-  const h = s / 2;
-  return `<path d="M${cx},${cy - h} Q${cx},${cy} ${cx + h},${cy} Q${cx},${cy} ${cx},${cy + h}
-                     Q${cx},${cy} ${cx - h},${cy} Q${cx},${cy} ${cx},${cy - h} Z"
-                  fill="${color}" fill-opacity="0" stroke="${color}" stroke-width="${sw}"
-                  stroke-linejoin="round" data-fill/>`;
-}
-
-function diamondNest(cx: number, cy: number, sizes: number[], color: string, sw = 6): string {
-  return sizes
-    .map((s, i) => {
-      const last = i === sizes.length - 1;
-      return `<polygon points="${cx},${cy - s} ${cx + s},${cy} ${cx},${cy + s} ${cx - s},${cy}"
-                fill="${color}" fill-opacity="0" stroke="${color}" stroke-width="${sw}"
-                stroke-linejoin="round" ${last ? "data-fill" : ""}/>`;
-    })
-    .join("");
-}
-
-function stripes(x: number, y: number, size: number, count: number, color: string, sw = 8): string {
-  let s = "";
-  const step = size / count;
-  for (let i = 1; i <= count; i++) {
-    const k = i * step;
-    s += `<line x1="${x}" y1="${y + k}" x2="${x + k}" y2="${y}"
-                  stroke="${color}" stroke-width="${sw}" stroke-linecap="round"/>`;
-  }
-  return s;
-}
-
-function dots(cx: number, cy: number, gap: number, r: number, color: string): string {
-  let s = "";
-  for (const dx of [-gap, gap])
-    for (const dy of [-gap, gap]) {
-      s += `<circle cx="${cx + dx}" cy="${cy + dy}" r="${r}"
-                    fill="${color}" fill-opacity="0" stroke="${color}" stroke-width="5" data-fill/>`;
-    }
-  return s;
-}
-
-// Дөрвөн буланд дөрөвний нэг дугуй → дунд нь од хэлбэрийн хоосон зай.
-function petals(cx: number, cy: number, s: number, a: string, b: string, sw = 6): string {
-  const h = s / 2;
-  const q = (x1: number, y1: number, x2: number, y2: number, x3: number, y3: number, col: string) =>
-    `<path d="M${x1},${y1} L${x2},${y2} A${h},${h} 0 0 1 ${x3},${y3} Z"
-             fill="${col}" fill-opacity="0" stroke="${col}" stroke-width="${sw}" stroke-linejoin="round" data-fill/>`;
-  return (
-    q(cx - h, cy - h, cx, cy - h, cx - h, cy, a) +
-    q(cx + h, cy - h, cx + h, cy, cx, cy - h, b) +
-    q(cx - h, cy + h, cx - h, cy, cx, cy + h, b) +
-    q(cx + h, cy + h, cx, cy + h, cx + h, cy, a)
-  );
-}
-
-/* ------------------- header-ийн найруулга (1600×900) ------------------- */
-const shapes: string[] = [
-  quarterArcs(0, 0, "rb", P.orange, [120, 180, 240, 300, 360]), // зүүн дээд булан
-  quarterArcs(1600, 900, "lt", P.blue, [120, 180, 240, 300, 360]), // баруун доод булан
-  ringSet(1370, 170, P.purple, [30, 60, 90, 120, 150]), // баруун дээд цагираг
-  star(230, 690, 170, P.red), // зүүн доод од
-  diamondNest(1290, 690, [120, 90, 60, 30], P.yellow), // баруун доод ромб
-  stripes(660, 60, 220, 6, P.green), // дээд зураас
-  quarterArcs(800, 900, "lt", P.teal, [90, 140, 190], 8), // доод төв хагас нум (зүүн)
-  quarterArcs(800, 900, "rt", P.teal, [90, 140, 190], 8), // доод төв хагас нум (баруун)
-  dots(1120, 250, 22, 12, P.orange), // цэгүүд
-  petals(390, 200, 150, P.teal, P.red), // дэлбээ
-  star(1250, 470, 70, P.red), // жижиг од
-  ringSet(520, 780, P.navy, [16, 34, 52], 5), // жижиг цагираг
-  dots(280, 430, 20, 10, P.purple), // цэгүүд
+/* ------------------- header-ийн найруулга: [төрөл, агуулга, байрлал] -------------------
+   Байрлалыг #hero-art-ийн бодит хэмжээнээс (px) тооцно: 4 нуман хавтан яг буланд, 4 жижиг хавтан дээд/доод захаар.
+   Нарийн дэлгэцэд (< 760px) жижиг хавтангуудыг нууна. */
+type Place = (W: number, H: number, big: number, small: number) => [number, number, number] | null;
+const TOP = 88;   // nav-ийн доор
+const mid = (fx: number, bottom: boolean): Place => (W, H, _big, small) => (W < 760 ? null : [W * fx, bottom ? H - small - 28 : TOP + 12, small]);
+const LAYOUT: ["arc" | "spin", string, Place][] = [
+  ["arc", arcTile(0, 0, C.purple), (_W, _H, big) => [0, TOP - 16, big]],                 // зүүн дээд булан
+  ["arc", arcTile(100, 0, C.green), (W, _H, big) => [W - big, TOP - 16, big]],           // баруун дээд булан
+  ["arc", arcTile(0, 100, C.red), (_W, H, big) => [0, H - big, big]],                    // зүүн доод булан
+  ["arc", arcTile(100, 100, C.orange), (W, H, big) => [W - big, H - big, big]],          // баруун доод булан
+  ["spin", TILES.petals, mid(0.3, false)],
+  ["spin", TILES.leaf, mid(0.56, false)],
+  ["spin", TILES.blue, mid(0.4, true)],
+  ["spin", TILES.checker, mid(0.66, true)],
 ];
+const shapes = LAYOUT.map(([kind, body]) => `<g class="tile-pos"><g class="tile-float"><g class="tile-in" data-kind="${kind}">${body}</g></g></g>`);
 
 export function Hero({ page }: { page: PageSettings | null }) {
   const root = useRef<HTMLElement>(null);
@@ -111,10 +63,28 @@ export function Hero({ page }: { page: PageSettings | null }) {
   useGSAP(
     () => {
       const svg = art.current!;
-      svg.innerHTML = shapes.map((s) => `<g class="shape">${s}</g>`).join("");
-      const groups = gsap.utils.toArray<SVGGElement>(".shape", svg);
-      const strokes = gsap.utils.toArray<SVGElement>(".shape > *", svg);
-      const fills = gsap.utils.toArray<SVGElement>("[data-fill]", svg);
+      svg.innerHTML = shapes.join("");
+      /* Хавтангуудыг бодит хэмжээгээр байрлуулна (өргөн өөрчлөгдөхөд дахин) */
+      const pos = gsap.utils.toArray<SVGGElement>(".tile-pos", svg);
+      const place = () => {
+        const W = svg.clientWidth, H = svg.clientHeight;
+        if (!W || !H) return;
+        svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+        const big = gsap.utils.clamp(96, 220, W * 0.13), small = gsap.utils.clamp(64, 104, W * 0.065);
+        pos.forEach((g, i) => {
+          const at = LAYOUT[i][2](W, H, big, small);
+          g.style.display = at ? "" : "none";
+          if (at) g.setAttribute("transform", `translate(${at[0]},${at[1]}) scale(${at[2] / 100})`);
+        });
+      };
+      place();
+      const ro = new ResizeObserver(place);
+      ro.observe(svg);
+      const floats = gsap.utils.toArray<SVGGElement>(".tile-float", svg);
+      const tiles = gsap.utils.toArray<SVGGElement>(".tile-in", svg);
+      const spinners = tiles.filter((t) => t.dataset.kind === "spin");
+      const arcTiles = tiles.filter((t) => t.dataset.kind === "arc");
+      const tileDots = gsap.utils.toArray<SVGElement>(".t-dot", svg);
       const mm = gsap.matchMedia();
       mm.add({ reduce: "(prefers-reduced-motion: reduce)", ok: "(prefers-reduced-motion: no-preference)" }, (ctx) => {
         const reduce = !!ctx.conditions?.reduce;
@@ -130,8 +100,8 @@ export function Hero({ page }: { page: PageSettings | null }) {
 
         if (reduce) {
           // Хөдөлгөөн багасгах: шууд бүрэн зурсан байдлаар харуулна.
-          gsap.set([strokes, frame], { drawSVG: "0% 100%" });
-          gsap.set([fills, frameFills], { fillOpacity: 1 });
+          gsap.set(frame, { drawSVG: "0% 100%" });
+          gsap.set(frameFills, { fillOpacity: 1 });
           // copy/heroImg/figcaption-ийг CSS-ээр хэзээ ч нуудаггүй (opacity/visibility анхдагч утгаараа)
           // тул autoAlpha:1 болгож "сэргээх" gsap.set нь no-op — хассан.
           return;
@@ -198,54 +168,22 @@ export function Hero({ page }: { page: PageSettings | null }) {
           orbit(pfO3, 11, 0.3);
         }
 
-        /* Зурах ↔ арилгах давталттай timeline */
-        const draw = gsap.timeline({ repeat: -1, repeatDelay: 5 });
+        /* Хавтангууд: эргэж томорч орж ирнэ → нумууд зурагдана */
+        gsap.set(tiles, { svgOrigin: "50 50" });
+        const tilesIn = gsap.timeline({ delay: 0.2 })
+          .from(tiles, { scale: 0, rotation: (i) => (i % 2 ? 90 : -90), autoAlpha: 0, duration: 0.8, ease: "back.out(1.6)", stagger: 0.08 })
+          .from(gsap.utils.toArray<SVGElement>(".t-arc", svg), { drawSVG: "0% 0%", duration: 0.9, ease: "power2.out", stagger: 0.04 }, 0.3);
 
-        draw
-          .addLabel("draw")
-          // 1. Stroke-ууд эхнээсээ зурагдана.
-          .fromTo(
-            strokes,
-            { drawSVG: "0% 0%" },
-            { drawSVG: "0% 100%", duration: 1.4, ease: "power2.inOut", stagger: { each: 0.05, from: "random" } },
-            "draw",
-          )
-          // 2. Дүүргэлт аажмаар орж ирнэ.
-          .to(fills, { fillOpacity: 1, duration: 0.8, ease: "power1.out", stagger: 0.04 }, "draw+=1.2")
-          // 3. Зурагдсан байдлаараа хэсэг хугацаанд үлдэнэ (энэ үед MotionPath урсгал үргэлжилнэ).
-          .addLabel("erase", "draw+=6.5")
-          // 4. Арилах: дүүргэлт алга болж, stroke-ууд төгсгөл рүүгээ "хумигдана".
-          .to(fills, { fillOpacity: 0, duration: 0.5, ease: "power1.in" }, "erase")
-          .to(
-            strokes,
-            {
-              drawSVG: "100% 100%",
-              duration: 1,
-              ease: "power2.inOut",
-              stagger: { each: 0.03, from: "random" },
-            },
-            "erase+=0.1",
-          );
-
-        /* MotionPath урсгал: дүрс бүр өөрийн байрлалыг тойрсон зөөлөн гогцоо замаар хөвнө.
-           Зам нь харьцангуй цэгүүд (x, y) тул дүрс анхны байрлалаасаа ±R хүрээнд хөдөлнө. */
-        groups.forEach((g, i) => {
-          const R = 18 + (i % 4) * 8; // гогцооны радиус
-          const dir = i % 2 ? 1 : -1; // ээлжлэн цагийн зүү / эсрэг
-          const loop = [
-            { x: 0, y: 0 },
-            { x: R * dir, y: -R * 0.6 },
-            { x: R * 0.4 * dir, y: -R * 1.4 },
-            { x: -R * 0.8 * dir, y: -R * 0.9 },
-            { x: -R * 0.5 * dir, y: R * 0.3 },
-            { x: 0, y: 0 },
-          ];
-          gsap.to(g, {
-            duration: 9 + (i % 5) * 2,
-            repeat: -1,
-            ease: "none",
-            motionPath: { path: loop, curviness: 1.6 },
-          });
+        /* Үргэлжилсэн хөдөлгөөн: зөөлөн хөвөлт; цэгүүд лугшина; шатар/дэлбээ хавтан үе үе 90° эргэнэ; нумууд дотроосоо гадагш долгиолно */
+        const loops: gsap.core.Animation[] = [tilesIn];
+        floats.forEach((f, i) => loops.push(gsap.to(f, { y: i % 2 ? 7 : -7, duration: 3 + (i % 3) * 0.7, ease: "sine.inOut", yoyo: true, repeat: -1, delay: i * 0.3 })));
+        loops.push(gsap.to(tileDots, { scale: 0.78, transformOrigin: "50% 50%", duration: 1.2, ease: "sine.inOut", yoyo: true, repeat: -1, stagger: { each: 0.12, from: "random" } }));
+        spinners.forEach((t, i) => loops.push(gsap.to(t, { rotation: "+=90", duration: 1, ease: "back.inOut(1.4)", repeat: -1, repeatDelay: 4 + i, delay: 2.5 + i * 1.3 })));
+        arcTiles.forEach((t, i) => {
+          const arcs = t.querySelectorAll(".t-arc");
+          loops.push(gsap.timeline({ repeat: -1, repeatDelay: 5, delay: 4 + i * 1.5 })
+            .to(arcs, { drawSVG: "100% 100%", duration: 0.6, ease: "power2.in", stagger: 0.08 })
+            .fromTo(arcs, { drawSVG: "0% 0%" }, { drawSVG: "0% 100%", duration: 0.8, ease: "power2.out", stagger: 0.1, immediateRender: false }, ">0.1"));
         });
 
         /* Гарчиг: зурагдаж эхэлмэгц дагаж гарч ирнэ (нэг л удаа). */
@@ -270,13 +208,14 @@ export function Hero({ page }: { page: PageSettings | null }) {
         });
 
         return () => {
-          draw.kill();
+          loops.forEach((t) => t.kill());
           orbitTweens.forEach((t) => t.kill());
           orbitNodes.forEach((n) => n.remove());
         };
       });
       return () => {
         mm.revert();
+        ro.disconnect();
         svg.innerHTML = "";
       };
     },
@@ -285,7 +224,7 @@ export function Hero({ page }: { page: PageSettings | null }) {
 
   return (
     <header ref={root} className="hero" id="hero">
-      <svg ref={art} id="hero-art" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true" />
+      <svg ref={art} id="hero-art" aria-hidden="true" />
       <div className="hero-grid">
         <div className="hero-copy">
           <p className="eyebrow">{page?.eyebrow ?? "Монгол Улсын Ардын багш"}</p>
