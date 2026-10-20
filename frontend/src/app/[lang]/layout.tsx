@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import Script from "next/script";
 import { LangProvider } from "@/components/site/LangProvider";
 import { getDict, isLang, LANGS } from "@/lib/i18n";
+import { SITE_URL } from "@/lib/site-url";
 import { VisitorProvider } from "@/lib/visitor";
 import { bodyClass, htmlClass } from "../fonts";
 import "../globals.css";
@@ -18,8 +19,6 @@ export async function generateMetadata({ params }: { params: Promise<{ lang: str
   // metadataBase: hreflang/canonical-ийн харьцангуй замыг бүтэн URL болгоно (lib/i18n/metadata.ts)
   return { metadataBase: new URL(SITE_URL), title: t.meta.siteName, description: t.meta.defaultDescription };
 }
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
 export default async function LangRootLayout({ children, params }: { children: React.ReactNode; params: Promise<{ lang: string }> }) {
   const { lang } = await params;

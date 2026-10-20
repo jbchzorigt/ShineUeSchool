@@ -17,9 +17,11 @@ import { CONTINENTS, MONGOLIA } from "@/lib/home-data";
 import type { GraduateDestination } from "@/lib/types";
 import type { MapData } from "@/lib/world-map";
 import { gsap, reduceMotion, useGSAP } from "@/components/site/gsap";
+import { useDict } from "@/components/site/LangProvider";
 
 export function GraduationMap({ map, destinations: DESTINATIONS }: { map: MapData; destinations: GraduateDestination[] }) {
   const root = useRef<HTMLDivElement>(null);
+  const t = useDict().home.graduation;
   const [selected, setSelected] = useState<string>(DESTINATIONS[0]?.code ?? "");
   const dest = DESTINATIONS.find((d) => d.code === selected) ?? DESTINATIONS[0];
   const color = (code: string) => CONTINENTS[DESTINATIONS.find((d) => d.code === code)?.continent ?? "other"].color;
@@ -75,7 +77,7 @@ export function GraduationMap({ map, destinations: DESTINATIONS }: { map: MapDat
     <div ref={root} className="flex flex-col gap-6 lg:gap-8">
       {/* Газрын зураг */}
       <div className="flex flex-col gap-4">
-        <svg viewBox={`0 0 ${map.width} ${map.height}`} className="w-full" role="img" aria-label="Төгсөгчид элссэн улсуудын газрын зураг">
+        <svg viewBox={`0 0 ${map.width} ${map.height}`} className="w-full" role="img" aria-label={t.mapAria}>
           <path d={map.land} fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.25)" strokeWidth="0.5" />
           {map.countries.map((c) => {
             const on = c.code === selected;
@@ -121,7 +123,7 @@ export function GraduationMap({ map, destinations: DESTINATIONS }: { map: MapDat
           })}
         </svg>
         {/* Улсын чипүүд (утсанд гол удирдлага) + тивийн тайлбар */}
-        <div className="flex flex-wrap gap-2" role="tablist" aria-label="Улс">
+        <div className="flex flex-wrap gap-2" role="tablist" aria-label={t.countries}>
           {DESTINATIONS.map((d) => {
             const on = d.code === selected;
             return (
@@ -133,9 +135,9 @@ export function GraduationMap({ map, destinations: DESTINATIONS }: { map: MapDat
             );
           })}
         </div>
-        <ul className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-white/70" aria-label="Тивийн өнгө">
-          {Object.values(CONTINENTS).map((c) => (
-            <li key={c.name} className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full" style={{ background: c.color }} aria-hidden="true" />{c.name}</li>
+        <ul className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-white/70" aria-label={t.legend}>
+          {(Object.keys(CONTINENTS) as (keyof typeof CONTINENTS)[]).map((k) => (
+            <li key={k} className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full" style={{ background: CONTINENTS[k].color }} aria-hidden="true" />{t.continents[k]}</li>
           ))}
         </ul>
       </div>
@@ -146,12 +148,12 @@ export function GraduationMap({ map, destinations: DESTINATIONS }: { map: MapDat
           <>
             <div className="flex flex-wrap items-end justify-between gap-3">
               <div>
-                <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">{CONTINENTS[dest.continent].name}</span>
+                <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted">{t.continents[dest.continent]}</span>
                 <h3 className="mt-1 font-display text-2xl font-extrabold text-navy">{dest.name}</h3>
-                <p className="mt-1 text-sm text-muted">Манай төгсөгчид элссэн сургуулиуд</p>
+                <p className="mt-1 text-sm text-muted">{t.schoolsLead}</p>
               </div>
               <span className="inline-flex items-baseline gap-1.5 rounded-full px-4 py-1.5 font-display text-2xl font-extrabold text-navy-deep" style={{ background: CONTINENTS[dest.continent].color }}>
-                {dest.universities.length}<span className="text-xs font-semibold uppercase tracking-wider">сургууль</span>
+                {dest.universities.length}<span className="text-xs font-semibold uppercase tracking-wider">{t.schools}</span>
               </span>
             </div>
             <ul className="mt-5 grid gap-x-8 gap-y-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -163,7 +165,7 @@ export function GraduationMap({ map, destinations: DESTINATIONS }: { map: MapDat
               ))}
             </ul>
           </>
-        ) : <p className="text-muted">Газрын зураг дээрээс улс сонгоно уу.</p>}
+        ) : <p className="text-muted">{t.pickCountry}</p>}
       </div>
     </div>
   );

@@ -18,7 +18,7 @@ export async function POST(req: Request) {
   }
   const body = (await req.json().catch(() => ({}))) as { tags?: unknown; paths?: unknown };
   const tags = Array.isArray(body.tags) ? body.tags.filter((t): t is string => typeof t === "string" && TAGS.has(t)) : [];
-  const paths = Array.isArray(body.paths) ? body.paths.filter((p): p is string => typeof p === "string" && p.startsWith("/") && !p.includes("..")) : ["/"];
+  const paths = Array.isArray(body.paths) ? body.paths.filter((p): p is string => typeof p === "string" && p.startsWith("/") && !p.includes("..")) : ["/mn", "/en"];   // нүүр хуудас: дотоод "/mn" (монгол) ба "/en"
   for (const t of tags) revalidateTag(t, "max");
   for (const p of paths) revalidatePath(p);
   return Response.json({ tags, paths });

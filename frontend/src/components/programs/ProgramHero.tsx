@@ -2,12 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { getDict, localePath, type Lang } from "@/lib/i18n";
 import type { ProgramDetail } from "@/lib/types";
 
-export function ProgramHero({ program }: { program: ProgramDetail }) {
+export function ProgramHero({ program, lang = "mn" }: { program: ProgramDetail; lang?: Lang }) {
   return (
     <div className="flex flex-col gap-4">
-      <p><Link href="/" className="text-sm font-medium text-navy hover:underline">← Нүүр</Link></p>
+      <p><Link href={localePath(lang, "/")} className="text-sm font-medium text-navy hover:underline">{getDict(lang).programs.back}</Link></p>
       <div className="relative h-[240px] overflow-hidden rounded-xl bg-navy lg:h-[440px]">
         {program.cover_image && <Image src={program.cover_image} alt="" fill unoptimized sizes="(max-width: 1440px) 100vw, 1440px" priority className="object-cover" />}
         <div className="absolute inset-0 bg-gradient-to-t from-navy/90 via-navy/30 to-transparent" aria-hidden="true" />

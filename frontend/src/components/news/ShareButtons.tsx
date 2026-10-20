@@ -3,8 +3,10 @@
 /* Хуваалцах товчнууд: Facebook (шинэ цонх) ба холбоос хуулах. */
 
 import { useEffect, useRef, useState } from "react";
+import { useDict } from "@/components/site/LangProvider";
 
 export function ShareButtons({ url, title }: { url: string; title: string }) {
+  const t = useDict().news;
   const [copied, setCopied] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -31,7 +33,7 @@ export function ShareButtons({ url, title }: { url: string; title: string }) {
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
         timeoutRef.current = setTimeout(() => setCopied(false), 2000);
       })
-      .catch(() => alert(`Холбоос: ${url}`));
+      .catch(() => alert(t.linkAlert(url)));
   };
 
   return (
@@ -39,7 +41,7 @@ export function ShareButtons({ url, title }: { url: string; title: string }) {
       <button
         type="button"
         onClick={shareFacebook}
-        aria-label={`${title} — Facebook-т хуваалцах`}
+        aria-label={t.shareFb(title)}
         className="inline-flex items-center gap-2 rounded-lg border border-line px-4 py-2.5 text-sm font-semibold text-ink hover:border-navy hover:text-navy"
       >
         Facebook
@@ -49,7 +51,7 @@ export function ShareButtons({ url, title }: { url: string; title: string }) {
         onClick={copyLink}
         className="inline-flex items-center gap-2 rounded-lg border border-line px-4 py-2.5 text-sm font-semibold text-ink hover:border-navy hover:text-navy"
       >
-        {copied ? "Хуулагдлаа" : "Холбоос хуулах"}
+        {copied ? t.copied : t.copyLink}
       </button>
     </div>
   );

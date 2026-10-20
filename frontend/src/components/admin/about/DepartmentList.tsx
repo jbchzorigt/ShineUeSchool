@@ -13,13 +13,14 @@ export function DepartmentList({ departments, selectedId, onSelect, onChanged }:
   departments: AboutDepartment[]; selectedId: number | null; onSelect: (id: number) => void; onChanged: () => void;
 }) {
   const [newName, setNewName] = useState("");
-  const [editing, setEditing] = useState<{ id: number; name: string } | null>(null);
+  const [newNameEn, setNewNameEn] = useState("");
+  const [editing, setEditing] = useState<{ id: number; name: string; name_en: string } | null>(null);
   const [error, setError] = useState("");
 
   async function add(e: FormEvent) {
     e.preventDefault();
     setError("");
-    try { const d = await api.about.departments.create(newName.trim()); setNewName(""); onChanged(); onSelect(d.id); }
+    try { const d = await api.about.departments.create(newName.trim(), newNameEn.trim()); setNewName(""); setNewNameEn(""); onChanged(); onSelect(d.id); }
     catch (err) { setError(err instanceof ApiError ? (err.fieldErrors.name ?? err.message) : "Нэмж чадсангүй."); }
   }
 
@@ -27,7 +28,7 @@ export function DepartmentList({ departments, selectedId, onSelect, onChanged }:
     e.preventDefault();
     if (!editing) return;
     setError("");
-    try { await api.about.departments.update(editing.id, editing.name.trim()); setEditing(null); onChanged(); }
+    try { await api.about.departments.update(editing.id, editing.name.trim(), editing.name_en.trim()); setEditing(null); onChanged(); }
     catch (err) { setError(err instanceof ApiError ? (err.fieldErrors.name ?? err.message) : "Хадгалж чадсангүй."); }
   }
 
@@ -58,7 +59,8 @@ export function DepartmentList({ departments, selectedId, onSelect, onChanged }:
               </span>
               {editing?.id === d.id ? (
                 <form onSubmit={rename} className="flex flex-1 items-center gap-1">
-                  <Input value={editing.name} onChange={(e) => setEditing({ id: d.id, name: e.target.value })} maxLength={120} autoFocus aria-label="Тэнхимийн нэр" />
+                  <Input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} maxLength={120} autoFocus aria-label="Тэнхимийн нэр" />
+                  <Input value={editing.name_en} onChange={(e) => setEditing({ ...editing, name_en: e.target.value })} maxLength={120} aria-label="Нэр (English)" placeholder="English" lang="en" />
                   <Button type="submit">OK</Button>
                   <Button type="button" variant="ghost" onClick={() => setEditing(null)}>✕</Button>
                 </form>
@@ -68,7 +70,7 @@ export function DepartmentList({ departments, selectedId, onSelect, onChanged }:
                 </button>
               )}
               <span className="whitespace-nowrap">
-                <button type="button" onClick={() => setEditing({ id: d.id, name: d.name })} className={`${iconBtn} text-navy`} aria-label="Нэр засах" title="Нэр засах">✎</button>
+                <button type="button" onClick={() => setEditing({ id: d.id, name: d.name, name_en: d.name_en ?? "" })} className={`${iconBtn} text-navy`} aria-label="Нэр засах" title="Нэр засах">✎</button>
                 <button type="button" onClick={() => remove(d)} className={`${iconBtn} text-red-600 hover:bg-red-50`} aria-label="Устгах" title="Устгах">🗑</button>
               </span>
             </li>
@@ -77,6 +79,7 @@ export function DepartmentList({ departments, selectedId, onSelect, onChanged }:
       )}
       <form onSubmit={add} className="flex items-center gap-2">
         <Input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Шинэ тэнхимийн нэр" maxLength={120} aria-label="Шинэ тэнхимийн нэр" />
+        <Input value={newNameEn} onChange={(e) => setNewNameEn(e.target.value)} placeholder="English" maxLength={120} aria-label="Шинэ тэнхимийн нэр (English)" lang="en" />
         <Button type="submit" disabled={!newName.trim()}>Нэмэх</Button>
       </form>
     </Card>

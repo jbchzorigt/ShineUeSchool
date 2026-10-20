@@ -1,6 +1,7 @@
 "use client";
 
-/* Мэдээ засварлах хуудасны цөм: гарчиг/slug/ангилал/огноо/тодотгол/бие, ковер, галерей, ноорог хадгалах/нийтлэх. */
+/* Мэдээ засварлах хуудасны цөм: "Монгол | English" таб (гарчиг, тодотгол, бие — англи хэсгийг бөглөсөн мэдээ л /en сайтад гарна;
+   монгол эсвэл англи гарчгийн аль нэг заавал), slug/ангилал/огноо, ковер, галерей (тайлбар 2 хэлээр), ноорог хадгалах/нийтлэх. */
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -10,6 +11,8 @@ import { useFetch } from "@/lib/useFetch";
 import type { NewsImage, PostAdmin, PostInput } from "@/lib/types";
 import { Badge, Button, Card, Field, Input, Select, Spinner, Textarea } from "@/components/ui";
 import { RichText } from "@/components/admin/RichText";
+import { LangTabs, langPane } from "@/components/admin/LangTabs";
+import type { Lang } from "@/lib/i18n";
 
 interface Props { post: PostAdmin | null; onSaved: () => void }
 
@@ -36,6 +39,10 @@ export function PostEditor({ post, onSaved }: Props) {
   const [slug, setSlug] = useState(post?.slug ?? "");
   const [excerpt, setExcerpt] = useState(post?.excerpt ?? "");
   const [body, setBody] = useState(post?.body_html ?? "");
+  const [titleEn, setTitleEn] = useState(post?.title_en ?? "");
+  const [excerptEn, setExcerptEn] = useState(post?.excerpt_en ?? "");
+  const [bodyEn, setBodyEn] = useState(post?.body_html_en ?? "");
+  const [tab, setTab] = useState<Lang>(post && !post.title && post.title_en ? "en" : "mn");
   const [categoryId, setCategoryId] = useState(post?.category ? String(post.category.id) : "");
   const [publishedAt, setPublishedAt] = useState(toLocalInput(post?.published_at ?? null));
   const [toFacebook, setToFacebook] = useState(false);
@@ -47,6 +54,7 @@ export function PostEditor({ post, onSaved }: Props) {
 
   const [galleryFile, setGalleryFile] = useState<File | null>(null);
   const [galleryCaption, setGalleryCaption] = useState("");
+  const [galleryCaptionEn, setGalleryCaptionEn] = useState("");
   const [galleryOrder, setGalleryOrder] = useState(0);
   const galleryFileRef = useRef<HTMLInputElement>(null);
   const [galleryBusy, setGalleryBusy] = useState(false);
@@ -58,9 +66,12 @@ export function PostEditor({ post, onSaved }: Props) {
   function buildInput(): PostInput {
     return {
       title: title.trim(),
+      title_en: titleEn.trim(),
       slug: slug.trim() || undefined,
       excerpt,
+      excerpt_en: excerptEn,
       body_html: body,
+      body_html_en: bodyEn,
       category_id: categoryId ? Number(categoryId) : null,
       published_at: publishedAt ? new Date(publishedAt).toISOString() : null,
     };
@@ -140,7 +151,7 @@ export function PostEditor({ post, onSaved }: Props) {
     }
   }
 
-  async function updateImageField(img: NewsImage, patch: { caption?: string; order?: number }) {
+  async function updateImageField(img: NewsImage, patch: { caption?: string; caption_en?: string; order?: number }) {
     try {
       await api.news.posts.updateImage(img.id, patch);
       onSaved();
@@ -166,8 +177,9 @@ export function PostEditor({ post, onSaved }: Props) {
     setGalleryError("");
     setGalleryBusy(true);
     try {
-      await api.news.posts.addImage(post.id, f, galleryCaption, galleryOrder);
+      await api.news.posts.addImage(post.id, f, galleryCaption, galleryOrder, galleryCaptionEn);
       setGalleryCaption("");
+      setGalleryCaptionEn("");
       setGalleryOrder((o) => o + 1);
       setGalleryFile(null);
       if (galleryFileRef.current) galleryFileRef.current.value = "";
@@ -189,9 +201,10 @@ export function PostEditor({ post, onSaved }: Props) {
           {statusBadge(post)}
         </div>
         {post?.is_published && (
-          <a href={`/news/${post.slug}`} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-navy hover:underline">
-            Сайт дээр харах ↗
-          </a>
+          <span className="flex gap-4">
+            {post.title && <a href={`/news/${post.slug}`} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-navy hover:underline">Сайт дээр харах ↗</a>}
+            {post.title_en && <a href={`/en/news/${post.slug}`} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-navy hover:underline">English ↗</a>}
+          </span>
         )}
       </div>
 
@@ -204,10 +217,43 @@ export function PostEditor({ post, onSaved }: Props) {
       )}
 
       <Card className="space-y-4">
-        <Field label="Гарчиг" error={errors.title}>
-          <Input value={title} onChange={(e) => setTitle(e.target.value)} required />
-        </Field>
-        <Field label="Slug" error={errors.slug} hint="Хоосон орхивол гарчгаас автоматаар үүснэ">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <LangTabs value={tab} onChange={setTab} enFilled={!!titleEn.trim()} />
+          <span className="text-xs text-slate-500">Англи хэсгийг бөглөсөн мэдээ л англи сайтад (/en) гарна.</span>
+        </div>
+        {errors.title && <p className="text-sm font-medium text-red-600">{errors.title}</p>}
+        <div className={langPane(tab === "mn")}>
+          <Field label="Гарчиг">
+            <Input value={title} onChange={(e) => setTitle(e.target.value)} />
+          </Field>
+          <Field label="Тодотгол" error={errors.excerpt} hint={`${excerpt.length}/280`}>
+            <Textarea value={excerpt} maxLength={280} onChange={(e) => setExcerpt(e.target.value)} />
+          </Field>
+          <div>
+            {/* RichText-ийг Field (<label>) дотор оруулбал label дээрх дарах нь
+                эхний toolbar товч руу дамждаг тул энд бие даасан span-аар шошгол. */}
+            <span className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-600">Бие</span>
+            <RichText value={body} onChange={setBody} onUploadImage={(f) => api.news.posts.uploadImage(f).then((r) => r.url)} />
+            {errors.body_html && <span className="mt-1 block text-xs font-medium text-red-600">{errors.body_html}</span>}
+          </div>
+        </div>
+        <div className={langPane(tab === "en")}>
+          <Field label="Title (English)" error={errors.title_en}>
+            <Input value={titleEn} onChange={(e) => setTitleEn(e.target.value)} lang="en" />
+          </Field>
+          <Field label="Summary (English)" error={errors.excerpt_en} hint={`${excerptEn.length}/280`}>
+            <Textarea value={excerptEn} maxLength={280} onChange={(e) => setExcerptEn(e.target.value)} lang="en" />
+          </Field>
+          <div>
+            <span className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-600">Body (English)</span>
+            <RichText value={bodyEn} onChange={setBodyEn} onUploadImage={(f) => api.news.posts.uploadImage(f).then((r) => r.url)} />
+            {errors.body_html_en && <span className="mt-1 block text-xs font-medium text-red-600">{errors.body_html_en}</span>}
+          </div>
+        </div>
+      </Card>
+
+      <Card className="space-y-4">
+        <Field label="Slug" error={errors.slug} hint="Хоосон орхивол гарчгаас (монгол гарчиггүй бол англиас) автоматаар үүснэ">
           <Input value={slug} onChange={(e) => setSlug(e.target.value)} />
         </Field>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -220,16 +266,6 @@ export function PostEditor({ post, onSaved }: Props) {
           <Field label="Нийтлэх огноо" error={errors.published_at} hint="Хоосон бол нийтлэх мөчийн цагаар бүртгэнэ.">
             <Input type="datetime-local" value={publishedAt} onChange={(e) => setPublishedAt(e.target.value)} />
           </Field>
-        </div>
-        <Field label="Тодотгол" error={errors.excerpt} hint={`${excerpt.length}/280`}>
-          <Textarea value={excerpt} maxLength={280} onChange={(e) => setExcerpt(e.target.value)} />
-        </Field>
-        <div>
-          {/* RichText-ийг Field (<label>) дотор оруулбал label дээрх дарах нь
-              эхний toolbar товч руу дамждаг тул энд бие даасан span-аар шошгол. */}
-          <span className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-600">Бие</span>
-          <RichText value={body} onChange={setBody} onUploadImage={(f) => api.news.posts.uploadImage(f).then((r) => r.url)} />
-          {errors.body_html && <span className="mt-1 block text-xs font-medium text-red-600">{errors.body_html}</span>}
         </div>
       </Card>
 
@@ -270,6 +306,8 @@ export function PostEditor({ post, onSaved }: Props) {
                   </div>
                   <Input defaultValue={img.caption} aria-label="Тайлбар" placeholder="Тайлбар"
                          onBlur={(e) => { const v = e.target.value; if (v !== img.caption) updateImageField(img, { caption: v }); }} />
+                  <Input defaultValue={img.caption_en} aria-label="Caption (English)" placeholder="Caption (English)" lang="en"
+                         onBlur={(e) => { const v = e.target.value; if (v !== img.caption_en) updateImageField(img, { caption_en: v }); }} />
                   <div className="flex items-center gap-2">
                     <label className="flex items-center gap-1 text-xs text-slate-600">
                       Дараалал
@@ -287,6 +325,7 @@ export function PostEditor({ post, onSaved }: Props) {
                        className="text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-navy file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-white" />
               </Field>
               <Field label="Тайлбар"><Input value={galleryCaption} onChange={(e) => setGalleryCaption(e.target.value)} /></Field>
+              <Field label="Caption (English)"><Input value={galleryCaptionEn} onChange={(e) => setGalleryCaptionEn(e.target.value)} lang="en" /></Field>
               <Field label="Дараалал"><Input type="number" className="w-20" value={galleryOrder} onChange={(e) => setGalleryOrder(Number(e.target.value))} /></Field>
               <Button type="button" variant="secondary" disabled={galleryBusy || !galleryFile} onClick={addGalleryImage}>Нэмэх</Button>
             </div>

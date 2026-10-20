@@ -1,6 +1,7 @@
 /* Хуудаслалт: Өмнөх · 1 2 3 … N · Дараах. Холбоосыг дуудагч тал hrefFor-оор өгнө
    (/news эсвэл цаашид өөр жагсаалтын хуудсанд дахин ашиглаж болохоор). */
 
+import { getDict, type Lang } from "@/lib/i18n";
 import Link from "next/link";
 
 /* Одоогийн хуудасны эргэн тойрны цонх: 1, сүүлчийн хуудас, мөн page-1..page+1
@@ -18,16 +19,17 @@ function buildPageList(page: number, pages: number): (number | "…")[] {
   return list;
 }
 
-export function Pagination({ page, pages, hrefFor }: { page: number; pages: number; hrefFor: (p: number) => string }) {
+export function Pagination({ page, pages, hrefFor, lang = "mn" }: { page: number; pages: number; hrefFor: (p: number) => string; lang?: Lang }) {
   if (pages <= 1) return null;
+  const t = getDict(lang).news;
 
   const list = buildPageList(page, pages);
   const base = "inline-flex h-11 min-w-11 items-center justify-center rounded-lg px-2.5 text-base font-medium";
 
   return (
-    <nav aria-label="Мэдээний хуудаслалт" className="flex items-center justify-center gap-1 lg:gap-1.5">
-      <Link href={hrefFor(Math.max(1, page - 1))} aria-label="Өмнөх хуудас" className={`${base} text-ink hover:bg-paper-3 hover:text-navy`}>
-        <span className="hidden lg:inline">Өмнөх</span>
+    <nav aria-label={t.pagination} className="flex items-center justify-center gap-1 lg:gap-1.5">
+      <Link href={hrefFor(Math.max(1, page - 1))} aria-label={t.prevAria} className={`${base} text-ink hover:bg-paper-3 hover:text-navy`}>
+        <span className="hidden lg:inline">{t.prev}</span>
         <svg className="lg:hidden" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
           <path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
@@ -48,8 +50,8 @@ export function Pagination({ page, pages, hrefFor }: { page: number; pages: numb
           </Link>
         ),
       )}
-      <Link href={hrefFor(Math.min(pages, page + 1))} aria-label="Дараах хуудас" className={`${base} text-ink hover:bg-paper-3 hover:text-navy`}>
-        <span className="hidden lg:inline">Дараах</span>
+      <Link href={hrefFor(Math.min(pages, page + 1))} aria-label={t.nextAria} className={`${base} text-ink hover:bg-paper-3 hover:text-navy`}>
+        <span className="hidden lg:inline">{t.next}</span>
         <svg className="lg:hidden" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
           <path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>

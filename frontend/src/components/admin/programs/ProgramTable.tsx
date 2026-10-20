@@ -5,7 +5,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Badge, Table, Td, Th } from "@/components/ui";
-import { gradeRange } from "@/components/programs/money";
+import { getDict } from "@/lib/i18n";
+
+const gradeRange = getDict("mn").programs.gradeRange;   // админ монголоор
 import { api, ApiError } from "@/lib/api";
 import type { ProgramAdmin } from "@/lib/types";
 

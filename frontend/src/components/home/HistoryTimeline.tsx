@@ -8,11 +8,12 @@
      getBoundingClientRect-ээр прогресс тооцно (ScrollSmoother-ийн transform дор ScrollTrigger найдваргүй байсан).
    - Үе шат бүр дэлгэцэнд орж ирэхэд IntersectionObserver-оор гарч ирнэ (дээшээ гүйлгэж алга болбол буцна).
    - Өргөн өөрчлөгдвөл багана дахин тооцоолж зам дахин барина. prefers-reduced-motion: зам бүтэн, бүгд шууд харагдана.
-   - /about хуудас ашиглана (нүүрэнд оронд нь Graduation.tsx). Өгөгдөл: lib/home-data.ts HISTORY.
+   - /about хуудас ашиглана (нүүрэнд оронд нь Graduation.tsx). Өгөгдөл: lib/home-data.ts HISTORY[lang] (монгол / англи).
    CSS: globals.css ".history-snake" блок. ===================================================================== */
 
 import { useRef, useState } from "react";
-import { HISTORY } from "@/lib/home-data";
+import { HISTORY as HISTORY_BY_LANG } from "@/lib/home-data";
+import { useDict, useLang } from "@/components/site/LangProvider";
 import { gsap, reduceMotion, useGSAP } from "@/components/site/gsap";
 
 const TL_COLORS = ["#FF3F33", "#9FC87E", "#FF9800", "#FF6666"];
@@ -21,6 +22,8 @@ const perRow = () => (typeof window === "undefined" ? 3 : innerWidth < 640 ? 1 :
 
 export function HistoryTimeline() {
   const root = useRef<HTMLElement>(null);
+  const HISTORY = HISTORY_BY_LANG[useLang()];
+  const t = useDict().about;
   const [cols, setCols] = useState(3);
   const rows: (typeof HISTORY)[] = [];
   for (let i = 0; i < HISTORY.length; i += cols) rows.push(HISTORY.slice(i, i + cols));
@@ -130,8 +133,8 @@ export function HistoryTimeline() {
   return (
     <section ref={root} id="history" className="scroll-mt-20 border-t border-line bg-paper-2">
       <div className="mx-auto flex max-w-[1440px] flex-col items-center px-4 py-10 md:px-10 lg:px-24 lg:py-[72px]">
-        <h2 className="font-display text-[32px] font-extrabold text-navy lg:text-[44px]">Сургуулийн түүх</h2>
-        <p className="mt-3 max-w-[32em] text-center text-muted lg:text-lg">2003 онд үүсгэн байгуулагдсанаас 2026 он хүртэлх гол үе шатууд.</p>
+        <h2 className="font-display text-[32px] font-extrabold text-navy lg:text-[44px]">{t.historyTitle}</h2>
+        <p className="mt-3 max-w-[32em] text-center text-muted lg:text-lg">{t.historyLead}</p>
 
         <div className="history-snake">
           <svg className="snake-svg" aria-hidden="true">
@@ -150,14 +153,14 @@ export function HistoryTimeline() {
               <image href="/logo-emblem.png" x="-16" y="-16" width="32" height="32" />
             </g>
           </svg>
-          <ol className="snake-rows" key={cols} aria-label="Сургуулийн түүхийн үе шатууд">
+          <ol className="snake-rows" key={cols} aria-label={t.historyAria}>
             {rows.map((row, r) => (
               <li key={r} className={`snake-row${r % 2 ? " is-rev" : ""}`}>
                 {row.map((e, j) => {
                   const i = r * cols + j;
                   return (
                     <article key={i} className="snake-item" style={{ ["--tl-c" as string]: TL_COLORS[i % TL_COLORS.length] }}>
-                      <div className="snake-date"><span className="snake-date-big">{e.year ?? "[он]"}</span></div>
+                      <div className="snake-date"><span className="snake-date-big">{e.year ?? t.yearUnknown}</span></div>
                       <div className="snake-card">
                         <h3>{e.title}</h3>
                         <p>{e.text}</p>

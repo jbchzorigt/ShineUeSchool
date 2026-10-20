@@ -24,7 +24,7 @@ from ..social.facebook import FacebookClient, FacebookError, get_facebook
 from ..social.models import Visitor
 from .models import Category, Comment, Post, PostImage
 from .router_public import counts_for, media_url, post_detail
-from .sanitize import clean_html
+from .sanitize import clean_html, clean_rich
 from .schemas import (
     AuthorRef, CategoryIn, CategoryOut, CategoryPatch, CommentAdmin, CommentAdminPage, CommentHideIn, ImageOut,
     ImagePatch, PostAdmin, PostAdminPage, PostIn, PostPatch, PostRef, PublishIn, PublishOut, FbResult,
@@ -96,7 +96,7 @@ async def admin_post_create(body: PostIn, request: Request, db: DB, me: Editor):
         raise FieldError("category_id", "Ангилал олдсонгүй.")
     _require_title(body.title, body.title_en)
     p = Post(title=body.title.strip(), title_en=body.title_en.strip(), excerpt=body.excerpt, excerpt_en=body.excerpt_en,
-             body_html=clean_html(body.body_html), body_html_en=clean_html(body.body_html_en),
+             body_html=clean_html(body.body_html), body_html_en=clean_rich(body.body_html_en),
              category_id=body.category_id, published_at=body.published_at, author_id=me.id, is_published=False)
     await _apply_slug(db, p, body.slug, p.title or p.title_en)   # монгол гарчиггүй бол англиас
     db.add(p)
@@ -115,9 +115,10 @@ async def admin_post_get(id: int, request: Request, db: DB):
 async def admin_post_patch(id: int, body: PostPatch, request: Request, db: DB):
     p = await get_post_or_404(db, id)
     data = body.model_dump(exclude_unset=True)
-    for k in ("body_html", "body_html_en"):
-        if data.get(k) is not None:
-            data[k] = clean_html(data[k])
+    if data.get("body_html") is not None:
+        data["body_html"] = clean_html(data["body_html"])
+    if data.get("body_html_en") is not None:
+        data["body_html_en"] = clean_rich(data["body_html_en"])   # хоосон "<p></p>" → ""
     for k in ("title", "title_en"):
         if data.get(k) is not None:
             data[k] = data[k].strip()

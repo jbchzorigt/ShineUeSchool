@@ -28,7 +28,7 @@ export function WorksPanel({ programId, works, onChanged }: { programId: number;
   }
   async function saveEdit(e: FormEvent) {
     e.preventDefault(); if (!editing) return; setError("");
-    try { await api.programs.works.update(editing.id, { title: editing.title.trim(), student: editing.student.trim(), caption: editing.caption.trim() }); setEditing(null); onChanged(); }
+    try { await api.programs.works.update(editing.id, { title: editing.title.trim(), title_en: (editing.title_en ?? "").trim(), student: editing.student.trim(), caption: editing.caption.trim(), caption_en: (editing.caption_en ?? "").trim() }); setEditing(null); onChanged(); }
     catch (err) { fail(err, "Хадгалж чадсангүй."); }
   }
   async function replaceImage(w: ProgramWork, f: File | undefined) {
@@ -57,6 +57,8 @@ export function WorksPanel({ programId, works, onChanged }: { programId: number;
                   <Input value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} maxLength={160} aria-label="Гарчиг" autoFocus />
                   <Input value={editing.student} onChange={(e) => setEditing({ ...editing, student: e.target.value })} maxLength={120} aria-label="Сурагч" placeholder="Сурагч" />
                   <Input value={editing.caption} onChange={(e) => setEditing({ ...editing, caption: e.target.value })} maxLength={280} aria-label="Тайлбар" placeholder="Тайлбар" />
+                  <Input value={editing.title_en ?? ""} onChange={(e) => setEditing({ ...editing, title_en: e.target.value })} maxLength={160} aria-label="Title (English)" placeholder="Title (English)" lang="en" />
+                  <Input value={editing.caption_en ?? ""} onChange={(e) => setEditing({ ...editing, caption_en: e.target.value })} maxLength={280} aria-label="Caption (English)" placeholder="Caption (English)" lang="en" />
                   <span className="flex gap-2"><Button type="submit">OK</Button><Button type="button" variant="ghost" onClick={() => setEditing(null)}>✕</Button></span>
                 </form>
               ) : (
@@ -64,13 +66,14 @@ export function WorksPanel({ programId, works, onChanged }: { programId: number;
                   <span className="font-semibold text-slate-900">{w.title}</span>
                   {w.student && <span className="text-sm text-slate-600">{w.student}</span>}
                   {w.caption && <span className="text-xs text-slate-500">{w.caption}</span>}
+                  {w.title_en && <span className="text-xs text-slate-500" lang="en">EN: {w.title_en}</span>}
                 </>
               )}
               <span className="mt-auto flex items-center gap-1 pt-1">
                 <button type="button" onClick={() => move(i, -1)} disabled={moving || i === 0} className="px-1 text-navy disabled:opacity-30" aria-label="Дээш">▲</button>
                 <button type="button" onClick={() => move(i, 1)} disabled={moving || i === works.length - 1} className="px-1 text-navy disabled:opacity-30" aria-label="Доош">▼</button>
                 <label className={`${iconBtn} cursor-pointer text-navy`} title="Зураг солих"><span aria-hidden="true">🖼</span><input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" aria-label="Зураг солих" onChange={(e) => { replaceImage(w, e.target.files?.[0]); e.target.value = ""; }} /></label>
-                <button type="button" onClick={() => setEditing({ id: w.id, title: w.title, student: w.student, caption: w.caption })} className={`${iconBtn} text-navy`} aria-label="Засах" title="Засах">✎</button>
+                <button type="button" onClick={() => setEditing({ id: w.id, title: w.title, title_en: w.title_en, student: w.student, caption: w.caption, caption_en: w.caption_en })} className={`${iconBtn} text-navy`} aria-label="Засах" title="Засах">✎</button>
                 <button type="button" onClick={() => remove(w)} className={`${iconBtn} ml-auto text-red-600 hover:bg-red-50`} aria-label="Устгах" title="Устгах">🗑</button>
               </span>
             </li>

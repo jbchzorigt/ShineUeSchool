@@ -65,7 +65,14 @@ export default function NewsListPage() {
           {q.data.items.map((p) => (
             <tr key={p.id} className="border-t border-slate-100">
               <Td className="whitespace-nowrap text-slate-600">{fmt(p.published_at)}</Td>
-              <Td><Link href={`/admin/news/${p.id}`} className="font-semibold text-navy hover:underline">{p.title}</Link></Td>
+              <Td>
+                <Link href={`/admin/news/${p.id}`} className="font-semibold text-navy hover:underline">{p.title || p.title_en}</Link>
+                {/* Хэлний тэмдэг: аль хэлээр бөглөгдсөн */}
+                <span className="ml-2 inline-flex gap-1 align-middle">
+                  {p.title && <Badge tone="slate">МН</Badge>}
+                  {p.title_en && <Badge tone="gold">EN</Badge>}
+                </span>
+              </Td>
               <Td>{p.category?.name ?? "—"}</Td>
               <Td>{statusOf(p)}</Td>
               <Td>{p.fb_post_id ? <Badge tone="green">✓</Badge> : p.fb_error ? <span title={p.fb_error}><Badge tone="gold">⚠ алдаа</Badge></span> : "—"}</Td>

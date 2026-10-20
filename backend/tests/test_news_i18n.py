@@ -119,3 +119,11 @@ async def test_facebook_message_falls_back_to_en(client, make_user, fb, monkeypa
     pid = (await client.post("/api/news/admin/posts/", json={"title_en": "Open Day", "excerpt_en": "Short"}, headers=h)).json()["id"]
     r = await client.post(f"/api/news/admin/posts/{pid}/publish/", json={"post_to_facebook": True}, headers=h)
     assert fb.posts == [{"message": "Open Day\n\nShort", "link": f"https://shine-ue.edu.mn/en/news/{r.json()['post']['slug']}"}]
+
+
+async def test_admin_empty_english_body_saved_as_empty(client, make_user):
+    h = await staff_headers(client, make_user, roles=("news",))
+    r = await client.post("/api/news/admin/posts/", headers=h, json={"title": "Т", "title_en": "T", "body_html_en": "<p></p>"})
+    assert r.json()["body_html_en"] == ""
+    r = await client.patch(f"/api/news/admin/posts/{r.json()['id']}/", headers=h, json={"body_html_en": "<p> </p><p></p>"})
+    assert r.json()["body_html_en"] == ""

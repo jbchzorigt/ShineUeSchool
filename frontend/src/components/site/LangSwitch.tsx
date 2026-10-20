@@ -8,7 +8,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useSyncExternalStore } from "react";
-import { LANGS, localePath, switchPath, type Lang } from "@/lib/i18n";
+import { LANGS, localePath, stripLang, switchPath, type Lang } from "@/lib/i18n";
 import { useDict, useLang } from "./LangProvider";
 
 let available: Lang[] | null = null;   // null = бүх хэл
@@ -29,7 +29,7 @@ export function LangAvailability({ languages }: { languages: Lang[] }) {
 export function LangSwitch({ className = "" }: { className?: string }) {
   const lang = useLang();
   const t = useDict();
-  const path = usePathname();
+  const path = stripLang(usePathname()).path;   // prerender үеийн дотоод "/mn/…"-г хэвийн болгоно
   const router = useRouter();
   const avail = useSyncExternalStore(subscribe, () => available, () => null);
 

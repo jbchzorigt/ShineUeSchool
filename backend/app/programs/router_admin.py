@@ -7,7 +7,6 @@
   POST /upload-image/  (rich text дундах зураг)
 """
 
-import re
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
@@ -19,7 +18,7 @@ from ..auth.models import User
 from ..common.errors import FieldError
 from ..common.media import delete_file, save_upload
 from ..db import get_db
-from ..news.sanitize import clean_html
+from ..news.sanitize import clean_rich
 from .models import Program, ProgramWork, Scholarship
 from .schemas import (OrderIn, ProgramAdmin, ProgramAdminDetail, ProgramIn, ProgramPatch, RadarIn, ScholarshipIn, ScholarshipOut,
                       ScholarshipPatch, WorkOut, WorkPatch)
@@ -38,16 +37,7 @@ def _clean(v: str | None, field: str, msg: str) -> str:
     return v
 
 
-_EMPTY_BODY_RE = re.compile(r"(\s*<p>\s*</p>\s*)*")
-
-
-def _clean_body(html: str) -> str:
-    """clean_html(...)-ийн үр дүнг цэвэрлэнэ: Tiptap хоосон үедээ "<p></p>" буцаадаг тул
-    зөвхөн хоосон <p></p>-ээс тогтсон бол "" болгож, нийтэд харагдах хэсгийг нуух боломжтой болгоно."""
-    html = clean_html(html)
-    if _EMPTY_BODY_RE.fullmatch(html):
-        return ""
-    return html
+_clean_body = clean_rich   # хоосон "<p></p>" → "" (news.sanitize)
 
 
 def _check_grades(gf: int, gt: int) -> None:

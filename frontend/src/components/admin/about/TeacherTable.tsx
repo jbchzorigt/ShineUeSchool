@@ -9,7 +9,7 @@ import { api, ApiError } from "@/lib/api";
 import type { AboutDepartment, AboutTeacher, AboutTeacherInput } from "@/lib/types";
 
 const iconBtn = "inline-grid h-8 w-8 place-items-center rounded-lg text-base transition hover:bg-navy/10";
-const EMPTY: AboutTeacherInput = { full_name: "", role: "", is_head: false };
+const EMPTY: AboutTeacherInput = { full_name: "", role: "", role_en: "", is_head: false };
 
 export function TeacherTable({ department, onChanged }: { department: AboutDepartment; onChanged: () => void }) {
   const [draft, setDraft] = useState<AboutTeacherInput>(EMPTY);
@@ -21,7 +21,7 @@ export function TeacherTable({ department, onChanged }: { department: AboutDepar
 
   async function add(e: FormEvent) {
     e.preventDefault(); setError("");
-    try { await api.about.teachers.create(department.id, { ...draft, full_name: draft.full_name.trim(), role: draft.role.trim() }); setDraft(EMPTY); onChanged(); }
+    try { await api.about.teachers.create(department.id, { ...draft, full_name: draft.full_name.trim(), role: draft.role.trim(), role_en: (draft.role_en ?? "").trim() }); setDraft(EMPTY); onChanged(); }
     catch (err) { fail(err, "Нэмж чадсангүй."); }
   }
 
@@ -29,7 +29,7 @@ export function TeacherTable({ department, onChanged }: { department: AboutDepar
     e.preventDefault();
     if (!editing) return;
     setError("");
-    try { await api.about.teachers.update(editing.id, { full_name: editing.full_name.trim(), role: editing.role.trim() }); setEditing(null); onChanged(); }
+    try { await api.about.teachers.update(editing.id, { full_name: editing.full_name.trim(), role: editing.role.trim(), role_en: (editing.role_en ?? "").trim() }); setEditing(null); onChanged(); }
     catch (err) { fail(err, "Хадгалж чадсангүй."); }
   }
 
@@ -68,6 +68,7 @@ export function TeacherTable({ department, onChanged }: { department: AboutDepar
                   <form id={`edit-${t.id}`} onSubmit={saveEdit} className="flex flex-wrap items-center gap-2">
                     <Input value={editing.full_name} onChange={(e) => setEditing({ ...editing, full_name: e.target.value })} maxLength={120} aria-label="Нэр" autoFocus />
                     <Input value={editing.role} onChange={(e) => setEditing({ ...editing, role: e.target.value })} maxLength={120} aria-label="Хичээл / албан тушаал" placeholder="Математикийн багш" />
+                    <Input value={editing.role_en ?? ""} onChange={(e) => setEditing({ ...editing, role_en: e.target.value })} maxLength={120} aria-label="Хичээл / албан тушаал (English)" placeholder="Mathematics teacher" lang="en" />
                     <Button type="submit">OK</Button>
                     <Button type="button" variant="ghost" onClick={() => setEditing(null)}>✕</Button>
                   </form>
@@ -75,12 +76,12 @@ export function TeacherTable({ department, onChanged }: { department: AboutDepar
               ) : (
                 <>
                   <Td className={t.is_head ? "font-semibold text-navy" : "font-semibold"}>{t.full_name}</Td>
-                  <Td className="text-slate-600">{t.role}</Td>
+                  <Td className="text-slate-600">{t.role}{t.role_en && <span className="block text-xs text-slate-400" lang="en">{t.role_en}</span>}</Td>
                 </>
               )}
               <Td><input type="checkbox" checked={t.is_head} onChange={() => toggleHead(t)} aria-label={`${t.full_name} эрхлэгч`} className="h-4 w-4 accent-navy" /></Td>
               <Td className="whitespace-nowrap text-right">
-                <button type="button" onClick={() => setEditing({ id: t.id, full_name: t.full_name, role: t.role, is_head: t.is_head })} className={`${iconBtn} text-navy`} aria-label="Засах" title="Засах">✎</button>
+                <button type="button" onClick={() => setEditing({ id: t.id, full_name: t.full_name, role: t.role, role_en: t.role_en, is_head: t.is_head })} className={`${iconBtn} text-navy`} aria-label="Засах" title="Засах">✎</button>
                 <button type="button" onClick={() => remove(t)} className={`${iconBtn} text-red-600 hover:bg-red-50`} aria-label="Устгах" title="Устгах">🗑</button>
               </Td>
             </tr>
@@ -90,6 +91,7 @@ export function TeacherTable({ department, onChanged }: { department: AboutDepar
       <form onSubmit={add} className="flex flex-wrap items-center gap-2 border-t border-slate-200 pt-3">
         <Input value={draft.full_name} onChange={(e) => setDraft({ ...draft, full_name: e.target.value })} placeholder="Овог, нэр" maxLength={120} aria-label="Багшийн нэр" className="max-w-56" />
         <Input value={draft.role} onChange={(e) => setDraft({ ...draft, role: e.target.value })} placeholder="Хичээл / албан тушаал" maxLength={120} aria-label="Хичээл / албан тушаал" className="max-w-64" />
+        <Input value={draft.role_en ?? ""} onChange={(e) => setDraft({ ...draft, role_en: e.target.value })} placeholder="English" maxLength={120} aria-label="Хичээл / албан тушаал (English)" className="max-w-48" lang="en" />
         <label className="flex items-center gap-1.5 text-sm"><input type="checkbox" checked={draft.is_head} onChange={(e) => setDraft({ ...draft, is_head: e.target.checked })} className="h-4 w-4 accent-navy" />Эрхлэгч</label>
         <Button type="submit" disabled={!draft.full_name.trim()}>Багш нэмэх</Button>
       </form>

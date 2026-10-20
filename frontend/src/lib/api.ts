@@ -89,8 +89,9 @@ async function refresh(refreshToken: string): Promise<boolean> {
 }
 
 /** Админ хадгалсны дараа нүүр зэрэг хуудасны ISR cache-ийг шууд цэвэрлэнэ (Next route handler app/api/revalidate).
-    Fire-and-forget: амжилтгүй бол чимээгүй — cache 60 сек дараа өөрөө шинэчлэгдэнэ. */
-export async function revalidateCache(tags: string[], paths: string[] = ["/"]): Promise<void> {
+    Нүүр хуудас дотооддоо "/mn" (монгол, proxy rewrite) ба "/en" — хоёуланг нь. Fire-and-forget: амжилтгүй бол чимээгүй —
+    cache 60 сек дараа өөрөө шинэчлэгдэнэ. */
+export async function revalidateCache(tags: string[], paths: string[] = ["/mn", "/en"]): Promise<void> {
   const t = tokens.get();
   if (!t) return;
   try {
@@ -184,8 +185,8 @@ export const api = {
   news: {
     categories: {
       list: () => request<NewsCategory[]>("/api/news/admin/categories/"),
-      create: (d: { name: string; slug?: string; order: number }) => request<NewsCategory>("/api/news/admin/categories/", { method: "POST", body: d }),
-      update: (id: number, d: Partial<{ name: string; slug: string; order: number }>) => request<NewsCategory>(`/api/news/admin/categories/${id}/`, { method: "PATCH", body: d }),
+      create: (d: { name: string; name_en?: string; slug?: string; order: number }) => request<NewsCategory>("/api/news/admin/categories/", { method: "POST", body: d }),
+      update: (id: number, d: Partial<{ name: string; name_en: string; slug: string; order: number }>) => request<NewsCategory>(`/api/news/admin/categories/${id}/`, { method: "PATCH", body: d }),
       remove: (id: number) => request<void>(`/api/news/admin/categories/${id}/`, { method: "DELETE" }),
     },
     posts: {
@@ -197,8 +198,8 @@ export const api = {
       remove: (id: number) => request<void>(`/api/news/admin/posts/${id}/`, { method: "DELETE" }),
       setCover: (id: number, file: File) => { const fd = new FormData(); fd.append("image", file); return request<PostAdmin>(`/api/news/admin/posts/${id}/cover/`, { method: "POST", body: fd }); },
       removeCover: (id: number) => request<PostAdmin>(`/api/news/admin/posts/${id}/cover/`, { method: "DELETE" }),
-      addImage: (id: number, file: File, caption: string, order: number) => { const fd = new FormData(); fd.append("image", file); fd.append("caption", caption); fd.append("order", String(order)); return request<NewsImage>(`/api/news/admin/posts/${id}/images/`, { method: "POST", body: fd }); },
-      updateImage: (imageId: number, d: { caption?: string; order?: number }) => request<NewsImage>(`/api/news/admin/images/${imageId}/`, { method: "PATCH", body: d }),
+      addImage: (id: number, file: File, caption: string, order: number, captionEn = "") => { const fd = new FormData(); fd.append("image", file); fd.append("caption", caption); fd.append("caption_en", captionEn); fd.append("order", String(order)); return request<NewsImage>(`/api/news/admin/posts/${id}/images/`, { method: "POST", body: fd }); },
+      updateImage: (imageId: number, d: { caption?: string; caption_en?: string; order?: number }) => request<NewsImage>(`/api/news/admin/images/${imageId}/`, { method: "PATCH", body: d }),
       removeImage: (imageId: number) => request<void>(`/api/news/admin/images/${imageId}/`, { method: "DELETE" }),
       uploadImage: (file: File) => { const fd = new FormData(); fd.append("image", file); return request<{ url: string }>("/api/news/admin/upload-image/", { method: "POST", body: fd }); },
       publish: (id: number, toFacebook: boolean) => request<PublishResult>(`/api/news/admin/posts/${id}/publish/`, { method: "POST", body: { post_to_facebook: toFacebook } }),
@@ -349,7 +350,7 @@ export const api = {
       list: () => request<AboutLeader[]>("/api/about/admin/leaders/"),
       create: (d: AboutLeaderInput, photo: File | null) => {
         const fd = new FormData();
-        fd.append("full_name", d.full_name); fd.append("position", d.position); fd.append("level", String(d.level));
+        fd.append("full_name", d.full_name); fd.append("position", d.position); fd.append("position_en", d.position_en ?? ""); fd.append("level", String(d.level));
         if (photo) fd.append("photo", photo);
         return request<AboutLeader>("/api/about/admin/leaders/", { method: "POST", body: fd });
       },
@@ -361,8 +362,8 @@ export const api = {
     },
     departments: {
       list: () => request<AboutDepartment[]>("/api/about/admin/departments/"),
-      create: (name: string) => request<AboutDepartment>("/api/about/admin/departments/", { method: "POST", body: { name } }),
-      update: (id: number, name: string) => request<AboutDepartment>(`/api/about/admin/departments/${id}/`, { method: "PATCH", body: { name } }),
+      create: (name: string, nameEn = "") => request<AboutDepartment>("/api/about/admin/departments/", { method: "POST", body: { name, name_en: nameEn } }),
+      update: (id: number, name: string, nameEn?: string) => request<AboutDepartment>(`/api/about/admin/departments/${id}/`, { method: "PATCH", body: nameEn === undefined ? { name } : { name, name_en: nameEn } }),
       remove: (id: number) => request<void>(`/api/about/admin/departments/${id}/`, { method: "DELETE" }),
       reorder: (ids: number[]) => request<AboutDepartment[]>("/api/about/admin/departments/order/", { method: "PUT", body: { ids } }),
     },
@@ -391,6 +392,7 @@ export const api = {
       create: (programId: number, d: WorkInput, image: File) => {
         const fd = new FormData();
         fd.append("title", d.title); fd.append("student", d.student); fd.append("caption", d.caption); fd.append("image", image);
+        fd.append("title_en", d.title_en ?? ""); fd.append("caption_en", d.caption_en ?? "");
         return request<ProgramWork>(`/api/programs/admin/programs/${programId}/works/`, { method: "POST", body: fd });
       },
       update: (id: number, d: Partial<WorkInput>) => request<ProgramWork>(`/api/programs/admin/works/${id}/`, { method: "PATCH", body: d }),

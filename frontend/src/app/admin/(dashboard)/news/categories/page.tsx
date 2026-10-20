@@ -8,9 +8,9 @@ import { useFetch } from "@/lib/useFetch";
 import type { NewsCategory } from "@/lib/types";
 import { Badge, Button, Empty, Field, Input, Modal, Spinner, Table, Td, Th } from "@/components/ui";
 
-interface CategoryForm { name: string; slug: string; order: number }
+interface CategoryForm { name: string; name_en: string; slug: string; order: number }
 
-const empty = (): CategoryForm => ({ name: "", slug: "", order: 0 });
+const empty = (): CategoryForm => ({ name: "", name_en: "", slug: "", order: 0 });
 
 export default function NewsCategoriesPage() {
   const catsQ = useFetch(() => api.news.categories.list(), []);
@@ -22,7 +22,7 @@ export default function NewsCategoriesPage() {
 
   function openEdit(c: NewsCategory) {
     setErrors({});
-    setEditing({ id: c.id, data: { name: c.name, slug: c.slug, order: c.order } });
+    setEditing({ id: c.id, data: { name: c.name, name_en: c.name_en ?? "", slug: c.slug, order: c.order } });
   }
 
   async function save(e: FormEvent) {
@@ -30,7 +30,7 @@ export default function NewsCategoriesPage() {
     if (!editing) return;
     setBusy(true); setErrors({});
     try {
-      const d = { name: editing.data.name, slug: editing.data.slug || undefined, order: editing.data.order };
+      const d = { name: editing.data.name, name_en: editing.data.name_en.trim(), slug: editing.data.slug || undefined, order: editing.data.order };
       if (editing.id) await api.news.categories.update(editing.id, d);
       else await api.news.categories.create(d);
       setEditing(null);
@@ -58,10 +58,11 @@ export default function NewsCategoriesPage() {
 
       {catsQ.error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{catsQ.error}</p>}
       {catsQ.loading ? <Spinner /> : !catsQ.data?.length ? <Empty>Ангилал байхгүй.</Empty> : (
-        <Table head={<><Th>Нэр</Th><Th>Slug</Th><Th>Дараалал</Th><Th>Мэдээ</Th><Th className="text-right">Үйлдэл</Th></>}>
+        <Table head={<><Th>Нэр</Th><Th>English</Th><Th>Slug</Th><Th>Дараалал</Th><Th>Мэдээ</Th><Th className="text-right">Үйлдэл</Th></>}>
           {catsQ.data.map((c) => (
             <tr key={c.id} className="border-t border-slate-100">
               <Td className="font-semibold">{c.name}</Td>
+              <Td className="text-slate-600">{c.name_en || "—"}</Td>
               <Td className="text-slate-600">{c.slug}</Td>
               <Td>{c.order}</Td>
               <Td><Badge tone="navy">{c.post_count}</Badge></Td>
@@ -80,6 +81,9 @@ export default function NewsCategoriesPage() {
           <form id="category-form" onSubmit={save} className="space-y-4">
             {errors.non_field_errors && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{errors.non_field_errors}</p>}
             <Field label="Нэр" error={errors.name}><Input value={editing.data.name} onChange={(e) => set({ name: e.target.value })} required /></Field>
+            <Field label="Нэр (English)" error={errors.name_en} hint="Англи сайтад харагдана; хоосон бол монгол нэр">
+              <Input value={editing.data.name_en} onChange={(e) => set({ name_en: e.target.value })} lang="en" />
+            </Field>
             <Field label="Slug" error={errors.slug} hint="Хоосон орхивол нэрнээс автоматаар үүснэ">
               <Input value={editing.data.slug} onChange={(e) => set({ slug: e.target.value })} />
             </Field>

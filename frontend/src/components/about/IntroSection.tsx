@@ -1,14 +1,15 @@
 /* Бидний тухай: navy дэвсгэрт гарчиг + танилцуулга (backend цэвэрлэсэн HTML) + үзүүлэлтийн мөр (0–4). Server component. */
 
 import { Reveal } from "@/components/site/Reveal";
+import { getDict, type Lang } from "@/lib/i18n";
 import type { AboutPage } from "@/lib/types";
 
-export function IntroSection({ page }: { page: AboutPage }) {
+export function IntroSection({ page, lang = "mn" }: { page: AboutPage; lang?: Lang }) {
   return (
     <section aria-labelledby="about-title" className="bg-navy text-white">
       <div className="mx-auto flex max-w-[1440px] flex-col gap-8 px-4 py-12 md:px-10 lg:gap-12 lg:px-24 lg:py-[88px]">
         <Reveal className="flex max-w-3xl flex-col gap-5">
-          <p className="text-sm font-semibold uppercase tracking-widest text-gold">Бидний тухай</p>
+          <p className="text-sm font-semibold uppercase tracking-widest text-gold">{getDict(lang).about.title}</p>
           <h1 id="about-title" className="font-display text-[30px] font-extrabold leading-tight lg:text-[42px]">{page.intro_title}</h1>
           {page.intro_html && <div className="news-body text-[17px] text-white/90 [&_a]:text-gold" dangerouslySetInnerHTML={{ __html: page.intro_html }} />}
         </Reveal>

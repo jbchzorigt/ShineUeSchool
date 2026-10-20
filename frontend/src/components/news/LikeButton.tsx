@@ -8,6 +8,7 @@
 
 import { useEffect, useState } from "react";
 import { useVisitor, visitorFetch } from "@/lib/visitor";
+import { useDict } from "@/components/site/LangProvider";
 
 interface LikeResponse {
   liked: boolean;
@@ -20,6 +21,7 @@ interface PostLikeState {
 }
 
 export function LikeButton({ slug, initialCount, initialLiked }: { slug: string; initialCount: number; initialLiked: boolean }) {
+  const likeSr = useDict().news.likeSr;
   const { token, loading, fbEnabled, login } = useVisitor();
   const [liked, setLiked] = useState(initialLiked);
   const [count, setCount] = useState(initialCount);
@@ -81,7 +83,7 @@ export function LikeButton({ slug, initialCount, initialLiked }: { slug: string;
         />
       </svg>
       <span className="tabular-nums">{count}</span>
-      <span className="sr-only">Таалагдсан</span>
+      <span className="sr-only">{likeSr}</span>
     </button>
   );
 }

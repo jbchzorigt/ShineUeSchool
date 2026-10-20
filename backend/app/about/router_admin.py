@@ -17,7 +17,7 @@ from ..auth.models import User
 from ..common.errors import FieldError
 from ..common.media import delete_file, save_upload
 from ..db import get_db
-from ..news.sanitize import clean_html
+from ..news.sanitize import clean_html, clean_rich
 from .models import Department, DeptTeacher, Leader
 from .schemas import (DepartmentIn, DepartmentOut, DepartmentPatch, LeaderOut, LeaderPatch, LeadersOrderIn, OrderIn, PageOut,
                       PagePatch, TeacherIn, TeacherOut, TeacherPatch)
@@ -59,7 +59,7 @@ async def page_patch(body: PagePatch, db: DB, _: Manager):
     if data.get("intro_title_en") is not None:
         p.intro_title_en = data["intro_title_en"].strip()
     if data.get("intro_html_en") is not None:
-        p.intro_html_en = clean_html(data["intro_html_en"])
+        p.intro_html_en = clean_rich(data["intro_html_en"])   # хоосон "<p></p>" → "" (монгол fallback)
     await db.commit()
     return page_out(p)
 

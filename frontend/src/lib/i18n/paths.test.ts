@@ -29,6 +29,17 @@ test("stripLang", () => {
   assert.deepEqual(stripLang("/en"), { lang: "en", path: "/" });
   assert.deepEqual(stripLang("/news"), { lang: "mn", path: "/news" });
   assert.deepEqual(stripLang("/english"), { lang: "mn", path: "/english" });
+  // Prerender/rewrite үед usePathname() дотоод "/mn/…" замыг буцаана — хэлгүй зам руу хэвийн болгоно
+  assert.deepEqual(stripLang("/mn/about"), { lang: "mn", path: "/about" });
+  assert.deepEqual(stripLang("/mn"), { lang: "mn", path: "/" });
+  assert.deepEqual(stripLang("/mnx"), { lang: "mn", path: "/mnx" });
+});
+
+test("switchPath from internal /mn paths", () => {
+  assert.equal(switchPath("/mn", "", "en"), "/en");
+  assert.equal(switchPath("/mn/about", "", "en"), "/en/about");
+  assert.equal(switchPath("/mn/about", "", "mn"), "/about");
+  assert.equal(switchPath("/mn/calendar", "", "en"), "/en");
 });
 
 test("switchPath", () => {

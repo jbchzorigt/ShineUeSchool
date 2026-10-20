@@ -4,6 +4,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { stripLang } from "@/lib/i18n";
 
 const TABS = [
   { href: "/calendar", label: "Академик календарь", exact: true },
@@ -11,7 +12,7 @@ const TABS = [
 ];
 
 export function CalendarTabs() {
-  const path = usePathname();
+  const path = stripLang(usePathname()).path;   // prerender үед дотоод "/mn/calendar"
   return (
     <nav aria-label="Календарийн хэсгүүд" className="flex flex-wrap gap-2 border-b border-line">
       {TABS.map((t) => {

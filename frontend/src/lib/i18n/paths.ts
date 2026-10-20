@@ -20,9 +20,12 @@ export function localePath(lang: Lang, path: string): string {
   return `/en${path}`;
 }
 
-/** Хэрэглэгчийн харах зам → хэл + хэлгүй зам ("/en/news/x" → {en, "/news/x"}, "/news" → {mn, "/news"}). */
+/** Зам → хэл + хэлгүй зам ("/en/news/x" → {en, "/news/x"}, "/news" → {mn, "/news"}). Prerender/rewrite үед usePathname()
+    дотоод "/mn/…" замыг буцаадаг тул түүнийг ч угтваргүй болгоно ("/mn/about" → {mn, "/about"}; хөтчид "/mn/…" хэзээ ч
+    харагдахгүй — proxy 308-аар шилжүүлдэг). */
 export function stripLang(pathname: string): { lang: Lang; path: string } {
   if (under(pathname, "/en")) return { lang: "en", path: pathname.slice(3) || "/" };
+  if (under(pathname, "/mn")) return { lang: "mn", path: pathname.slice(3) || "/" };
   return { lang: "mn", path: pathname };
 }
 

@@ -6,14 +6,16 @@
 
 import Image from "next/image";
 import { useVisitor } from "@/lib/visitor";
+import { useDict } from "@/components/site/LangProvider";
 
 export function VisitorBar() {
   const { visitor, loading, fbEnabled, error, login, logout } = useVisitor();
+  const t = useDict().news;
 
   if (loading) return null;
 
   if (!fbEnabled) {
-    return <p className="text-sm text-muted">Сэтгэгдэл бичих, лайк дарах нь Facebook холболт тохируулагдсаны дараа идэвхжинэ.</p>;
+    return <p className="text-sm text-muted">{t.fbDisabled}</p>;
   }
 
   if (!visitor) {
@@ -24,7 +26,7 @@ export function VisitorBar() {
           onClick={login}
           className="inline-flex w-fit items-center gap-2 rounded-lg bg-navy px-4 py-2.5 text-sm font-semibold text-white hover:bg-navy/90"
         >
-          Facebook-ээр нэвтрэх
+          {t.login}
         </button>
         {error && <p className="text-sm font-medium text-red-600">{error}</p>}
       </div>
@@ -40,7 +42,7 @@ export function VisitorBar() {
       )}
       <span className="text-sm font-semibold text-ink">{visitor.name}</span>
       <button type="button" onClick={logout} className="text-sm font-medium text-navy hover:underline">
-        Гарах
+        {t.logout}
       </button>
     </div>
   );

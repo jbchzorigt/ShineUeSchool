@@ -42,3 +42,11 @@ async def test_about_people_en(client, make_user):
     assert d["departments"][0]["teachers"][0]["role"] == "Head teacher"
     m = (await client.get("/api/about/")).json()
     assert m["leaders"][0]["position"] == "Захирал" and m["departments"][0]["name"] == "Математик"
+
+
+async def test_empty_english_editor_falls_back(client, make_user):
+    # Tiptap хоосон үедээ "<p></p>" буцаадаг — англи хуудас монгол fallback-аа алдах ёсгүй
+    h = await staff_headers(client, make_user, roles=("manager",))
+    await client.patch("/api/about/admin/page/", headers=h, json={"intro_html": "<p>Монгол</p>", "intro_html_en": "<p></p>"})
+    d = (await client.get("/api/about/?lang=en")).json()
+    assert d["page"]["intro_html"] == "<p>Монгол</p>" and d["page"]["intro_html_en"] == ""

@@ -136,18 +136,26 @@ export interface UserInput {
 
 /* ---- Мэдээ ---- */
 export interface Paged<T> { items: T[]; total: number; page: number; page_size: number }
-export interface NewsCategory { id: number; name: string; slug: string; order: number; post_count: number }
-export interface CategoryRef { id: number; name: string; slug: string }
-export interface NewsImage { id: number; image: string; caption: string; order: number }
+/* Нийтийн хариунд үндсэн талбарууд (`title`, `name` …) `?lang`-аар сонгогдсон хэлээр; `_en` талбарууд — админ засварлагчид. */
+export interface NewsCategory { id: number; name: string; name_en: string; slug: string; order: number; post_count: number }
+export interface CategoryRef { id: number; name: string; name_en: string; slug: string }
+export interface NewsImage { id: number; image: string; caption: string; caption_en: string; order: number }
 export interface PostCard {
-  id: number; title: string; slug: string; excerpt: string; cover_image: string | null;
+  id: number; title: string; title_en: string; slug: string; excerpt: string; excerpt_en: string; cover_image: string | null;
   category: CategoryRef | null; published_at: string | null; likes_count: number; comments_count: number;
 }
-export interface PostDetail extends PostCard { body_html: string; images: NewsImage[]; liked_by_me: boolean; fb_post_id: string | null }
+export interface PostDetail extends PostCard {
+  body_html: string; body_html_en: string; images: NewsImage[]; liked_by_me: boolean; fb_post_id: string | null;
+  /** Бөглөгдсөн хэлнүүд (гарчгаар) — хэл солих товч */
+  languages: ("mn" | "en")[];
+}
 export interface PostAdmin extends PostDetail {
   is_published: boolean; author: { id: number; full_name: string } | null; fb_error: string | null; created_at: string; updated_at: string;
 }
-export interface PostInput { title: string; slug?: string; excerpt: string; body_html: string; category_id: number | null; published_at: string | null }
+export interface PostInput {
+  title: string; title_en?: string; slug?: string; excerpt: string; excerpt_en?: string; body_html: string; body_html_en?: string;
+  category_id: number | null; published_at: string | null;
+}
 export interface VisitorRef { id: number; name: string; avatar_url: string }
 export interface CommentItem { id: number; body: string; created_at: string; visitor: VisitorRef; is_mine: boolean }
 export interface CommentAdmin extends CommentItem { is_hidden: boolean; post: { id: number; title: string; slug: string } }
@@ -262,28 +270,34 @@ export interface ClubRegistrationAdmin {
 }
 
 /* ---- Бидний тухай (backend/app/about/schemas.py) ---- */
-export interface AboutStat { value: string; label: string }
-export interface AboutPage { intro_title: string; intro_html: string; stats: AboutStat[] }
+export interface AboutStat { value: string; label: string; label_en?: string }
+export interface AboutPage { intro_title: string; intro_title_en: string; intro_html: string; intro_html_en: string; stats: AboutStat[] }
 export type AboutPageInput = AboutPage;
-export interface AboutLeader { id: number; full_name: string; position: string; level: number; photo: string | null }
-export interface AboutLeaderInput { full_name: string; position: string; level: number }
-export interface AboutTeacher { id: number; full_name: string; role: string; is_head: boolean }
-export interface AboutTeacherInput { full_name: string; role: string; is_head: boolean }
-export interface AboutDepartment { id: number; name: string; teachers: AboutTeacher[] }
+export interface AboutLeader { id: number; full_name: string; position: string; position_en: string; level: number; photo: string | null }
+export interface AboutLeaderInput { full_name: string; position: string; position_en?: string; level: number }
+export interface AboutTeacher { id: number; full_name: string; role: string; role_en: string; is_head: boolean }
+export interface AboutTeacherInput { full_name: string; role: string; role_en?: string; is_head: boolean }
+export interface AboutDepartment { id: number; name: string; name_en: string; teachers: AboutTeacher[] }
 export interface AboutData { page: AboutPage; leaders: AboutLeader[]; departments: AboutDepartment[] }
 
 /* ---- Хөтөлбөрүүд (backend/app/programs/schemas.py) ---- */
-export interface ProgramCard { id: number; slug: string; name: string; badge: string; summary: string; cover_image: string | null; grade_from: number; grade_to: number }
-export interface ProgramWork { id: number; image: string; title: string; student: string; caption: string }
+export interface ProgramCard {
+  id: number; slug: string; name: string; name_en: string; badge: string; summary: string; summary_en: string;
+  cover_image: string | null; grade_from: number; grade_to: number;
+}
+export interface ProgramWork { id: number; image: string; title: string; title_en: string; student: string; caption: string; caption_en: string }
 export interface Scholarship { id: number; student_name: string; photo: string | null; university: string; year: number; amount_usd: number }
 export interface ProgramRadarSeries { name: string; values: number[] }
 /** Радар график (ЭЕШ-ийн оноо г.м.): хичээлүүд × цуврал; backend radar JSONB */
 export interface ProgramRadar { title: string; subjects: string[]; series: ProgramRadarSeries[] }
-export interface ProgramDetail extends ProgramCard { body_html: string; radar: ProgramRadar | null; works: ProgramWork[]; scholarships: Scholarship[]; scholarship_total_usd: number; scholarship_count: number }
-export interface ProgramAdmin extends ProgramCard { body_html: string; is_published: boolean; order: number; works_count: number; scholarships_count: number }
+export interface ProgramDetail extends ProgramCard { body_html: string; body_html_en: string; radar: ProgramRadar | null; works: ProgramWork[]; scholarships: Scholarship[]; scholarship_total_usd: number; scholarship_count: number }
+export interface ProgramAdmin extends ProgramCard { body_html: string; body_html_en: string; is_published: boolean; order: number; works_count: number; scholarships_count: number }
 export interface ProgramAdminDetail extends ProgramAdmin { radar: ProgramRadar | null; works: ProgramWork[]; scholarships: Scholarship[] }
-export interface ProgramInput { name: string; badge: string; summary: string; grade_from: number; grade_to: number; body_html: string; is_published: boolean }
-export interface WorkInput { title: string; student: string; caption: string }
+export interface ProgramInput {
+  name: string; name_en?: string; badge: string; summary: string; summary_en?: string; grade_from: number; grade_to: number;
+  body_html: string; body_html_en?: string; is_published: boolean;
+}
+export interface WorkInput { title: string; title_en?: string; student: string; caption: string; caption_en?: string }
 export interface ScholarshipInput { student_name: string; university: string; year: number; amount_usd: number }
 
 /* ---- Төгсөгчид: улс + сургуулиуд (backend/app/graduates/schemas.py) ---- */
