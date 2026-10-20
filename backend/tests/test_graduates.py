@@ -68,3 +68,14 @@ async def test_graduate_stats(client, make_user):
     assert r.status_code == 400 and "abroad_count" in r.json()
     assert (await client.get("/api/graduates/stats/")).json()["university_percent"] == 95   # буруу PATCH хадгалагдаагүй
     assert (await client.patch(f"{A}/stats/", headers=await staff_headers(client, make_user), json={"total_graduates": 1})).status_code == 403
+
+
+async def test_public_country_names_by_lang(client, db):
+    from app.graduates.countries import CATALOGUE
+    from app.graduates.models import GraduateCountry
+    assert all(v["name_en"].strip() for v in CATALOGUE.values())
+    db.add(GraduateCountry(code="US", universities=["MIT"], order=1))
+    await db.flush()
+    en = (await client.get("/api/graduates/?lang=en")).json()
+    assert en[0]["name"] == "United States" and "name_en" not in en[0]
+    assert (await client.get("/api/graduates/")).json()[0]["name"] == "АНУ"

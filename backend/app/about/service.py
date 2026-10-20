@@ -5,8 +5,9 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..common.i18n import Lang, localized
 from ..config import settings
-from .models import PAGE_DEFAULTS, AboutPage, Department, Leader
+from .models import PAGE_DEFAULTS, AboutPage, Department, DeptTeacher, Leader
 from .schemas import DepartmentOut, LeaderOut, PageOut, StatItem, TeacherOut
 
 
@@ -29,18 +30,29 @@ async def get_page(db: AsyncSession) -> AboutPage:
     return await db.get(AboutPage, 1)  # type: ignore[return-value]
 
 
-def page_out(p: AboutPage) -> PageOut:
-    return PageOut(intro_title=p.intro_title, intro_html=p.intro_html, stats=[StatItem(**s) for s in (p.stats or [])])
+def _stat(s: dict, lang: Lang) -> StatItem:
+    en = s.get("label_en") or ""
+    return StatItem(value=s["value"], label=localized(s["label"], en, lang), label_en=en)
 
 
-def leader_out(request: Request, l: Leader) -> LeaderOut:
-    return LeaderOut(id=l.id, full_name=l.full_name, position=l.position, level=l.level,
-                     photo=media_url(request, l.photo) if l.photo else None)
+def page_out(p: AboutPage, lang: Lang = "mn") -> PageOut:
+    return PageOut(intro_title=localized(p.intro_title, p.intro_title_en, lang), intro_title_en=p.intro_title_en,
+                   intro_html=localized(p.intro_html, p.intro_html_en, lang), intro_html_en=p.intro_html_en,
+                   stats=[_stat(s, lang) for s in (p.stats or [])])
 
 
-def department_out(d: Department) -> DepartmentOut:
-    return DepartmentOut(id=d.id, name=d.name,
-                         teachers=[TeacherOut(id=t.id, full_name=t.full_name, role=t.role, is_head=t.is_head) for t in d.teachers])
+def leader_out(request: Request, l: Leader, lang: Lang = "mn") -> LeaderOut:
+    return LeaderOut(id=l.id, full_name=l.full_name, position=localized(l.position, l.position_en, lang), position_en=l.position_en,
+                     level=l.level, photo=media_url(request, l.photo) if l.photo else None)
+
+
+def teacher_out(t: DeptTeacher, lang: Lang = "mn") -> TeacherOut:
+    return TeacherOut(id=t.id, full_name=t.full_name, role=localized(t.role, t.role_en, lang), role_en=t.role_en, is_head=t.is_head)
+
+
+def department_out(d: Department, lang: Lang = "mn") -> DepartmentOut:
+    return DepartmentOut(id=d.id, name=localized(d.name, d.name_en, lang), name_en=d.name_en,
+                         teachers=[teacher_out(t, lang) for t in d.teachers])
 
 
 async def list_leaders(db: AsyncSession) -> list[Leader]:

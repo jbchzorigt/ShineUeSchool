@@ -9,6 +9,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..common.i18n import Lang
 from ..db import get_db
 from .schemas import DestinationOut, StatsOut
 from .service import get_stats, list_countries, out, stats_out
@@ -18,8 +19,9 @@ DB = Annotated[AsyncSession, Depends(get_db)]
 
 
 @router.get("/", response_model=list[DestinationOut])
-async def graduates_list(db: DB):
-    return [out(c) for c in await list_countries(db)]
+async def graduates_list(db: DB, lang: Lang = "mn"):
+    """`?lang=en` — улсын нэр англиар (каталогоос)."""
+    return [out(c, lang) for c in await list_countries(db)]
 
 
 @router.get("/stats/", response_model=StatsOut)

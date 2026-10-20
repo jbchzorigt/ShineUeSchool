@@ -21,7 +21,7 @@ from ..news.sanitize import clean_html
 from .models import Department, DeptTeacher, Leader
 from .schemas import (DepartmentIn, DepartmentOut, DepartmentPatch, LeaderOut, LeaderPatch, LeadersOrderIn, OrderIn, PageOut,
                       PagePatch, TeacherIn, TeacherOut, TeacherPatch)
-from .service import department_out, get_page, leader_out, list_departments, list_leaders, media_url, page_out
+from .service import department_out, get_page, leader_out, list_departments, list_leaders, media_url, page_out, teacher_out
 
 router = APIRouter(prefix="/api/about/admin", tags=["about-admin"])
 DB = Annotated[AsyncSession, Depends(get_db)]
@@ -56,6 +56,10 @@ async def page_patch(body: PagePatch, db: DB, _: Manager):
         p.intro_title = _clean_name(data["intro_title"], "intro_title", "Гарчиг оруулна уу.")
     if data.get("intro_html") is not None:
         p.intro_html = clean_html(data["intro_html"])
+    if data.get("intro_title_en") is not None:
+        p.intro_title_en = data["intro_title_en"].strip()
+    if data.get("intro_html_en") is not None:
+        p.intro_html_en = clean_html(data["intro_html_en"])
     await db.commit()
     return page_out(p)
 
@@ -92,9 +96,11 @@ async def leaders_list(request: Request, db: DB, _: Manager):
 
 @router.post("/leaders/", response_model=LeaderOut, status_code=201)
 async def leader_create(request: Request, db: DB, _: Manager, full_name: Annotated[str, Form()], position: Annotated[str, Form()],
-                        level: Annotated[int, Form()], photo: Annotated[UploadFile | None, File()] = None):
+                        level: Annotated[int, Form()], photo: Annotated[UploadFile | None, File()] = None,
+                        position_en: Annotated[str, Form()] = ""):
     l = Leader(full_name=_clean_name(full_name, "full_name", "Нэр оруулна уу."),
-               position=_clean_name(position, "position", "Албан тушаал оруулна уу."), level=_check_level(level))
+               position=_clean_name(position, "position", "Албан тушаал оруулна уу."), position_en=position_en.strip()[:160],
+               level=_check_level(level))
     l.order = await _next_order(db, l.level)
     if photo is not None and photo.filename:
         l.photo = await save_upload(photo, "about", "photo")
@@ -111,6 +117,8 @@ async def leader_patch(id: int, body: LeaderPatch, request: Request, db: DB, _: 
         l.full_name = _clean_name(d["full_name"], "full_name", "Нэр оруулна уу.")
     if "position" in d:
         l.position = _clean_name(d["position"], "position", "Албан тушаал оруулна уу.")
+    if d.get("position_en") is not None:
+        l.position_en = d["position_en"].strip()
     if d.get("level") is not None and d["level"] != l.level:
         l.level = _check_level(d["level"])
         l.order = await _next_order(db, l.level)
@@ -172,7 +180,7 @@ async def departments_list(db: DB, _: Manager):
 @router.post("/departments/", response_model=DepartmentOut, status_code=201)
 async def department_create(body: DepartmentIn, db: DB, _: Manager):
     mx = (await db.execute(select(func.max(Department.order)))).scalar_one()
-    d = Department(name=_clean_name(body.name, "name", "Нэр оруулна уу."), order=(mx or 0) + 1)
+    d = Department(name=_clean_name(body.name, "name", "Нэр оруулна уу."), name_en=body.name_en.strip(), order=(mx or 0) + 1)
     db.add(d)
     await db.commit()
     await db.refresh(d)
@@ -184,6 +192,8 @@ async def department_patch(id: int, body: DepartmentPatch, db: DB, _: Manager):
     d = await _get_or_404(db, Department, id)
     if body.name is not None:
         d.name = _clean_name(body.name, "name", "Нэр оруулна уу.")
+    if body.name_en is not None:
+        d.name_en = body.name_en.strip()
     await db.commit()
     await db.refresh(d)
     return department_out(d)
@@ -213,10 +223,10 @@ async def teacher_create(id: int, body: TeacherIn, db: DB, _: Manager):
     d = await _get_or_404(db, Department, id)
     mx = (await db.execute(select(func.max(DeptTeacher.order)).where(DeptTeacher.department_id == d.id))).scalar_one()
     t = DeptTeacher(department_id=d.id, full_name=_clean_name(body.full_name, "full_name", "Нэр оруулна уу."),
-                    role=body.role.strip(), is_head=body.is_head, order=(mx or 0) + 1)
+                    role=body.role.strip(), role_en=body.role_en.strip(), is_head=body.is_head, order=(mx or 0) + 1)
     db.add(t)
     await db.commit()
-    return TeacherOut(id=t.id, full_name=t.full_name, role=t.role, is_head=t.is_head)
+    return teacher_out(t)
 
 
 @router.patch("/teachers/{id}/", response_model=TeacherOut)
@@ -227,10 +237,12 @@ async def teacher_patch(id: int, body: TeacherPatch, db: DB, _: Manager):
         t.full_name = _clean_name(d["full_name"], "full_name", "Нэр оруулна уу.")
     if d.get("role") is not None:
         t.role = d["role"].strip()
+    if d.get("role_en") is not None:
+        t.role_en = d["role_en"].strip()
     if d.get("is_head") is not None:
         t.is_head = d["is_head"]
     await db.commit()
-    return TeacherOut(id=t.id, full_name=t.full_name, role=t.role, is_head=t.is_head)
+    return teacher_out(t)
 
 
 @router.delete("/teachers/{id}/", status_code=204)

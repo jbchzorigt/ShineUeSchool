@@ -74,8 +74,10 @@ async def program_create(body: ProgramIn, request: Request, db: DB, _: Manager):
     badge = _clean(body.badge, "badge", "Badge оруулна уу.")
     _check_grades(body.grade_from, body.grade_to)
     mx = (await db.execute(select(func.max(Program.order)))).scalar_one()
-    p = Program(slug=await unique_slug(db, name), name=name, badge=badge, summary=body.summary.strip(), grade_from=body.grade_from,
-                grade_to=body.grade_to, body_html=_clean_body(body.body_html), is_published=body.is_published, order=(mx or 0) + 1)
+    p = Program(slug=await unique_slug(db, name), name=name, name_en=body.name_en.strip(), badge=badge, summary=body.summary.strip(),
+                summary_en=body.summary_en.strip(), grade_from=body.grade_from, grade_to=body.grade_to,
+                body_html=_clean_body(body.body_html), body_html_en=_clean_body(body.body_html_en), is_published=body.is_published,
+                order=(mx or 0) + 1)
     db.add(p)
     await db.commit()
     await db.refresh(p)
@@ -97,6 +99,11 @@ async def program_patch(id: int, body: ProgramPatch, request: Request, db: DB, _
         p.badge = _clean(d["badge"], "badge", "Badge оруулна уу.")
     if d.get("summary") is not None:
         p.summary = d["summary"].strip()
+    for k in ("name_en", "summary_en"):   # англи талбарууд заавал биш (хоосон → монгол fallback)
+        if d.get(k) is not None:
+            setattr(p, k, d[k].strip())
+    if d.get("body_html_en") is not None:
+        p.body_html_en = _clean_body(d["body_html_en"])
     gf, gt = d.get("grade_from", p.grade_from), d.get("grade_to", p.grade_to)
     if gf is not None and gt is not None:
         _check_grades(gf, gt)
@@ -171,12 +178,13 @@ async def _next_order(db: AsyncSession, model, program_id: int) -> int:
 @router.post("/programs/{id}/works/", response_model=WorkOut, status_code=201)
 async def work_create(id: int, request: Request, db: DB, _: Manager, title: Annotated[str, Form()],
                       student: Annotated[str, Form()] = "", caption: Annotated[str, Form()] = "",
+                      title_en: Annotated[str, Form()] = "", caption_en: Annotated[str, Form()] = "",
                       image: Annotated[UploadFile | None, File()] = None):
     p = await get_or_404(db, Program, id)
     if image is None or not image.filename:
         raise FieldError("image", "Зураг оруулна уу.")
     w = ProgramWork(program_id=p.id, title=_clean(title, "title", "Гарчиг оруулна уу."), student=student.strip(), caption=caption.strip(),
-                    order=await _next_order(db, ProgramWork, p.id))
+                    title_en=title_en.strip()[:160], caption_en=caption_en.strip()[:280], order=await _next_order(db, ProgramWork, p.id))
     w.image = await save_upload(image, "programs", "image")
     db.add(w)
     await db.commit()
@@ -193,6 +201,9 @@ async def work_patch(id: int, body: WorkPatch, request: Request, db: DB, _: Mana
         w.student = d["student"].strip()
     if d.get("caption") is not None:
         w.caption = d["caption"].strip()
+    for k in ("title_en", "caption_en"):
+        if d.get(k) is not None:
+            setattr(w, k, d[k].strip())
     await db.commit()
     return work_out(request, w)
 

@@ -2,7 +2,10 @@
    Нүүр хуудасны өгөгдөл (түүх — /about, төгсөлт, хаяг, цэс).
    Түүх (2003–2026) — School Profile 2026-27 ба 2022–2026 оны тайлангаас; хаяг бодит.
    Мэдээ (Мэдээний булан) — src/lib/news-api.ts-ээр backend-ээс татна.
+   Хэлтэй өгөгдөл `Record<Lang, …>` хэлбэртэй (mn / en).
    ===================================================================== */
+
+import type { Lang } from "./i18n/paths";
 
 export interface HistoryEvent {
   /** Он; бодит он тодорхойгүй бол null (хуудсанд "[он]" гэж харагдана) */
@@ -73,21 +76,50 @@ export const CONTACT = {
   mapEmbedUrl: "https://www.google.com/maps?cid=17290213854975683691&output=embed&hl=mn",
 };
 
-// Дээд цэс: зөвхөн тусдаа хуудсууд (нүүрний #хэсэг рүү анкор байхгүй).
-// /olympiad нь header-т баруун талд "Олимпиад" + оны Bauhaus хавтантай тусдаа гарна (SiteHeader.tsx).
+// Дээд цэс: href-үүд хэлгүй зам (харуулахдаа localePath(lang, href)); хагасыг логоны зүүн, үлдсэнийг баруун талд.
+// /olympiad нь монгол header-т баруун талд "Олимпиад" + оны Bauhaus хавтантай тусдаа гарна (SiteHeader.tsx); англи цэсэнд байхгүй.
 export const OLYMPIAD_HREF = "/olympiad";
 export interface NavLink { href: string; label: string }
-/** Дээд цэс: энгийн холбоос эсвэл drop-down бүлэг (children). "Бүртгэл" бүлэг: Дугуйлан, Судалгаа, Элсэлт. */
+/** Дээд цэс: энгийн холбоос эсвэл drop-down бүлэг (children). Монгол "Бүртгэл" бүлэг: Дугуйлан, Судалгаа, Элсэлт. */
 export type NavItem = NavLink | { label: string; children: NavLink[] };
-export const NAV_LINKS: NavItem[] = [
-  { href: "/", label: "Нүүр" },
-  { href: "/about", label: "Бидний тухай" },
-  { href: "/news", label: "Мэдээ" },
-  { href: "/calendar", label: "Календарь" },
-  { label: "Бүртгэл", children: [
+export const NAV_LINKS: Record<Lang, NavItem[]> = {
+  mn: [
+    { href: "/", label: "Нүүр" },
+    { href: "/about", label: "Бидний тухай" },
+    { href: "/news", label: "Мэдээ" },
+    { href: "/calendar", label: "Календарь" },
+    { label: "Бүртгэл", children: [
+      { href: "/clubs", label: "Дугуйлан" },
+      { href: "/survey", label: "Судалгаа" },
+      { href: "/admission", label: "Элсэлт" },
+    ] },
+  ],
+  // Англи: зөвхөн англи хувилбартай хуудсууд (календарь, дугуйлан, судалгаа, олимпиад монголоор л)
+  en: [
+    { href: "/", label: "Home" },
+    { href: "/about", label: "About" },
+    { href: "/news", label: "News" },
+    { href: "/#programs", label: "Programs" },
+    { href: "/admission", label: "Admission" },
+    { href: "/#location", label: "Contact" },
+  ],
+};
+/** Хөлийн холбоосууд (дээд цэстэй ижил дараалал). */
+export const FOOTER_LINKS: Record<Lang, NavLink[]> = {
+  mn: [
+    { href: "/about", label: "Бидний тухай" },
+    { href: "/news", label: "Мэдээ" },
+    { href: "/calendar", label: "Календарь, хуваарь" },
     { href: "/clubs", label: "Дугуйлан" },
     { href: "/survey", label: "Судалгаа" },
     { href: "/admission", label: "Элсэлт" },
-  ] },
-  { href: OLYMPIAD_HREF, label: "Олимпиад" },
-];
+    { href: OLYMPIAD_HREF, label: "Олимпиад" },
+  ],
+  en: [
+    { href: "/about", label: "About" },
+    { href: "/news", label: "News" },
+    { href: "/#programs", label: "Programs" },
+    { href: "/admission", label: "Admission" },
+    { href: "/#location", label: "Contact" },
+  ],
+};

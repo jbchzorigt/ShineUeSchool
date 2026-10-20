@@ -2,6 +2,7 @@
 Хөтөлбөр — нээлттэй API (зөвхөн нийтлэгдсэн).
   GET /api/programs/          → [ProgramCard] (нүүрний картууд)
   GET /api/programs/{slug}/   → ProgramDetail (хэрэгжилт, бүтээл, тэтгэлэг + нийт дүн)
+Хэл: `?lang=mn|en` — нэр, товч, их бие, бүтээлийн гарчиг/тайлбар англиар (хоосон бол монгол).
 """
 
 from typing import Annotated
@@ -10,6 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..common.i18n import Lang
 from ..db import get_db
 from .models import Program
 from .schemas import ProgramCard, ProgramDetail
@@ -20,13 +22,13 @@ DB = Annotated[AsyncSession, Depends(get_db)]
 
 
 @router.get("/", response_model=list[ProgramCard])
-async def programs_list(request: Request, db: DB):
-    return [card_out(request, p) for p in await list_programs(db, published_only=True)]
+async def programs_list(request: Request, db: DB, lang: Lang = "mn"):
+    return [card_out(request, p, lang) for p in await list_programs(db, published_only=True)]
 
 
 @router.get("/{slug}/", response_model=ProgramDetail)
-async def program_get(slug: str, request: Request, db: DB):
+async def program_get(slug: str, request: Request, db: DB, lang: Lang = "mn"):
     p = (await db.execute(select(Program).where(Program.slug == slug, Program.is_published.is_(True)))).scalar_one_or_none()
     if p is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Олдсонгүй.")
-    return detail_out(request, p)
+    return detail_out(request, p, lang)

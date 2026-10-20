@@ -53,6 +53,11 @@ async def post_admin(request: Request, db: AsyncSession, p: Post) -> PostAdmin:
                      author=AuthorRef(id=author.id, full_name=author.full_name or author.username) if author else None)
 
 
+def _require_title(title: str, title_en: str) -> None:
+    if not ((title or "").strip() or (title_en or "").strip()):
+        raise FieldError("title", "Монгол эсвэл англи гарчиг заавал.")
+
+
 async def _apply_slug(db: AsyncSession, p: Post, wanted: str | None, title: str) -> None:
     base = slugify(wanted) if wanted else slugify(title)
     if wanted:
@@ -89,9 +94,11 @@ async def admin_posts(request: Request, db: DB, page: int = 1, page_size: int = 
 async def admin_post_create(body: PostIn, request: Request, db: DB, me: Editor):
     if body.category_id is not None and await db.get(Category, body.category_id) is None:
         raise FieldError("category_id", "Ангилал олдсонгүй.")
-    p = Post(title=body.title, excerpt=body.excerpt, body_html=clean_html(body.body_html),
+    _require_title(body.title, body.title_en)
+    p = Post(title=body.title.strip(), title_en=body.title_en.strip(), excerpt=body.excerpt, excerpt_en=body.excerpt_en,
+             body_html=clean_html(body.body_html), body_html_en=clean_html(body.body_html_en),
              category_id=body.category_id, published_at=body.published_at, author_id=me.id, is_published=False)
-    await _apply_slug(db, p, body.slug, body.title)
+    await _apply_slug(db, p, body.slug, p.title or p.title_en)   # монгол гарчиггүй бол англиас
     db.add(p)
     await db.flush()
     await db.commit()
@@ -108,8 +115,14 @@ async def admin_post_get(id: int, request: Request, db: DB):
 async def admin_post_patch(id: int, body: PostPatch, request: Request, db: DB):
     p = await get_post_or_404(db, id)
     data = body.model_dump(exclude_unset=True)
-    if "body_html" in data and data["body_html"] is not None:
-        data["body_html"] = clean_html(data["body_html"])
+    for k in ("body_html", "body_html_en"):
+        if data.get(k) is not None:
+            data[k] = clean_html(data[k])
+    for k in ("title", "title_en"):
+        if data.get(k) is not None:
+            data[k] = data[k].strip()
+    _require_title(data.get("title") if data.get("title") is not None else p.title,
+                   data.get("title_en") if data.get("title_en") is not None else p.title_en)
     if data.get("category_id") is not None and await db.get(Category, data["category_id"]) is None:
         raise FieldError("category_id", "Ангилал олдсонгүй.")
     slug = data.pop("slug", None)
@@ -117,7 +130,7 @@ async def admin_post_patch(id: int, body: PostPatch, request: Request, db: DB):
         if v is not None or k in ("category_id", "published_at"):
             setattr(p, k, v)
     if slug is not None:
-        await _apply_slug(db, p, slug, p.title)
+        await _apply_slug(db, p, slug, p.title or p.title_en)
     await db.commit()
     await db.refresh(p)
     return await post_admin(request, db, p)
@@ -160,12 +173,18 @@ async def admin_cover_delete(id: int, request: Request, db: DB):
 
 @router.post("/posts/{id}/images/", response_model=ImageOut, status_code=201)
 async def admin_image_add(id: int, request: Request, db: DB, image: Annotated[UploadFile, File()],
-                          caption: Annotated[str, Form()] = "", order: Annotated[int, Form()] = 0):
+                          caption: Annotated[str, Form()] = "", caption_en: Annotated[str, Form()] = "",
+                          order: Annotated[int, Form()] = 0):
     p = await get_post_or_404(db, id)
-    img = PostImage(post_id=p.id, image=await save_upload(image, "news/gallery"), caption=caption[:200], order=order)
+    img = PostImage(post_id=p.id, image=await save_upload(image, "news/gallery"), caption=caption[:200], caption_en=caption_en[:200],
+                    order=order)
     db.add(img)
     await db.commit()
-    return ImageOut(id=img.id, image=media_url(request, img.image), caption=img.caption, order=img.order)
+    return _image_out(request, img)
+
+
+def _image_out(request: Request, img: PostImage) -> ImageOut:
+    return ImageOut(id=img.id, image=media_url(request, img.image), caption=img.caption, caption_en=img.caption_en, order=img.order)
 
 
 @router.patch("/images/{id}/", response_model=ImageOut)
@@ -177,7 +196,7 @@ async def admin_image_patch(id: int, body: ImagePatch, request: Request, db: DB)
         if v is not None:
             setattr(img, k, v)
     await db.commit()
-    return ImageOut(id=img.id, image=media_url(request, img.image), caption=img.caption, order=img.order)
+    return _image_out(request, img)
 
 
 @router.delete("/images/{id}/", status_code=204)
@@ -214,8 +233,12 @@ async def admin_publish(id: int, body: PublishIn, request: Request, db: DB):
             fb = FbResult(ok=False, error="Facebook холболт тохируулагдаагүй.")
         else:
             client: FacebookClient = request.app.dependency_overrides.get(get_facebook, get_facebook)()
+            # Монгол хувилбар; монгол гарчиггүй (зөвхөн англи) мэдээ бол англи текст + /en холбоос
+            mn = bool(p.title.strip())
+            title, excerpt = (p.title, p.excerpt) if mn else (p.title_en, p.excerpt_en)
+            link = f"{settings.public_site_url}{'' if mn else '/en'}/news/{p.slug}"
             try:
-                p.fb_post_id = await client.post_to_page(f"{p.title}\n\n{p.excerpt}".strip(), f"{settings.public_site_url}/news/{p.slug}")
+                p.fb_post_id = await client.post_to_page(f"{title}\n\n{excerpt}".strip(), link)
                 p.fb_error = None
                 fb = FbResult(ok=True, post_id=p.fb_post_id)
             except FacebookError as e:
@@ -240,12 +263,12 @@ async def admin_unpublish(id: int, request: Request, db: DB):
 async def admin_categories(db: DB):
     counts = dict((await db.execute(select(Post.category_id, func.count()).group_by(Post.category_id))).all())
     cats = (await db.execute(select(Category).order_by(Category.order, Category.name))).scalars().all()
-    return [CategoryOut(id=c.id, name=c.name, slug=c.slug, order=c.order, post_count=counts.get(c.id, 0)) for c in cats]
+    return [CategoryOut(id=c.id, name=c.name, name_en=c.name_en, slug=c.slug, order=c.order, post_count=counts.get(c.id, 0)) for c in cats]
 
 
 @router.post("/categories/", response_model=CategoryOut, status_code=201)
 async def admin_category_create(body: CategoryIn, db: DB):
-    c = Category(name=body.name, slug=slugify(body.slug or body.name), order=body.order)
+    c = Category(name=body.name, name_en=body.name_en.strip(), slug=slugify(body.slug or body.name), order=body.order)
     db.add(c)
     try:
         await db.flush()
@@ -253,7 +276,7 @@ async def admin_category_create(body: CategoryIn, db: DB):
         await db.rollback()
         raise FieldError("slug", "Ийм slug-тай ангилал байна.") from None
     await db.commit()
-    return CategoryOut(id=c.id, name=c.name, slug=c.slug, order=c.order)
+    return CategoryOut(id=c.id, name=c.name, name_en=c.name_en, slug=c.slug, order=c.order)
 
 
 @router.patch("/categories/{id}/", response_model=CategoryOut)
@@ -273,7 +296,7 @@ async def admin_category_patch(id: int, body: CategoryPatch, db: DB):
         await db.rollback()
         raise FieldError("slug", "Ийм slug-тай ангилал байна.") from None
     await db.commit()
-    return CategoryOut(id=c.id, name=c.name, slug=c.slug, order=c.order)
+    return CategoryOut(id=c.id, name=c.name, name_en=c.name_en, slug=c.slug, order=c.order)
 
 
 @router.delete("/categories/{id}/", status_code=204)
@@ -296,7 +319,7 @@ def _page(page: int, page_size: int) -> tuple[int, int, int]:
 def _comment_admin(c: Comment, v: Visitor, p: Post) -> CommentAdmin:
     return CommentAdmin(id=c.id, body=c.body, created_at=c.created_at, is_mine=False, is_hidden=c.is_hidden,
                         visitor=VisitorOut(id=v.id, name=v.name, avatar_url=v.avatar_url),
-                        post=PostRef(id=p.id, title=p.title, slug=p.slug))
+                        post=PostRef(id=p.id, title=p.title or p.title_en, slug=p.slug))
 
 
 @router.get("/comments/", response_model=CommentAdminPage)

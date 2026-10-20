@@ -8,6 +8,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..common.i18n import Lang
 from ..db import get_db
 from .schemas import AboutOut
 from .service import department_out, get_page, leader_out, list_departments, list_leaders, page_out
@@ -17,9 +18,10 @@ DB = Annotated[AsyncSession, Depends(get_db)]
 
 
 @router.get("/", response_model=AboutOut)
-async def about_get(request: Request, db: DB):
+async def about_get(request: Request, db: DB, lang: Lang = "mn"):
+    """`?lang=en` — танилцуулга, үзүүлэлтийн шошго, албан тушаал, тэнхим, багшийн үүрэг англиар (хоосон бол монгол)."""
     return AboutOut(
-        page=page_out(await get_page(db)),
-        leaders=[leader_out(request, l) for l in await list_leaders(db)],
-        departments=[department_out(d) for d in await list_departments(db)],
+        page=page_out(await get_page(db), lang),
+        leaders=[leader_out(request, l, lang) for l in await list_leaders(db)],
+        departments=[department_out(d, lang) for d in await list_departments(db)],
     )

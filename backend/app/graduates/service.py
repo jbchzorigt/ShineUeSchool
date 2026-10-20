@@ -3,6 +3,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..common.errors import FieldError
+from ..common.i18n import Lang, localized
 from .countries import CATALOGUE
 from .models import STATS_DEFAULTS, GraduateCountry, GraduateStats
 from .schemas import DestinationOut, StatsOut, StatsPatch
@@ -11,8 +12,9 @@ MAX_UNIVERSITIES = 100
 MAX_NAME = 200
 
 
-def out(c: GraduateCountry) -> DestinationOut:
-    info = CATALOGUE[c.code]
+def out(c: GraduateCountry, lang: Lang = "mn") -> DestinationOut:
+    info = {k: v for k, v in CATALOGUE[c.code].items() if k != "name_en"}
+    info["name"] = localized(info["name"], CATALOGUE[c.code]["name_en"], lang)
     return DestinationOut(id=c.id, universities=list(c.universities or []), order=c.order, **info)
 
 

@@ -20,8 +20,10 @@ class AboutPage(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     intro_title: Mapped[str] = mapped_column(String(160), default=PAGE_DEFAULTS["intro_title"])
+    intro_title_en: Mapped[str] = mapped_column(String(160), default="", server_default="")
     intro_html: Mapped[str] = mapped_column(Text, default="")
-    stats: Mapped[list] = mapped_column(JSONB, default=list)  # [{value, label}] 0–4
+    intro_html_en: Mapped[str] = mapped_column(Text, default="", server_default="")
+    stats: Mapped[list] = mapped_column(JSONB, default=list)  # [{value, label, label_en}] 0–4
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 
@@ -31,6 +33,7 @@ class Leader(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     full_name: Mapped[str] = mapped_column(String(120))
     position: Mapped[str] = mapped_column(String(160))
+    position_en: Mapped[str] = mapped_column(String(160), default="", server_default="")
     level: Mapped[int] = mapped_column(SmallInteger, default=1)   # 1–3
     order: Mapped[int] = mapped_column(SmallInteger, default=0)
     photo: Mapped[str | None] = mapped_column(String(255), nullable=True)   # "about/uuid.jpg"
@@ -41,6 +44,7 @@ class Department(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(120))
+    name_en: Mapped[str] = mapped_column(String(120), default="", server_default="")
     order: Mapped[int] = mapped_column(SmallInteger, default=0)
     teachers: Mapped[list["DeptTeacher"]] = relationship(
         lazy="selectin", cascade="all, delete-orphan",
@@ -55,5 +59,6 @@ class DeptTeacher(Base):
     department_id: Mapped[int] = mapped_column(ForeignKey("about_departments.id", ondelete="CASCADE"), index=True)
     full_name: Mapped[str] = mapped_column(String(120))
     role: Mapped[str] = mapped_column(String(120), default="")
+    role_en: Mapped[str] = mapped_column(String(120), default="", server_default="")
     is_head: Mapped[bool] = mapped_column(Boolean, default=False)
     order: Mapped[int] = mapped_column(SmallInteger, default=0)

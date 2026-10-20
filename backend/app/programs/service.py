@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import noload
 
 from ..common.errors import FieldError
+from ..common.i18n import Lang, localized
 from ..config import settings
 from ..news.slug import slugify
 from .models import Program, ProgramWork, Scholarship
@@ -48,32 +49,34 @@ async def list_programs(db: AsyncSession, published_only: bool) -> list[Program]
     return list((await db.execute(q)).scalars().all())
 
 
-def _card(request: Request, p: Program) -> dict:
-    return dict(id=p.id, slug=p.slug, name=p.name, badge=p.badge, summary=p.summary, cover_image=_url(request, p.cover_image),
+def _card(request: Request, p: Program, lang: Lang = "mn") -> dict:
+    return dict(id=p.id, slug=p.slug, name=localized(p.name, p.name_en, lang), name_en=p.name_en, badge=p.badge,
+                summary=localized(p.summary, p.summary_en, lang), summary_en=p.summary_en, cover_image=_url(request, p.cover_image),
                 grade_from=p.grade_from, grade_to=p.grade_to)
 
 
-def card_out(request: Request, p: Program) -> ProgramCard:
-    return ProgramCard(**_card(request, p))
+def card_out(request: Request, p: Program, lang: Lang = "mn") -> ProgramCard:
+    return ProgramCard(**_card(request, p, lang))
 
 
-def work_out(request: Request, w: ProgramWork) -> WorkOut:
-    return WorkOut(id=w.id, image=media_url(request, w.image), title=w.title, student=w.student, caption=w.caption)
+def work_out(request: Request, w: ProgramWork, lang: Lang = "mn") -> WorkOut:
+    return WorkOut(id=w.id, image=media_url(request, w.image), title=localized(w.title, w.title_en, lang), title_en=w.title_en,
+                   student=w.student, caption=localized(w.caption, w.caption_en, lang), caption_en=w.caption_en)
 
 
 def scholarship_out(request: Request, s: Scholarship) -> ScholarshipOut:
     return ScholarshipOut(id=s.id, student_name=s.student_name, photo=_url(request, s.photo), university=s.university, year=s.year, amount_usd=s.amount_usd)
 
 
-def detail_out(request: Request, p: Program) -> ProgramDetail:
-    return ProgramDetail(**_card(request, p), body_html=p.body_html, radar=radar_out(p),
-                         works=[work_out(request, w) for w in p.works],
+def detail_out(request: Request, p: Program, lang: Lang = "mn") -> ProgramDetail:
+    return ProgramDetail(**_card(request, p, lang), body_html=localized(p.body_html, p.body_html_en, lang), body_html_en=p.body_html_en,
+                         radar=radar_out(p), works=[work_out(request, w, lang) for w in p.works],
                          scholarships=[scholarship_out(request, s) for s in p.scholarships],
                          scholarship_total_usd=sum(s.amount_usd for s in p.scholarships), scholarship_count=len(p.scholarships))
 
 
 def admin_out(request: Request, p: Program) -> ProgramAdmin:
-    return ProgramAdmin(**_card(request, p), body_html=p.body_html, is_published=p.is_published, order=p.order,
+    return ProgramAdmin(**_card(request, p), body_html=p.body_html, body_html_en=p.body_html_en, is_published=p.is_published, order=p.order,
                         works_count=len(p.works), scholarships_count=len(p.scholarships))
 
 
