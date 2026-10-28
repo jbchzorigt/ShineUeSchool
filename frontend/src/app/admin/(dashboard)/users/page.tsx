@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/auth";
 import { useFetch } from "@/lib/useFetch";
 import type { RoleCode, User, UserInput } from "@/lib/types";
 import { Badge, Button, Empty, Field, Input, Modal, Spinner, Table, Td, Th } from "@/components/ui";
+import { DeleteLabel, EditLabel } from "@/components/admin/ActionLabel";
 
 const empty = (): UserInput => ({ username: "", password: "", full_name: "", email: "", is_active: true, is_superuser: false, roles: [] });
 
@@ -74,9 +75,9 @@ export default function UsersPage() {
                 {u.roles.map((r) => <Badge key={r}>{rolesQ.data?.find((x) => x.code === r)?.name ?? r}</Badge>)}
               </Td>
               <Td>{u.is_active ? <Badge tone="green">идэвхтэй</Badge> : <Badge tone="slate">идэвхгүй</Badge>}</Td>
-              <Td className="text-right space-x-2">
-                <Button variant="ghost" onClick={() => openEdit(u)}>Засах</Button>
-                {u.id !== me?.id && <Button variant="danger" onClick={() => remove(u)}>Устгах</Button>}
+              <Td className="whitespace-nowrap text-right space-x-2">
+                <Button variant="ghost" onClick={() => openEdit(u)}><EditLabel /></Button>
+                {u.id !== me?.id && <Button variant="danger" onClick={() => remove(u)}><DeleteLabel /></Button>}
               </Td>
             </tr>
           ))}

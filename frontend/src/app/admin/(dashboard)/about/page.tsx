@@ -10,6 +10,7 @@ import { Button, Card, Field, Input, Spinner } from "@/components/ui";
 import { api, ApiError } from "@/lib/api";
 import { useFetch } from "@/lib/useFetch";
 import type { AboutPageInput, AboutStat } from "@/lib/types";
+import { DeleteLabel, actionBtn } from "@/components/admin/ActionLabel";
 
 const STATS_MAX = 4;
 
@@ -74,7 +75,7 @@ export default function AboutPageAdmin() {
             <Field label="Тоо"><Input value={s.value} onChange={(e) => setStat(i, { value: e.target.value })} maxLength={20} placeholder="1200+" /></Field>
             <div className="flex-1"><Field label="Шошго"><Input value={s.label} onChange={(e) => setStat(i, { label: e.target.value })} maxLength={60} placeholder="Суралцагчид" /></Field></div>
             <div className="flex-1"><Field label="Шошго (English)"><Input value={s.label_en ?? ""} onChange={(e) => setStat(i, { label_en: e.target.value })} maxLength={60} placeholder="Students" lang="en" /></Field></div>
-            <button type="button" onClick={() => set({ stats: data.stats.filter((_, j) => j !== i) })} className="mb-1 inline-grid h-9 w-9 place-items-center rounded-lg text-red-600 hover:bg-red-50" aria-label="Устгах" title="Устгах">🗑</button>
+            <button type="button" onClick={() => set({ stats: data.stats.filter((_, j) => j !== i) })} className={`${actionBtn} mb-1 text-red-600 hover:bg-red-50`}><DeleteLabel /></button>
           </div>
         ))}
         {errors.stats && <p className="text-xs font-medium text-red-600">{errors.stats}</p>}

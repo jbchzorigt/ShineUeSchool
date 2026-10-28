@@ -8,6 +8,7 @@ import { Button, Card, Empty, Input } from "@/components/ui";
 import { api, ApiError } from "@/lib/api";
 import type { ProgramWork, WorkInput } from "@/lib/types";
 import { WorkDialog } from "./WorkDialog";
+import { DeleteLabel, EditLabel, actionBtn } from "@/components/admin/ActionLabel";
 
 const iconBtn = "inline-grid h-8 w-8 place-items-center rounded-lg text-base transition hover:bg-navy/10";
 
@@ -73,8 +74,8 @@ export function WorksPanel({ programId, works, onChanged }: { programId: number;
                 <button type="button" onClick={() => move(i, -1)} disabled={moving || i === 0} className="px-1 text-navy disabled:opacity-30" aria-label="Дээш">▲</button>
                 <button type="button" onClick={() => move(i, 1)} disabled={moving || i === works.length - 1} className="px-1 text-navy disabled:opacity-30" aria-label="Доош">▼</button>
                 <label className={`${iconBtn} cursor-pointer text-navy`} title="Зураг солих"><span aria-hidden="true">🖼</span><input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" aria-label="Зураг солих" onChange={(e) => { replaceImage(w, e.target.files?.[0]); e.target.value = ""; }} /></label>
-                <button type="button" onClick={() => setEditing({ id: w.id, title: w.title, title_en: w.title_en, student: w.student, caption: w.caption, caption_en: w.caption_en })} className={`${iconBtn} text-navy`} aria-label="Засах" title="Засах">✎</button>
-                <button type="button" onClick={() => remove(w)} className={`${iconBtn} ml-auto text-red-600 hover:bg-red-50`} aria-label="Устгах" title="Устгах">🗑</button>
+                <button type="button" onClick={() => setEditing({ id: w.id, title: w.title, title_en: w.title_en, student: w.student, caption: w.caption, caption_en: w.caption_en })} className={`${actionBtn} text-navy hover:bg-navy/10`}><EditLabel /></button>
+                <button type="button" onClick={() => remove(w)} className={`${actionBtn} ml-auto text-red-600 hover:bg-red-50`}><DeleteLabel /></button>
               </span>
             </li>
           ))}

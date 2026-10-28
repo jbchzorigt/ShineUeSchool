@@ -7,6 +7,7 @@ import Image from "next/image";
 import { Button, Card, Empty } from "@/components/ui";
 import { api, ApiError } from "@/lib/api";
 import type { AboutLeader } from "@/lib/types";
+import { DeleteLabel, EditLabel, actionBtn } from "@/components/admin/ActionLabel";
 
 const LEVEL_HINT: Record<number, string> = { 1: "захирал", 2: "дэд захирлууд", 3: "менежерүүд" };
 const levelLabel = (lv: number) => `${lv}-р түвшин${LEVEL_HINT[lv] ? ` (${LEVEL_HINT[lv]})` : ""}`;
@@ -62,8 +63,8 @@ export function LeaderList({ leaders, levels, canAddLevel, onAdd, onAddLevel, on
                       <span className="block truncate text-sm text-slate-600">{l.position}</span>
                     </span>
                     <span className="whitespace-nowrap">
-                      <button type="button" onClick={() => onEdit(l)} className={`${iconBtn} text-navy`} aria-label="Засах" title="Засах">✎</button>
-                      <button type="button" onClick={() => remove(l)} className={`${iconBtn} text-red-600 hover:bg-red-50`} aria-label="Устгах" title="Устгах">🗑</button>
+                      <button type="button" onClick={() => onEdit(l)} className={`${actionBtn} text-navy hover:bg-navy/10`}><EditLabel /></button>
+                      <button type="button" onClick={() => remove(l)} className={`${actionBtn} text-red-600 hover:bg-red-50`}><DeleteLabel /></button>
                     </span>
                   </li>
                 ))}

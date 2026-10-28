@@ -29,6 +29,10 @@ export const en: Dict = {
   footer: {
     name: "Shine Ue School",
     pages: "Pages",
+    social: "Links",
+    maps: "View on Google Maps",
+    emailUs: "Send us an email",
+    facebook: "Facebook page",
   },
   home: {
     hero: {

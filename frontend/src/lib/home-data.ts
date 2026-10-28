@@ -85,6 +85,8 @@ export const CONTACT = {
   // Утас, и-мэйл — сургуулийн албан ёсны (хэрэглэгчийн өгсөн). Хаяг, ажлын цаг хэлээр — толь бичигт (home.location).
   phone: "(+976) 7012 8044",
   email: "info@shineue.edu.mn",
+  /** Сургуулийн Facebook хуудас — хоосон бол footer-т Facebook icon харагдахгүй (⚠ бодит хаягийг бөглөнө) */
+  facebookUrl: "",
   /** Google Maps-ийн холбоос (сургуулийн place, cid) */
   mapUrl: "https://www.google.com/maps?cid=17290213854975683691",
   /** Google Maps embed URL (ижил place, output=embed); хоосон бол орлуулагч харагдана */

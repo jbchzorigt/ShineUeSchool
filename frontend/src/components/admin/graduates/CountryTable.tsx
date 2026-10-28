@@ -7,8 +7,8 @@ import { Table, Td, Th } from "@/components/ui";
 import { CONTINENTS } from "@/lib/home-data";
 import { api, ApiError } from "@/lib/api";
 import type { GraduateDestination } from "@/lib/types";
+import { DeleteLabel, EditLabel, actionBtn } from "@/components/admin/ActionLabel";
 
-const iconBtn = "inline-grid h-8 w-8 place-items-center rounded-lg text-base transition hover:bg-navy/10";
 
 export function CountryTable({ items, onEdit, onChanged }: { items: GraduateDestination[]; onEdit: (d: GraduateDestination) => void; onChanged: () => void }) {
   const [moving, setMoving] = useState(false);
@@ -42,8 +42,8 @@ export function CountryTable({ items, onEdit, onChanged }: { items: GraduateDest
             <span className="text-xs text-slate-400">{d.universities.length} сургууль</span>
           </Td>
           <Td className="whitespace-nowrap text-right">
-            <button type="button" onClick={() => onEdit(d)} className={`${iconBtn} text-navy`} aria-label="Засах" title="Засах">✎</button>
-            <button type="button" onClick={() => remove(d)} className={`${iconBtn} text-red-600 hover:bg-red-50`} aria-label="Устгах" title="Устгах">🗑</button>
+            <button type="button" onClick={() => onEdit(d)} className={`${actionBtn} text-navy hover:bg-navy/10`}><EditLabel /></button>
+            <button type="button" onClick={() => remove(d)} className={`${actionBtn} text-red-600 hover:bg-red-50`}><DeleteLabel /></button>
           </Td>
         </tr>
       ))}

@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Badge, Button, Input, Select } from "@/components/ui";
 import { api, ApiError } from "@/lib/api";
 import type { ClubRound } from "@/lib/types";
+import { DeleteLabel, EditLabel } from "@/components/admin/ActionLabel";
 
 export function RoundBar({ rounds, current, onSelect, onChanged }: {
   rounds: ClubRound[]; current: ClubRound | null; onSelect: (id: number) => void; onChanged: () => void;
@@ -44,14 +45,14 @@ export function RoundBar({ rounds, current, onSelect, onChanged }: {
           <Button variant="ghost" onClick={() => { setMode("new"); setName(""); setError(""); }}>+ Шинэ ээлж</Button>
           {current && (
             <>
-              <Button variant="ghost" onClick={() => { setMode("rename"); setName(current.name); setError(""); }}>Нэр засах</Button>
+              <Button variant="ghost" onClick={() => { setMode("rename"); setName(current.name); setError(""); }}><EditLabel text="Нэр засах" /></Button>
               {!current.is_active && (
                 <Button variant="secondary" onClick={() => confirm("Энэ ээлжийг идэвхжүүлэх үү? Бусад ээлж идэвхгүй болно.") &&
                   run(() => api.clubsAdmin.rounds.update(current.id, { is_active: true }), "Идэвхжүүлж чадсангүй.")}>Идэвхжүүлэх</Button>
               )}
               <Button variant="ghost" onClick={download}>Excel татах</Button>
               <Button variant="danger" onClick={() => confirm(`«${current.name}» ээлжийг устгах уу? Дугуйлангууд нь устана.`) &&
-                run(() => api.clubsAdmin.rounds.remove(current.id), "Устгаж чадсангүй.")}>Устгах</Button>
+                run(() => api.clubsAdmin.rounds.remove(current.id), "Устгаж чадсангүй.")}><DeleteLabel /></Button>
             </>
           )}
         </div>

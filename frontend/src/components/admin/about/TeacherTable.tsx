@@ -7,8 +7,8 @@ import { useState, type FormEvent } from "react";
 import { Button, Card, Empty, Input, Table, Td, Th } from "@/components/ui";
 import { api, ApiError } from "@/lib/api";
 import type { AboutDepartment, AboutTeacher, AboutTeacherInput } from "@/lib/types";
+import { DeleteLabel, EditLabel, actionBtn } from "@/components/admin/ActionLabel";
 
-const iconBtn = "inline-grid h-8 w-8 place-items-center rounded-lg text-base transition hover:bg-navy/10";
 const EMPTY: AboutTeacherInput = { full_name: "", role: "", role_en: "", is_head: false };
 
 export function TeacherTable({ department, onChanged }: { department: AboutDepartment; onChanged: () => void }) {
@@ -81,8 +81,8 @@ export function TeacherTable({ department, onChanged }: { department: AboutDepar
               )}
               <Td><input type="checkbox" checked={t.is_head} onChange={() => toggleHead(t)} aria-label={`${t.full_name} эрхлэгч`} className="h-4 w-4 accent-navy" /></Td>
               <Td className="whitespace-nowrap text-right">
-                <button type="button" onClick={() => setEditing({ id: t.id, full_name: t.full_name, role: t.role, role_en: t.role_en, is_head: t.is_head })} className={`${iconBtn} text-navy`} aria-label="Засах" title="Засах">✎</button>
-                <button type="button" onClick={() => remove(t)} className={`${iconBtn} text-red-600 hover:bg-red-50`} aria-label="Устгах" title="Устгах">🗑</button>
+                <button type="button" onClick={() => setEditing({ id: t.id, full_name: t.full_name, role: t.role, role_en: t.role_en, is_head: t.is_head })} className={`${actionBtn} text-navy hover:bg-navy/10`}><EditLabel /></button>
+                <button type="button" onClick={() => remove(t)} className={`${actionBtn} text-red-600 hover:bg-red-50`}><DeleteLabel /></button>
               </Td>
             </tr>
           ))}

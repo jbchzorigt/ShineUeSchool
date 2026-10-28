@@ -7,6 +7,7 @@ import { api, ApiError } from "@/lib/api";
 import type { Stage, StageInput } from "@/lib/types";
 import { useFetch } from "@/lib/useFetch";
 import { Badge, Button, Empty, Field, Input, Modal, Spinner, Table, Td, Textarea, Th } from "@/components/ui";
+import { DeleteLabel, EditLabel } from "@/components/admin/ActionLabel";
 
 const empty = (year: number, order: number): StageInput => ({
   year, order, title: "", date_text: `${year} · `, date: null, text: "", tags: [], location: "",
@@ -102,9 +103,9 @@ export default function SchedulePage() {
               <Td><div className="font-semibold">{s.title}</div>{s.location && <div className="text-xs text-slate-500">{s.location}</div>}</Td>
               <Td className="hidden max-w-md text-slate-600 lg:table-cell">{s.text}</Td>
               <Td><div className="flex flex-wrap gap-1">{s.tags.map((t) => <Badge key={t} tone="slate">{t}</Badge>)}</div></Td>
-              <Td className="text-right">
-                <Button variant="ghost" onClick={() => setEditing({ id: s.id, data: { ...s } })}>Засах</Button>
-                <Button variant="ghost" className="text-red-600 hover:bg-red-50" onClick={() => remove(s)}>Устгах</Button>
+              <Td className="whitespace-nowrap text-right">
+                <Button variant="ghost" onClick={() => setEditing({ id: s.id, data: { ...s } })}><EditLabel /></Button>
+                <Button variant="ghost" className="text-red-600 hover:bg-red-50" onClick={() => remove(s)}><DeleteLabel /></Button>
               </Td>
             </tr>
           ))}

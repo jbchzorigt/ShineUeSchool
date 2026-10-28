@@ -8,8 +8,9 @@ import { STATE_LABEL, STATE_TONE, formatFee, formatGrades, formatPeriod } from "
 import { api, ApiError } from "@/lib/api";
 import type { ClubAdmin } from "@/lib/types";
 import { QuotaRows } from "@/components/clubs/QuotaRows";
+import { ClipboardList } from "lucide-react";
+import { DeleteLabel, EditLabel, actionBtn } from "@/components/admin/ActionLabel";
 
-const iconBtn = "inline-grid h-8 w-8 place-items-center rounded-lg text-base transition hover:bg-navy/10";
 
 export function ClubTable({ clubs, onEdit, onChanged }: { clubs: ClubAdmin[]; onEdit: (c: ClubAdmin) => void; onChanged: () => void }) {
   async function move(i: number, dir: -1 | 1) {
@@ -45,9 +46,11 @@ export function ClubTable({ clubs, onEdit, onChanged }: { clubs: ClubAdmin[]; on
             {!c.is_published && <Badge tone="gold">Нийтлээгүй</Badge>}
           </Td>
           <Td className="whitespace-nowrap text-right">
-            <button type="button" onClick={() => onEdit(c)} className={`${iconBtn} text-navy`} aria-label="Засах" title="Засах">✎</button>
-            <Link href={`/admin/clubs/${c.id}`} className={`${iconBtn} text-navy`} aria-label="Бүртгэл, зураг" title="Бүртгэл, зураг">☷</Link>
-            <button type="button" onClick={() => remove(c)} className={`${iconBtn} text-red-600 hover:bg-red-50`} aria-label="Устгах" title="Устгах">🗑</button>
+            <button type="button" onClick={() => onEdit(c)} className={`${actionBtn} text-navy hover:bg-navy/10`}><EditLabel /></button>
+            <Link href={`/admin/clubs/${c.id}`} className={`${actionBtn} text-navy hover:bg-navy/10`}>
+              <ClipboardList size={15} strokeWidth={2.2} aria-hidden="true" className="shrink-0" />Бүртгэл, зураг
+            </Link>
+            <button type="button" onClick={() => remove(c)} className={`${actionBtn} text-red-600 hover:bg-red-50`}><DeleteLabel /></button>
           </Td>
         </tr>
       ))}

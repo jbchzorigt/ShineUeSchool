@@ -29,6 +29,10 @@ export const mn = {
   footer: {
     name: "Шинэ Үе сургууль",
     pages: "Хуудсууд",
+    social: "Холбоос",
+    maps: "Google Maps дээр харах",
+    emailUs: "И-мэйл илгээх",
+    facebook: "Facebook хуудас",
   },
   home: {
     hero: {

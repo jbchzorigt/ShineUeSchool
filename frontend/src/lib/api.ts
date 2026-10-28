@@ -98,7 +98,9 @@ export async function revalidateCache(tags: string[], paths: string[] = ["/mn", 
     await fetch("/api/revalidate", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${t.access}` }, body: JSON.stringify({ tags, paths }) });
   } catch { /* ignore */ }
 }
-const afterSave = <T,>(p: Promise<T>, tags: string[]): Promise<T> => p.then((r) => { void revalidateCache(tags); return r; });
+const afterSave = <T,>(p: Promise<T>, tags: string[], paths?: string[]): Promise<T> => p.then((r) => { void revalidateCache(tags, paths); return r; });
+/** Олимпиадын хуудас + header-ийн оны хавтантай нүүр хуудсууд */
+const OLYMPIAD_PATHS = ["/olympiad", "/mn", "/en"];
 
 const q = (params: Record<string, string | number | boolean | undefined>) => {
   const s = new URLSearchParams();
@@ -124,18 +126,18 @@ export const api = {
   /* ---- хуваарь ---- */
   stages: {
     list: (year?: number) => request<Stage[]>(`/api/olympiad/schedule/${q({ year })}`, { auth: false }),
-    create: (d: StageInput) => request<Stage>("/api/olympiad/schedule/", { method: "POST", body: d }),
-    update: (id: number, d: Partial<StageInput>) => request<Stage>(`/api/olympiad/schedule/${id}/`, { method: "PATCH", body: d }),
-    remove: (id: number) => request<void>(`/api/olympiad/schedule/${id}/`, { method: "DELETE" }),
+    create: (d: StageInput) => afterSave(request<Stage>("/api/olympiad/schedule/", { method: "POST", body: d }), ["olympiad"], OLYMPIAD_PATHS),
+    update: (id: number, d: Partial<StageInput>) => afterSave(request<Stage>(`/api/olympiad/schedule/${id}/`, { method: "PATCH", body: d }), ["olympiad"], OLYMPIAD_PATHS),
+    remove: (id: number) => afterSave(request<void>(`/api/olympiad/schedule/${id}/`, { method: "DELETE" }), ["olympiad"], OLYMPIAD_PATHS),
   },
 
   /* ---- үр дүн ---- */
   categories: (year?: number) => request<CategoryItem[]>(`/api/olympiad/categories/${q({ year })}`, { auth: false }),
   results: {
     list: (year?: number, category?: string) => request<Result[]>(`/api/olympiad/results/${q({ year, category })}`, { auth: false }),
-    create: (d: ResultInput) => request<Result>("/api/olympiad/results/", { method: "POST", body: d }),
-    update: (id: number, d: Partial<ResultInput>) => request<Result>(`/api/olympiad/results/${id}/`, { method: "PATCH", body: d }),
-    remove: (id: number) => request<void>(`/api/olympiad/results/${id}/`, { method: "DELETE" }),
+    create: (d: ResultInput) => afterSave(request<Result>("/api/olympiad/results/", { method: "POST", body: d }), ["olympiad"], OLYMPIAD_PATHS),
+    update: (id: number, d: Partial<ResultInput>) => afterSave(request<Result>(`/api/olympiad/results/${id}/`, { method: "PATCH", body: d }), ["olympiad"], OLYMPIAD_PATHS),
+    remove: (id: number) => afterSave(request<void>(`/api/olympiad/results/${id}/`, { method: "DELETE" }), ["olympiad"], OLYMPIAD_PATHS),
     /** Excel импорт. dryRun=true бол зөвхөн шалгаад тайлан буцаана. */
     importExcel: (file: File, year: number | "", dryRun: boolean, replace = true) => {
       const fd = new FormData();
@@ -143,7 +145,8 @@ export const api = {
       if (year !== "") fd.append("year", String(year));
       fd.append("dry_run", String(dryRun));
       fd.append("replace", String(replace));
-      return request<ImportResponse>("/api/olympiad/results/import/", { method: "POST", body: fd });
+      const r = request<ImportResponse>("/api/olympiad/results/import/", { method: "POST", body: fd });
+      return dryRun ? r : afterSave(r, ["olympiad"], OLYMPIAD_PATHS);
     },
   },
 
@@ -166,19 +169,19 @@ export const api = {
       fd.append("caption", caption);
       fd.append("order", String(order));
       fd.append("is_published", String(isPublished));
-      return request<AlbumPhoto>("/api/olympiad/album/", { method: "POST", body: fd });
+      return afterSave(request<AlbumPhoto>("/api/olympiad/album/", { method: "POST", body: fd }), ["olympiad"], OLYMPIAD_PATHS);
     },
     update: (id: number, d: { title?: string; caption?: string; order?: number; is_published?: boolean }) =>
-      request<AlbumPhoto>(`/api/olympiad/album/${id}/`, { method: "PATCH", body: d }),
-    remove: (id: number) => request<void>(`/api/olympiad/album/${id}/`, { method: "DELETE" }),
+      afterSave(request<AlbumPhoto>(`/api/olympiad/album/${id}/`, { method: "PATCH", body: d }), ["olympiad"], OLYMPIAD_PATHS),
+    remove: (id: number) => afterSave(request<void>(`/api/olympiad/album/${id}/`, { method: "DELETE" }), ["olympiad"], OLYMPIAD_PATHS),
   },
 
   /* ---- олимпиадын хуудасны тохиргоо ---- */
   olympiadPage: {
     get: () => request<OlympiadPage>("/api/olympiad/page/", { auth: false }),
-    update: (d: Partial<OlympiadPageInput>) => request<OlympiadPage>("/api/olympiad/page/", { method: "PATCH", body: d }),
-    setPortrait: (file: File) => { const fd = new FormData(); fd.append("image", file); return request<OlympiadPage>("/api/olympiad/page/portrait/", { method: "POST", body: fd }); },
-    removePortrait: () => request<OlympiadPage>("/api/olympiad/page/portrait/", { method: "DELETE" }),
+    update: (d: Partial<OlympiadPageInput>) => afterSave(request<OlympiadPage>("/api/olympiad/page/", { method: "PATCH", body: d }), ["olympiad"], OLYMPIAD_PATHS),
+    setPortrait: (file: File) => { const fd = new FormData(); fd.append("image", file); return afterSave(request<OlympiadPage>("/api/olympiad/page/portrait/", { method: "POST", body: fd }), ["olympiad"], OLYMPIAD_PATHS); },
+    removePortrait: () => afterSave(request<OlympiadPage>("/api/olympiad/page/portrait/", { method: "DELETE" }), ["olympiad"], OLYMPIAD_PATHS),
   },
 
   /* ---- мэдээ (админ) ---- */

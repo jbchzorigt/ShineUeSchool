@@ -7,6 +7,7 @@ import { api, ApiError } from "@/lib/api";
 import { useFetch } from "@/lib/useFetch";
 import type { NewsCategory } from "@/lib/types";
 import { Badge, Button, Empty, Field, Input, Modal, Spinner, Table, Td, Th } from "@/components/ui";
+import { DeleteLabel, EditLabel } from "@/components/admin/ActionLabel";
 
 interface CategoryForm { name: string; name_en: string; slug: string; order: number }
 
@@ -66,9 +67,9 @@ export default function NewsCategoriesPage() {
               <Td className="text-slate-600">{c.slug}</Td>
               <Td>{c.order}</Td>
               <Td><Badge tone="navy">{c.post_count}</Badge></Td>
-              <Td className="text-right space-x-2">
-                <Button variant="ghost" onClick={() => openEdit(c)}>Засах</Button>
-                <Button variant="danger" onClick={() => remove(c)}>Устгах</Button>
+              <Td className="whitespace-nowrap text-right space-x-2">
+                <Button variant="ghost" onClick={() => openEdit(c)}><EditLabel /></Button>
+                <Button variant="danger" onClick={() => remove(c)}><DeleteLabel /></Button>
               </Td>
             </tr>
           ))}

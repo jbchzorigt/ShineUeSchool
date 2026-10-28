@@ -9,6 +9,7 @@ import { api, ApiError } from "@/lib/api";
 import { useFetch } from "@/lib/useFetch";
 import type { CommentAdmin, VisitorAdmin } from "@/lib/types";
 import { Badge, Button, Empty, Select, Spinner, Table, Td, Th } from "@/components/ui";
+import { DeleteLabel } from "@/components/admin/ActionLabel";
 
 const fmt = (iso: string) => new Date(iso).toLocaleString("mn-MN", { dateStyle: "short", timeStyle: "short" });
 const truncate = (s: string, n = 80) => (s.length > n ? `${s.slice(0, n)}…` : s);
@@ -98,7 +99,7 @@ export default function NewsCommentsPage() {
               <Td className="space-x-2 text-right whitespace-nowrap">
                 <Button variant="ghost" onClick={() => toggleHide(c)}>{c.is_hidden ? "Харуулах" : "Нуух"}</Button>
                 <Button variant="ghost" onClick={() => blockVisitor(c)}>Зочныг блоклох</Button>
-                <Button variant="danger" onClick={() => remove(c)}>Устгах</Button>
+                <Button variant="danger" onClick={() => remove(c)}><DeleteLabel /></Button>
               </Td>
             </tr>
           ))}

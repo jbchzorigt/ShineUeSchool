@@ -8,6 +8,7 @@ import type { RoomInput, RoomKind } from "@/lib/types";
 import { Badge, Button, Empty, Field, Input, Modal, Select, Spinner, Table, Td, Th } from "@/components/ui";
 import { ROOM_KINDS } from "@/components/timetable/format";
 import { confirmRemove, FormError, useModalForm } from "./forms";
+import { DeleteLabel, EditLabel } from "@/components/admin/ActionLabel";
 
 export function RoomsTab() {
   const q = useFetch(() => api.timetable.rooms.list(), []);
@@ -24,9 +25,9 @@ export function RoomsTab() {
               <Td className="font-semibold">{r.name}</Td>
               <Td>{r.capacity ?? "—"}</Td>
               <Td><Badge tone="slate">{ROOM_KINDS[r.kind]}</Badge></Td>
-              <Td className="text-right space-x-2">
-                <Button variant="ghost" onClick={() => form.open({ name: r.name, capacity: r.capacity, kind: r.kind }, r.id)}>Засах</Button>
-                <Button variant="danger" onClick={() => confirmRemove(`"${r.name}" өрөөг устгах уу? Хуваарьт өрөөгүй болно.`, () => api.timetable.rooms.remove(r.id), q.reload)}>Устгах</Button>
+              <Td className="whitespace-nowrap text-right space-x-2">
+                <Button variant="ghost" onClick={() => form.open({ name: r.name, capacity: r.capacity, kind: r.kind }, r.id)}><EditLabel /></Button>
+                <Button variant="danger" onClick={() => confirmRemove(`"${r.name}" өрөөг устгах уу? Хуваарьт өрөөгүй болно.`, () => api.timetable.rooms.remove(r.id), q.reload)}><DeleteLabel /></Button>
               </Td>
             </tr>
           ))}

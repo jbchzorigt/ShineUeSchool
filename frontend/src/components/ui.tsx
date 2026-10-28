@@ -3,6 +3,7 @@
 /* Жижиг UI бүрдлүүд — Tailwind классуудыг нэг газар хадгална. */
 
 import { useEffect, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type Ref, type SelectHTMLAttributes, type TdHTMLAttributes, type TextareaHTMLAttributes } from "react";
+import { Pencil } from "lucide-react";
 
 const cx = (...c: (string | false | undefined | null)[]) => c.filter(Boolean).join(" ");
 
@@ -84,7 +85,11 @@ export function Modal({ open, title, onClose, children, footer, size = "md" }: {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4" onClick={onClose} role="dialog" aria-modal="true">
       <div className={cx("w-full rounded-2xl bg-white shadow-xl", size === "lg" ? "max-w-2xl" : "max-w-lg")} onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-          <h2 className="text-lg font-bold text-navy">{title}</h2>
+          <h2 className="flex items-center gap-2 text-lg font-bold text-navy">
+            {/* Засах горим ("… засах" гарчиг): харандаа icon */}
+            {/засах$/i.test(title.trim()) && <Pencil size={18} strokeWidth={2.2} aria-hidden="true" className="shrink-0" />}
+            {title}
+          </h2>
           <button onClick={onClose} className="rounded-md p-1 text-slate-500 hover:bg-slate-100" aria-label="Хаах">✕</button>
         </div>
         <div className="max-h-[70vh] overflow-y-auto px-5 py-4">{children}</div>

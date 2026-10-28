@@ -10,6 +10,7 @@ import { Badge, Button, Card, Empty, Field, Input, Modal, Select, Spinner, Table
 import { useYear } from "@/components/timetable/useYear";
 import { YearSelect } from "@/components/timetable/YearSelect";
 import { confirmRemove, FormError, useModalForm } from "@/components/admin/timetable/forms";
+import { DeleteLabel, EditLabel } from "@/components/admin/ActionLabel";
 
 const emptyYear = (): AcademicYearInput => ({ name: "", start_date: "", end_date: "", working_days: 5 });
 
@@ -69,9 +70,9 @@ export default function TimetableHome() {
                 <Td>{y.end_date}</Td>
                 <Td>{y.working_days}</Td>
                 <Td>{y.is_current ? <Badge tone="green">Одоогийн</Badge> : <Button variant="ghost" onClick={() => setCurrent(y)}>Одоогийн болгох</Button>}</Td>
-                <Td className="text-right space-x-2">
-                  <Button variant="ghost" onClick={() => form.open({ name: y.name, start_date: y.start_date, end_date: y.end_date, working_days: y.working_days }, y.id)}>Засах</Button>
-                  <Button variant="danger" onClick={() => confirmRemove(`"${y.name}" жилийг устгах уу? Түүний бүх анги, хуваарь, хөтөлбөр, календарь устана.`, () => api.timetable.years.remove(y.id), reload)}>Устгах</Button>
+                <Td className="whitespace-nowrap text-right space-x-2">
+                  <Button variant="ghost" onClick={() => form.open({ name: y.name, start_date: y.start_date, end_date: y.end_date, working_days: y.working_days }, y.id)}><EditLabel /></Button>
+                  <Button variant="danger" onClick={() => confirmRemove(`"${y.name}" жилийг устгах уу? Түүний бүх анги, хуваарь, хөтөлбөр, календарь устана.`, () => api.timetable.years.remove(y.id), reload)}><DeleteLabel /></Button>
                 </Td>
               </tr>
             ))}

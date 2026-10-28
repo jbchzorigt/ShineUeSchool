@@ -1,6 +1,8 @@
 "use client";
 
-/* Маам багшийн албумын зураг: оруулах, гарчиг, тайлбар, дараалал, нийтлэх, устгах. */
+/* Маам багшийн албумын зураг: оруулах, гарчиг, тайлбар, дараалал, нийтлэх, устгах.
+   Карт бүр өөрийн "Хадгалах" товчтой (өмнө нь талбараас гарахад анзааралгүй хадгалагддаг байсан): өөрчлөлт хадгалаагүй бол
+   шар анхааруулга, хадгалсны дараа "Хадгалагдлаа"; хадгалахад /olympiad хуудасны кэш шууд шинэчлэгдэнэ (api.ts afterSave). */
 
 import Image from "next/image";
 import { useState, type FormEvent } from "react";
@@ -8,6 +10,7 @@ import { api, ApiError } from "@/lib/api";
 import { useFetch } from "@/lib/useFetch";
 import type { AlbumPhoto } from "@/lib/types";
 import { Button, Card, Empty, Field, Input, Modal, Spinner, Textarea } from "@/components/ui";
+import { DeleteLabel } from "@/components/admin/ActionLabel";
 
 export default function AlbumPage() {
   const q = useFetch(() => api.album.list(), []);
@@ -33,10 +36,6 @@ export default function AlbumPage() {
     } finally { setBusy(false); }
   }
 
-  async function patch(p: AlbumPhoto, d: { title?: string; caption?: string; order?: number; is_published?: boolean }) {
-    try { await api.album.update(p.id, d); q.reload(); } catch { alert("Хадгалж чадсангүй."); }
-  }
-
   async function remove(p: AlbumPhoto) {
     if (!confirm("Зургийг устгах уу?")) return;
     try { await api.album.remove(p.id); q.reload(); } catch { alert("Устгаж чадсангүй."); }
@@ -56,18 +55,7 @@ export default function AlbumPage() {
       {q.loading ? <Spinner /> : !q.data?.length ? <Empty>Зураг байхгүй.</Empty> : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {q.data.map((p) => (
-            <Card key={p.id} className="space-y-3">
-              <div className="relative h-48 w-full overflow-hidden rounded-lg bg-slate-100">
-                <Image src={p.image} alt="" fill unoptimized className="object-cover" />
-              </div>
-              <Input defaultValue={p.title} aria-label="Гарчиг" className="font-semibold" onBlur={(e) => { const v = e.target.value.trim(); if (v && v !== p.title) patch(p, { title: v }); else e.target.value = p.title; }} />
-              <Textarea defaultValue={p.caption} aria-label="Тайлбар" onBlur={(e) => e.target.value !== p.caption && patch(p, { caption: e.target.value })} />
-              <div className="flex items-center gap-3 text-sm">
-                <label className="flex items-center gap-1">Дараалал <Input type="number" className="w-16" defaultValue={p.order} onBlur={(e) => Number(e.target.value) !== p.order && patch(p, { order: Number(e.target.value) })} /></label>
-                <label className="flex items-center gap-1"><input type="checkbox" checked={p.is_published} onChange={(e) => patch(p, { is_published: e.target.checked })} />Нийтлэх</label>
-                <Button variant="danger" className="ml-auto" onClick={() => remove(p)}>Устгах</Button>
-              </div>
-            </Card>
+            <AlbumCard key={p.id} photo={p} onSaved={q.reload} onRemove={() => remove(p)} />
           ))}
         </div>
       )}
@@ -84,5 +72,52 @@ export default function AlbumPage() {
         </form>
       </Modal>
     </div>
+  );
+}
+
+/** Албумын нэг зураг: талбаруудыг засаад "Хадгалах" дарахад л PATCH хийнэ. */
+function AlbumCard({ photo, onSaved, onRemove }: { photo: AlbumPhoto; onSaved: () => void; onRemove: () => void }) {
+  const [base, setBase] = useState(photo);   // сүүлд хадгалагдсан утга (серверийн хариу)
+  const [d, setD] = useState({ title: photo.title, caption: photo.caption, order: photo.order, is_published: photo.is_published });
+  const [busy, setBusy] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState("");
+  const dirty = d.title !== base.title || d.caption !== base.caption || d.order !== base.order || d.is_published !== base.is_published;
+  const up = (patch: Partial<typeof d>) => { setD({ ...d, ...patch }); setSaved(false); setError(""); };
+
+  async function save(e: FormEvent) {
+    e.preventDefault();
+    if (!d.title.trim()) { setError("Гарчиг оруулна уу."); return; }
+    setBusy(true); setError("");
+    try {
+      const p = await api.album.update(photo.id, { ...d, title: d.title.trim() });
+      setBase(p); setD({ title: p.title, caption: p.caption, order: p.order, is_published: p.is_published }); setSaved(true);
+      if (p.order !== base.order) onSaved();   // дараалал өөрчлөгдсөн бол жагсаалтыг дахин эрэмбэлнэ
+    }
+    catch (err) { setError(err instanceof ApiError ? Object.values(err.fieldErrors).join(" ") || err.message : "Хадгалж чадсангүй."); }
+    finally { setBusy(false); }
+  }
+
+  return (
+    <form onSubmit={save}>
+      <Card className="space-y-3">
+        <div className="relative h-48 w-full overflow-hidden rounded-lg bg-slate-100">
+          <Image src={photo.image} alt="" fill unoptimized className="object-cover" />
+        </div>
+        <Input value={d.title} aria-label="Гарчиг" className="font-semibold" onChange={(e) => up({ title: e.target.value })} />
+        <Textarea value={d.caption} aria-label="Тайлбар" onChange={(e) => up({ caption: e.target.value })} />
+        <div className="flex items-center gap-3 text-sm">
+          <label className="flex items-center gap-1">Дараалал <Input type="number" className="w-16" value={d.order} onChange={(e) => up({ order: Number(e.target.value) })} /></label>
+          <label className="flex items-center gap-1"><input type="checkbox" checked={d.is_published} onChange={(e) => up({ is_published: e.target.checked })} />Нийтлэх</label>
+        </div>
+        <div className="flex flex-wrap items-center gap-3 border-t border-slate-100 pt-3">
+          <Button type="submit" disabled={busy || !dirty}>{busy ? "Хадгалж байна…" : "Хадгалах"}</Button>
+          {saved && !dirty && <span className="text-sm font-medium text-emerald-700">✓ Хадгалагдлаа</span>}
+          {dirty && <span className="text-sm text-amber-700">Хадгалаагүй өөрчлөлт</span>}
+          {error && <span className="text-sm text-red-600">{error}</span>}
+          <Button type="button" variant="danger" className="ml-auto" onClick={onRemove}><DeleteLabel /></Button>
+        </div>
+      </Card>
+    </form>
   );
 }

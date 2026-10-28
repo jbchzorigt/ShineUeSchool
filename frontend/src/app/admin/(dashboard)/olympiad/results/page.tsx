@@ -9,6 +9,7 @@ import { api, ApiError } from "@/lib/api";
 import { CATEGORIES, type CategoryValue, type Medal, type RankLabel, type Result, type ResultInput } from "@/lib/types";
 import { useFetch } from "@/lib/useFetch";
 import { Badge, Button, Empty, Field, Input, Modal, Select, Spinner, Table, Td, Th } from "@/components/ui";
+import { DeleteLabel, EditLabel } from "@/components/admin/ActionLabel";
 
 const MEDAL_STYLE: Record<string, string> = {
   "АЛТ": "bg-gold text-navy",
@@ -141,8 +142,8 @@ export default function ResultsPage() {
                   <Button variant="ghost" onClick={() => setEditing({ id: r.id, data: {
                     year: r.year, category: r.category, last_name: r.last_name, first_name: r.first_name, school: r.school,
                     code: r.code, scores: r.scores, score: r.score, rank_label: r.rank_label, medal: r.medal, note: r.note,
-                  } })}>Засах</Button>
-                  <Button variant="ghost" className="text-red-600 hover:bg-red-50" onClick={() => remove(r)}>Устгах</Button>
+                  } })}><EditLabel /></Button>
+                  <Button variant="ghost" className="text-red-600 hover:bg-red-50" onClick={() => remove(r)}><DeleteLabel /></Button>
                 </Td>
               </tr>
             ))}

@@ -6,8 +6,8 @@ import { useState, type FormEvent } from "react";
 import { Button, Card, Empty, Input } from "@/components/ui";
 import { api, ApiError } from "@/lib/api";
 import type { AboutDepartment } from "@/lib/types";
+import { DeleteLabel, EditLabel, actionBtn } from "@/components/admin/ActionLabel";
 
-const iconBtn = "inline-grid h-8 w-8 place-items-center rounded-lg text-base transition hover:bg-navy/10";
 
 export function DepartmentList({ departments, selectedId, onSelect, onChanged }: {
   departments: AboutDepartment[]; selectedId: number | null; onSelect: (id: number) => void; onChanged: () => void;
@@ -70,8 +70,8 @@ export function DepartmentList({ departments, selectedId, onSelect, onChanged }:
                 </button>
               )}
               <span className="whitespace-nowrap">
-                <button type="button" onClick={() => setEditing({ id: d.id, name: d.name, name_en: d.name_en ?? "" })} className={`${iconBtn} text-navy`} aria-label="Нэр засах" title="Нэр засах">✎</button>
-                <button type="button" onClick={() => remove(d)} className={`${iconBtn} text-red-600 hover:bg-red-50`} aria-label="Устгах" title="Устгах">🗑</button>
+                <button type="button" onClick={() => setEditing({ id: d.id, name: d.name, name_en: d.name_en ?? "" })} className={`${actionBtn} text-navy hover:bg-navy/10`}><EditLabel /></button>
+                <button type="button" onClick={() => remove(d)} className={`${actionBtn} text-red-600 hover:bg-red-50`}><DeleteLabel /></button>
               </span>
             </li>
           ))}

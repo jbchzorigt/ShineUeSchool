@@ -13,6 +13,8 @@ import { Badge, Button, Card, Field, Input, Select, Spinner, Textarea } from "@/
 import { RichText } from "@/components/admin/RichText";
 import { LangTabs, langPane } from "@/components/admin/LangTabs";
 import type { Lang } from "@/lib/i18n";
+import { DeleteLabel } from "@/components/admin/ActionLabel";
+import { Pencil } from "lucide-react";
 
 interface Props { post: PostAdmin | null; onSaved: () => void }
 
@@ -197,7 +199,7 @@ export function PostEditor({ post, onSaved }: Props) {
     <div className="space-y-6 pb-24">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-black text-navy">{post ? "Мэдээ засах" : "Шинэ мэдээ"}</h1>
+          <h1 className="flex items-center gap-2 text-2xl font-black text-navy">{post && <Pencil size={22} strokeWidth={2.2} aria-hidden="true" />}{post ? "Мэдээ засах" : "Шинэ мэдээ"}</h1>
           {statusBadge(post)}
         </div>
         {post?.is_published && (
@@ -314,7 +316,7 @@ export function PostEditor({ post, onSaved }: Props) {
                       <Input type="number" className="w-16" defaultValue={img.order}
                              onBlur={(e) => { const v = Number(e.target.value); if (v !== img.order) updateImageField(img, { order: v }); }} />
                     </label>
-                    <Button variant="danger" className="ml-auto" type="button" onClick={() => removeImage(img)}>Устгах</Button>
+                    <Button variant="danger" className="ml-auto" type="button" onClick={() => removeImage(img)}><DeleteLabel /></Button>
                   </div>
                 </div>
               ))}

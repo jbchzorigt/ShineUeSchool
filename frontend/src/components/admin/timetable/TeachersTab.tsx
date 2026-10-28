@@ -7,6 +7,7 @@ import { useFetch } from "@/lib/useFetch";
 import type { TeacherInput } from "@/lib/types";
 import { Badge, Button, Empty, Field, Input, Modal, Spinner, Table, Td, Th } from "@/components/ui";
 import { confirmRemove, FormError, useModalForm } from "./forms";
+import { DeleteLabel, EditLabel } from "@/components/admin/ActionLabel";
 
 export function TeachersTab() {
   const q = useFetch(() => api.timetable.teachers.list(), []);
@@ -31,9 +32,9 @@ export function TeachersTab() {
               <Td>{t.full_name}</Td>
               <Td className="space-x-1">{t.subject_ids.map((id) => <Badge key={id} tone="navy">{subjectName(id)}</Badge>)}</Td>
               <Td>{t.is_active ? <Badge tone="green">Идэвхтэй</Badge> : <Badge tone="slate">Идэвхгүй</Badge>}</Td>
-              <Td className="text-right space-x-2">
-                <Button variant="ghost" onClick={() => form.open({ last_name: t.last_name, first_name: t.first_name, short_name: t.short_name, is_active: t.is_active, subject_ids: t.subject_ids }, t.id)}>Засах</Button>
-                <Button variant="danger" onClick={() => confirmRemove(`${t.short_name} багшийг устгах уу?`, () => api.timetable.teachers.remove(t.id), q.reload)}>Устгах</Button>
+              <Td className="whitespace-nowrap text-right space-x-2">
+                <Button variant="ghost" onClick={() => form.open({ last_name: t.last_name, first_name: t.first_name, short_name: t.short_name, is_active: t.is_active, subject_ids: t.subject_ids }, t.id)}><EditLabel /></Button>
+                <Button variant="danger" onClick={() => confirmRemove(`${t.short_name} багшийг устгах уу?`, () => api.timetable.teachers.remove(t.id), q.reload)}><DeleteLabel /></Button>
               </Td>
             </tr>
           ))}

@@ -10,6 +10,7 @@ import { Button, Card, Empty, Input, Table, Td, Th } from "@/components/ui";
 import { api, ApiError } from "@/lib/api";
 import type { Scholarship, ScholarshipInput } from "@/lib/types";
 import { ScholarshipDialog } from "./ScholarshipDialog";
+import { DeleteLabel, EditLabel, actionBtn } from "@/components/admin/ActionLabel";
 
 const iconBtn = "inline-grid h-8 w-8 place-items-center rounded-lg text-base transition hover:bg-navy/10";
 
@@ -90,8 +91,8 @@ export function ScholarshipsPanel({ programId, items, onChanged }: { programId: 
               <Td className="whitespace-nowrap text-right">
                 <label className={`${iconBtn} cursor-pointer text-navy`} title="Зураг оруулах"><span aria-hidden="true">🖼</span><input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" aria-label="Зураг оруулах" onChange={(e) => { setPhoto(s, e.target.files?.[0]); e.target.value = ""; }} /></label>
                 {s.photo && <button type="button" onClick={() => removePhoto(s)} className={`${iconBtn} text-slate-500`} aria-label="Зураг устгах" title="Зураг устгах">⊘</button>}
-                <button type="button" onClick={() => setEditing({ id: s.id, student_name: s.student_name, university: s.university, year: s.year, amount_usd: s.amount_usd })} className={`${iconBtn} text-navy`} aria-label="Засах" title="Засах">✎</button>
-                <button type="button" onClick={() => remove(s)} className={`${iconBtn} text-red-600 hover:bg-red-50`} aria-label="Устгах" title="Устгах">🗑</button>
+                <button type="button" onClick={() => setEditing({ id: s.id, student_name: s.student_name, university: s.university, year: s.year, amount_usd: s.amount_usd })} className={`${actionBtn} text-navy hover:bg-navy/10`}><EditLabel /></button>
+                <button type="button" onClick={() => remove(s)} className={`${actionBtn} text-red-600 hover:bg-red-50`}><DeleteLabel /></button>
               </Td>
             </tr>
           ))}

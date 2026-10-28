@@ -5,7 +5,7 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 
 const API = process.env.INTERNAL_API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
-const TAGS = new Set(["graduates", "programs", "about", "news"]);
+const TAGS = new Set(["graduates", "programs", "about", "news", "olympiad"]);
 
 export async function POST(req: Request) {
   const auth = req.headers.get("authorization") ?? "";
@@ -19,7 +19,9 @@ export async function POST(req: Request) {
   const body = (await req.json().catch(() => ({}))) as { tags?: unknown; paths?: unknown };
   const tags = Array.isArray(body.tags) ? body.tags.filter((t): t is string => typeof t === "string" && TAGS.has(t)) : [];
   const paths = Array.isArray(body.paths) ? body.paths.filter((p): p is string => typeof p === "string" && p.startsWith("/") && !p.includes("..")) : ["/mn", "/en"];   // нүүр хуудас: дотоод "/mn" (монгол) ба "/en"
-  for (const t of tags) revalidateTag(t, "max");
+  // Route handler-ээс дуудагдах тул updateTag боломжгүй — { expire: 0 }: дараагийн хүсэлт хуучин (stale) өгөгдөл харуулахгүй
+  // ("max" бол админ хадгалсны дараах эхний зочин хуучин агуулга хардаг байсан).
+  for (const t of tags) revalidateTag(t, { expire: 0 });
   for (const p of paths) revalidatePath(p);
   return Response.json({ tags, paths });
 }

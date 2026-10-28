@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Button, Card, Empty } from "@/components/ui";
 import { api, ApiError } from "@/lib/api";
 import type { ClubAdmin } from "@/lib/types";
+import { DeleteLabel } from "@/components/admin/ActionLabel";
 
 export function ImagesPanel({ club, onChanged }: { club: ClubAdmin; onChanged: (c: ClubAdmin) => void }) {
   const [busy, setBusy] = useState(false);
@@ -56,7 +57,7 @@ export function ImagesPanel({ club, onChanged }: { club: ClubAdmin; onChanged: (
               <div className="flex items-center gap-1 text-sm">
                 <button onClick={() => move(i, -1)} disabled={i === 0} className="px-1 text-navy disabled:opacity-30" aria-label="Өмнө">◀</button>
                 <button onClick={() => move(i, 1)} disabled={i === club.images.length - 1} className="px-1 text-navy disabled:opacity-30" aria-label="Дараа">▶</button>
-                <Button variant="danger" className="ml-auto px-2 py-1 text-xs" onClick={() => remove(img.id)}>Устгах</Button>
+                <Button variant="danger" className="ml-auto px-2 py-1 text-xs" onClick={() => remove(img.id)}><DeleteLabel /></Button>
               </div>
             </div>
           ))}

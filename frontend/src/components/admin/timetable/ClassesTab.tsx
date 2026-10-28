@@ -7,6 +7,7 @@ import { useFetch } from "@/lib/useFetch";
 import type { ClassGroupInput } from "@/lib/types";
 import { Button, Empty, Field, Input, Modal, Select, Spinner, Table, Td, Th } from "@/components/ui";
 import { confirmRemove, FormError, useModalForm } from "./forms";
+import { DeleteLabel, EditLabel } from "@/components/admin/ActionLabel";
 
 export function ClassesTab({ yearId }: { yearId: number }) {
   const classesQ = useFetch(() => api.timetable.classes.list(yearId), [yearId]);
@@ -34,9 +35,9 @@ export function ClassesTab({ yearId }: { yearId: number }) {
               <Td className="font-semibold">{c.name}</Td>
               <Td>{setName(c.period_set_id)}</Td>
               <Td>{teacherName(c.homeroom_teacher_id)}</Td>
-              <Td className="text-right space-x-2">
-                <Button variant="ghost" onClick={() => form.open({ year_id: c.year_id, grade: c.grade, letter: c.letter, period_set_id: c.period_set_id, homeroom_teacher_id: c.homeroom_teacher_id }, c.id)}>Засах</Button>
-                <Button variant="danger" onClick={() => confirmRemove(`${c.name} ангийг устгах уу? Хуваарь, хөтөлбөр нь устана.`, () => api.timetable.classes.remove(c.id), classesQ.reload)}>Устгах</Button>
+              <Td className="whitespace-nowrap text-right space-x-2">
+                <Button variant="ghost" onClick={() => form.open({ year_id: c.year_id, grade: c.grade, letter: c.letter, period_set_id: c.period_set_id, homeroom_teacher_id: c.homeroom_teacher_id }, c.id)}><EditLabel /></Button>
+                <Button variant="danger" onClick={() => confirmRemove(`${c.name} ангийг устгах уу? Хуваарь, хөтөлбөр нь устана.`, () => api.timetable.classes.remove(c.id), classesQ.reload)}><DeleteLabel /></Button>
               </Td>
             </tr>
           ))}
