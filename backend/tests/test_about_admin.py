@@ -39,7 +39,7 @@ async def test_page_patch_sanitizes_and_validates(client, make_user):
 
 async def test_admin_requires_manager(client, make_user):
     assert (await client.get(f"{A}/page/")).status_code == 401
-    h = await staff_headers(client, make_user, "editor", roles=("news",))
+    h = await staff_headers(client, make_user, "editor", roles=("news.edit",))
     assert (await client.get(f"{A}/page/", headers=h)).status_code == 403
     assert (await client.get(f"{A}/leaders/", headers=h)).status_code == 403
 
@@ -52,7 +52,7 @@ async def test_upload_image_manager_only(client, make_user, tmp_path, monkeypatc
     assert r.status_code == 201, r.text
     rel = r.json()["url"].split("/media/")[1]
     assert "/media/about/body/" in r.json()["url"] and (tmp_path / rel).exists()
-    hn = await staff_headers(client, make_user, "editor", roles=("news",))
+    hn = await staff_headers(client, make_user, "editor", roles=("news.edit",))
     r = await client.post(f"{A}/upload-image/", headers=hn, files={"image": ("a.png", png_bytes(), "image/png")})
     assert r.status_code == 403
     r = await client.post(f"{A}/upload-image/", headers=h, files={"image": ("t.txt", b"hello", "text/plain")})

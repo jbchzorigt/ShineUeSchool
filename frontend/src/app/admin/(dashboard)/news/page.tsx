@@ -78,7 +78,7 @@ export default function NewsListPage() {
               <Td>{statusOf(p)}</Td>
               <Td>{p.fb_post_id ? <Badge tone="green">✓</Badge> : p.fb_error ? <span title={p.fb_error}><Badge tone="gold">⚠ алдаа</Badge></span> : "—"}</Td>
               <Td className="whitespace-nowrap space-x-2 text-right">
-                {p.is_published ? <Button variant="ghost" onClick={() => unpublish(p)}>Буцаах</Button> : <Button variant="secondary" onClick={() => publish(p)}>Нийтлэх</Button>}
+                {p.is_published ? <Button mutates variant="ghost" onClick={() => unpublish(p)}>Буцаах</Button> : <Button mutates variant="secondary" onClick={() => publish(p)}>Нийтлэх</Button>}
                 <Button variant="danger" onClick={() => remove(p)}><DeleteLabel /></Button>
               </Td>
             </tr>

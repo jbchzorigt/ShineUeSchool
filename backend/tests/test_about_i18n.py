@@ -4,7 +4,7 @@ from tests.helpers import staff_headers
 
 
 async def test_about_page_en(client, make_user):
-    h = await staff_headers(client, make_user, roles=("manager",))
+    h = await staff_headers(client, make_user, roles=("about.edit",))
     r = await client.patch("/api/about/admin/page/", headers=h, json={
         "intro_title_en": "About us", "intro_html_en": "<p>Hi</p><script>x</script>",
         "stats": [{"value": "23", "label": "жил", "label_en": "years"}, {"value": "900", "label": "сурагч"}]})
@@ -21,7 +21,7 @@ async def test_about_page_en(client, make_user):
 
 
 async def test_about_people_en(client, make_user):
-    h = await staff_headers(client, make_user, roles=("manager",))
+    h = await staff_headers(client, make_user, roles=("about.edit",))
     r = await client.post("/api/about/admin/leaders/", headers=h, data={"full_name": "Бат", "position": "Захирал", "position_en": "Principal", "level": "1"})
     assert r.status_code == 201, r.text
     assert r.json()["position_en"] == "Principal"
@@ -46,7 +46,7 @@ async def test_about_people_en(client, make_user):
 
 async def test_empty_english_editor_falls_back(client, make_user):
     # Tiptap хоосон үедээ "<p></p>" буцаадаг — англи хуудас монгол fallback-аа алдах ёсгүй
-    h = await staff_headers(client, make_user, roles=("manager",))
+    h = await staff_headers(client, make_user, roles=("about.edit",))
     await client.patch("/api/about/admin/page/", headers=h, json={"intro_html": "<p>Монгол</p>", "intro_html_en": "<p></p>"})
     d = (await client.get("/api/about/?lang=en")).json()
     assert d["page"]["intro_html"] == "<p>Монгол</p>" and d["page"]["intro_html_en"] == ""

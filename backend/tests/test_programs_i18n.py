@@ -32,7 +32,7 @@ async def test_programs_en_fallback(client, db):
 
 
 async def test_programs_admin_en_fields(client, db, make_user):
-    h = await staff_headers(client, make_user, roles=("manager",))
+    h = await staff_headers(client, make_user, roles=("programs.edit",))
     r = await client.post("/api/programs/admin/programs/", headers=h,
                           json={"name": "Үндэсний", "badge": "MN", "name_en": "National", "summary_en": " Short ",
                                 "body_html_en": "<p>x</p><script>y</script>"})

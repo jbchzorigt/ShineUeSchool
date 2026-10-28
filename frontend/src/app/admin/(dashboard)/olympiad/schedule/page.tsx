@@ -105,7 +105,7 @@ export default function SchedulePage() {
               <Td><div className="flex flex-wrap gap-1">{s.tags.map((t) => <Badge key={t} tone="slate">{t}</Badge>)}</div></Td>
               <Td className="whitespace-nowrap text-right">
                 <Button variant="ghost" onClick={() => setEditing({ id: s.id, data: { ...s } })}><EditLabel /></Button>
-                <Button variant="ghost" className="text-red-600 hover:bg-red-50" onClick={() => remove(s)}><DeleteLabel /></Button>
+                <Button mutates variant="ghost" className="text-red-600 hover:bg-red-50" onClick={() => remove(s)}><DeleteLabel /></Button>
               </Td>
             </tr>
           ))}

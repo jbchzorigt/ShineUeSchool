@@ -4,14 +4,15 @@
    доор "Багш нэмэх" мөр. Жагсаалт backend-ийн эрэмбээр (эрхлэгч эхэнд) ирдэг тул мутаци бүрийн дараа onChanged. */
 
 import { useState, type FormEvent } from "react";
-import { Button, Card, Empty, Input, Table, Td, Th } from "@/components/ui";
+import { Button, Card, Empty, Input, Table, Td, Th, useReadOnly } from "@/components/ui";
 import { api, ApiError } from "@/lib/api";
 import type { AboutDepartment, AboutTeacher, AboutTeacherInput } from "@/lib/types";
-import { DeleteLabel, EditLabel, actionBtn } from "@/components/admin/ActionLabel";
+import { DeleteButton, EditLabel, MoveButton, actionBtn } from "@/components/admin/ActionLabel";
 
 const EMPTY: AboutTeacherInput = { full_name: "", role: "", role_en: "", is_head: false };
 
 export function TeacherTable({ department, onChanged }: { department: AboutDepartment; onChanged: () => void }) {
+  const readOnly = useReadOnly();
   const [draft, setDraft] = useState<AboutTeacherInput>(EMPTY);
   const [editing, setEditing] = useState<(AboutTeacherInput & { id: number }) | null>(null);
   const [error, setError] = useState("");
@@ -60,8 +61,8 @@ export function TeacherTable({ department, onChanged }: { department: AboutDepar
           {list.map((t, i) => (
             <tr key={t.id}>
               <Td className="whitespace-nowrap">
-                <button onClick={() => move(i, -1)} disabled={i === 0} className="px-1 text-navy disabled:opacity-30" aria-label="Дээш">▲</button>
-                <button onClick={() => move(i, 1)} disabled={i === list.length - 1} className="px-1 text-navy disabled:opacity-30" aria-label="Доош">▼</button>
+                <MoveButton dir="up" onClick={() => move(i, -1)} disabled={i === 0} />
+                <MoveButton dir="down" onClick={() => move(i, 1)} disabled={i === list.length - 1} />
               </Td>
               {editing?.id === t.id ? (
                 <Td className="space-y-1" colSpan={2}>
@@ -79,10 +80,10 @@ export function TeacherTable({ department, onChanged }: { department: AboutDepar
                   <Td className="text-slate-600">{t.role}{t.role_en && <span className="block text-xs text-slate-400" lang="en">{t.role_en}</span>}</Td>
                 </>
               )}
-              <Td><input type="checkbox" checked={t.is_head} onChange={() => toggleHead(t)} aria-label={`${t.full_name} эрхлэгч`} className="h-4 w-4 accent-navy" /></Td>
+              <Td><input type="checkbox" checked={t.is_head} onChange={() => toggleHead(t)} disabled={readOnly} aria-label={`${t.full_name} эрхлэгч`} className="h-4 w-4 accent-navy" /></Td>
               <Td className="whitespace-nowrap text-right">
                 <button type="button" onClick={() => setEditing({ id: t.id, full_name: t.full_name, role: t.role, role_en: t.role_en, is_head: t.is_head })} className={`${actionBtn} text-navy hover:bg-navy/10`}><EditLabel /></button>
-                <button type="button" onClick={() => remove(t)} className={`${actionBtn} text-red-600 hover:bg-red-50`}><DeleteLabel /></button>
+                <DeleteButton onClick={() => remove(t)} />
               </Td>
             </tr>
           ))}

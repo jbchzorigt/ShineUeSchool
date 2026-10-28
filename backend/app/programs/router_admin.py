@@ -13,7 +13,7 @@ from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..auth.deps import require_role
+from ..auth.deps import require_section
 from ..auth.models import User
 from ..common.errors import FieldError
 from ..common.media import delete_file, save_upload
@@ -27,7 +27,7 @@ from .service import (RADAR_SLUGS, admin_detail_out, admin_out, clean_radar, get
 
 router = APIRouter(prefix="/api/programs/admin", tags=["programs-admin"])
 DB = Annotated[AsyncSession, Depends(get_db)]
-Manager = Annotated[User, Depends(require_role("manager"))]
+Manager = Annotated[User, Depends(require_section("programs"))]  # GET — харах, бусад — засах эрх
 
 
 def _clean(v: str | None, field: str, msg: str) -> str:

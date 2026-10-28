@@ -14,7 +14,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..auth.deps import require_role
+from ..auth.deps import require_section
 from ..auth.models import User
 from ..common.errors import FieldError
 from ..common.media import delete_file, save_upload
@@ -32,9 +32,9 @@ from .schemas import (
 )
 from .slug import slugify, unique_slug
 
-router = APIRouter(prefix="/api/news/admin", tags=["news-admin"], dependencies=[Depends(require_role("news"))])
+router = APIRouter(prefix="/api/news/admin", tags=["news-admin"], dependencies=[Depends(require_section("news"))])  # GET — харах, бусад — засах
 DB = Annotated[AsyncSession, Depends(get_db)]
-Editor = Annotated[User, Depends(require_role("news"))]
+Editor = Annotated[User, Depends(require_section("news"))]
 
 
 async def get_post_or_404(db: AsyncSession, id: int) -> Post:

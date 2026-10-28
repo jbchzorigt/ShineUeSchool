@@ -7,7 +7,7 @@ import Image from "next/image";
 import { Button, Card, Empty } from "@/components/ui";
 import { api, ApiError } from "@/lib/api";
 import type { AboutLeader } from "@/lib/types";
-import { DeleteLabel, EditLabel, actionBtn } from "@/components/admin/ActionLabel";
+import { DeleteButton, EditLabel, MoveButton, actionBtn } from "@/components/admin/ActionLabel";
 
 const LEVEL_HINT: Record<number, string> = { 1: "захирал", 2: "дэд захирлууд", 3: "менежерүүд" };
 const levelLabel = (lv: number) => `${lv}-р түвшин${LEVEL_HINT[lv] ? ` (${LEVEL_HINT[lv]})` : ""}`;
@@ -52,8 +52,8 @@ export function LeaderList({ leaders, levels, canAddLevel, onAdd, onAddLevel, on
                 {row.map((l, i) => (
                   <li key={l.id} className="flex items-center gap-3 py-2">
                     <span className="whitespace-nowrap">
-                      <button onClick={() => move(level, i, -1)} disabled={i === 0} className="px-1 text-navy disabled:opacity-30" aria-label="Дээш">▲</button>
-                      <button onClick={() => move(level, i, 1)} disabled={i === row.length - 1} className="px-1 text-navy disabled:opacity-30" aria-label="Доош">▼</button>
+                      <MoveButton dir="up" onClick={() => move(level, i, -1)} disabled={i === 0} />
+                      <MoveButton dir="down" onClick={() => move(level, i, 1)} disabled={i === row.length - 1} />
                     </span>
                     <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-navy text-center font-bold leading-10 text-gold">
                       {l.photo ? <Image src={l.photo} alt="" fill unoptimized sizes="40px" className="object-cover" /> : l.full_name.charAt(0)}
@@ -64,7 +64,7 @@ export function LeaderList({ leaders, levels, canAddLevel, onAdd, onAddLevel, on
                     </span>
                     <span className="whitespace-nowrap">
                       <button type="button" onClick={() => onEdit(l)} className={`${actionBtn} text-navy hover:bg-navy/10`}><EditLabel /></button>
-                      <button type="button" onClick={() => remove(l)} className={`${actionBtn} text-red-600 hover:bg-red-50`}><DeleteLabel /></button>
+                      <DeleteButton onClick={() => remove(l)} />
                     </span>
                   </li>
                 ))}

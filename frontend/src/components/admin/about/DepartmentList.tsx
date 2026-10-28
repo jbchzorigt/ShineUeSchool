@@ -6,7 +6,7 @@ import { useState, type FormEvent } from "react";
 import { Button, Card, Empty, Input } from "@/components/ui";
 import { api, ApiError } from "@/lib/api";
 import type { AboutDepartment } from "@/lib/types";
-import { DeleteLabel, EditLabel, actionBtn } from "@/components/admin/ActionLabel";
+import { DeleteButton, EditLabel, MoveButton, actionBtn } from "@/components/admin/ActionLabel";
 
 
 export function DepartmentList({ departments, selectedId, onSelect, onChanged }: {
@@ -54,8 +54,8 @@ export function DepartmentList({ departments, selectedId, onSelect, onChanged }:
           {departments.map((d, i) => (
             <li key={d.id} className={`flex items-center gap-2 rounded-lg px-2 py-1.5 ${d.id === selectedId ? "bg-navy/10" : ""}`}>
               <span className="whitespace-nowrap">
-                <button onClick={() => move(i, -1)} disabled={i === 0} className="px-1 text-navy disabled:opacity-30" aria-label="Дээш">▲</button>
-                <button onClick={() => move(i, 1)} disabled={i === departments.length - 1} className="px-1 text-navy disabled:opacity-30" aria-label="Доош">▼</button>
+                <MoveButton dir="up" onClick={() => move(i, -1)} disabled={i === 0} />
+                <MoveButton dir="down" onClick={() => move(i, 1)} disabled={i === departments.length - 1} />
               </span>
               {editing?.id === d.id ? (
                 <form onSubmit={rename} className="flex flex-1 items-center gap-1">
@@ -71,7 +71,7 @@ export function DepartmentList({ departments, selectedId, onSelect, onChanged }:
               )}
               <span className="whitespace-nowrap">
                 <button type="button" onClick={() => setEditing({ id: d.id, name: d.name, name_en: d.name_en ?? "" })} className={`${actionBtn} text-navy hover:bg-navy/10`}><EditLabel /></button>
-                <button type="button" onClick={() => remove(d)} className={`${actionBtn} text-red-600 hover:bg-red-50`}><DeleteLabel /></button>
+                <DeleteButton onClick={() => remove(d)} />
               </span>
             </li>
           ))}

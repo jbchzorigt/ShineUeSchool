@@ -1,14 +1,19 @@
 "use client";
 
-/* Хэрэглэгч удирдах (зөвхөн superuser): жагсаалт, нэмэх, засах, устгах, эрхийн бүлэг. */
+/* Хэрэглэгч удирдах (зөвхөн superuser): жагсаалт, нэмэх, засах, устгах, хэсэг тус бүрийн эрх (эрхгүй / харах / засах). */
 
 import { useState, type FormEvent } from "react";
 import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { useFetch } from "@/lib/useFetch";
-import type { RoleCode, User, UserInput } from "@/lib/types";
+import { levelOf, setLevel, type Level } from "@/lib/permissions";
+import type { User, UserInput } from "@/lib/types";
 import { Badge, Button, Empty, Field, Input, Modal, Spinner, Table, Td, Th } from "@/components/ui";
 import { DeleteLabel, EditLabel } from "@/components/admin/ActionLabel";
+
+const LEVELS: { level: Level | null; label: string }[] = [
+  { level: null, label: "Эрхгүй" }, { level: "view", label: "Харах" }, { level: "edit", label: "Засах" },
+];
 
 const empty = (): UserInput => ({ username: "", password: "", full_name: "", email: "", is_active: true, is_superuser: false, roles: [] });
 
@@ -51,8 +56,6 @@ export default function UsersPage() {
     catch (err) { alert(err instanceof ApiError ? Object.values(err.fieldErrors).join(" ") : "Устгаж чадсангүй."); }
   }
 
-  const toggleRole = (code: RoleCode) => editing && set({ roles: editing.data.roles.includes(code) ? editing.data.roles.filter((r) => r !== code) : [...editing.data.roles, code] });
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -70,9 +73,14 @@ export default function UsersPage() {
             <tr key={u.id} className="border-t border-slate-100">
               <Td className="font-semibold">{u.username}</Td>
               <Td>{u.full_name}<div className="text-xs text-slate-500">{u.email}</div></Td>
-              <Td className="space-x-1">
-                {u.is_superuser && <Badge tone="gold">superuser</Badge>}
-                {u.roles.map((r) => <Badge key={r}>{rolesQ.data?.find((x) => x.code === r)?.name ?? r}</Badge>)}
+              <Td>
+                <div className="flex min-w-48 flex-wrap gap-1 whitespace-nowrap">
+                  {u.is_superuser && <Badge tone="gold">superuser</Badge>}
+                  {!u.is_superuser && (rolesQ.data ?? []).map((sec) => {
+                    const lv = levelOf(u.roles, sec.code);
+                    return lv && <Badge key={sec.code} tone={lv === "edit" ? "navy" : "slate"}>{sec.name}{lv === "view" && " · харах"}</Badge>;
+                  })}
+                </div>
               </Td>
               <Td>{u.is_active ? <Badge tone="green">идэвхтэй</Badge> : <Badge tone="slate">идэвхгүй</Badge>}</Td>
               <Td className="whitespace-nowrap text-right space-x-2">
@@ -95,19 +103,40 @@ export default function UsersPage() {
             </Field>
             <Field label="Бүтэн нэр" error={errors.full_name}><Input value={editing.data.full_name} onChange={(e) => set({ full_name: e.target.value })} /></Field>
             <Field label="И-мэйл" error={errors.email}><Input type="email" value={editing.data.email} onChange={(e) => set({ email: e.target.value })} /></Field>
-            <Field label="Эрхийн бүлэг" error={errors.roles}>
-              <div className="flex flex-wrap gap-3">
-                {(rolesQ.data ?? []).map((r) => (
-                  <label key={r.code} className="flex items-center gap-2 text-sm">
-                    <input type="checkbox" checked={editing.data.roles.includes(r.code)} onChange={() => toggleRole(r.code)} />{r.name}
-                  </label>
-                ))}
-              </div>
-            </Field>
             <div className="flex gap-6 text-sm">
               <label className="flex items-center gap-2"><input type="checkbox" checked={editing.data.is_superuser} onChange={(e) => set({ is_superuser: e.target.checked })} />Superuser</label>
               <label className="flex items-center gap-2"><input type="checkbox" checked={editing.data.is_active} onChange={(e) => set({ is_active: e.target.checked })} />Идэвхтэй</label>
             </div>
+            <fieldset>
+              <legend className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-600">Хэсгийн эрх</legend>
+              {editing.data.is_superuser ? (
+                <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">Superuser бүх хэсгийг удирдах, хэрэглэгч нэмэх эрхтэй.</p>
+              ) : (
+                <div className="overflow-hidden rounded-lg border border-slate-200">
+                  <table className="w-full text-sm">
+                    <thead className="bg-slate-50 text-xs font-semibold text-slate-600">
+                      <tr><th className="px-3 py-2 text-left">Хэсэг</th>{LEVELS.map((c) => <th key={c.label} className="w-20 px-2 py-2 text-center">{c.label}</th>)}</tr>
+                    </thead>
+                    <tbody>
+                      {(rolesQ.data ?? []).map((sec) => (
+                        <tr key={sec.code} className="border-t border-slate-100">
+                          <td className="px-3 py-1.5 font-medium text-slate-800">{sec.name}</td>
+                          {LEVELS.map((c) => (
+                            <td key={c.label} className="text-center">
+                              <input type="radio" name={`perm-${sec.code}`} aria-label={`${sec.name} — ${c.label}`} className="h-4 w-4 accent-navy"
+                                     checked={levelOf(editing.data.roles, sec.code) === c.level}
+                                     onChange={() => set({ roles: setLevel(editing.data.roles, sec.code, c.level) })} />
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              <p className="mt-1 text-xs text-slate-500">Засах эрх харах эрхийг агуулна.</p>
+              {errors.roles && <p className="mt-1 text-xs font-medium text-red-600">{errors.roles}</p>}
+            </fieldset>
           </form>
         )}
       </Modal>

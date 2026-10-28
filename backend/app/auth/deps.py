@@ -40,16 +40,14 @@ async def current_user(user: Annotated[User | None, Depends(optional_user)]) -> 
     return user
 
 
-async def require_staff(user: Annotated[User, Depends(current_user)]) -> User:
-    if not user.is_staff:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "Энэ үйлдэлд эрх хүрэхгүй.")
-    return user
-
-
-def require_role(code: str):
-    async def _dep(user: Annotated[User, Depends(current_user)]) -> User:
-        if user.is_superuser or code in user.role_codes:
+def require_section(section: str):
+    """Админы хэсгийн эрх: GET/HEAD хүсэлтэд "харах", бусад (нэмэх, засах, устгах) хүсэлтэд "засах" эрх шаардана."""
+    async def _dep(request: Request, user: Annotated[User, Depends(current_user)]) -> User:
+        level = "view" if request.method in ("GET", "HEAD") else "edit"
+        if user.can(section, level):
             return user
+        if user.can(section, "view"):
+            raise HTTPException(status.HTTP_403_FORBIDDEN, "Танд энэ хэсгийг зөвхөн харах эрх байна.")
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Энэ үйлдэлд эрх хүрэхгүй.")
     return _dep
 

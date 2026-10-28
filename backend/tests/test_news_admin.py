@@ -13,11 +13,11 @@ def png() -> bytes:
 
 
 async def news_headers(client, make_user, username="editor"):
-    return await staff_headers(client, make_user, username=username, roles=("news",))
+    return await staff_headers(client, make_user, username=username, roles=("news.edit",))
 
 
 async def test_news_role_required(client, make_user):
-    h = await staff_headers(client, make_user, roles=("olympiad",))
+    h = await staff_headers(client, make_user, roles=("olympiad.edit",))
     assert (await client.get("/api/news/admin/posts/", headers=h)).status_code == 403
     assert (await client.get("/api/news/admin/posts/")).status_code == 401
 

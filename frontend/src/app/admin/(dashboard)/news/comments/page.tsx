@@ -97,8 +97,8 @@ export default function NewsCommentsPage() {
               <Td className="max-w-sm text-slate-700">{truncate(c.body)}</Td>
               <Td>{c.is_hidden ? <Badge tone="slate">Нуугдсан</Badge> : <Badge tone="green">Харагдана</Badge>}</Td>
               <Td className="space-x-2 text-right whitespace-nowrap">
-                <Button variant="ghost" onClick={() => toggleHide(c)}>{c.is_hidden ? "Харуулах" : "Нуух"}</Button>
-                <Button variant="ghost" onClick={() => blockVisitor(c)}>Зочныг блоклох</Button>
+                <Button mutates variant="ghost" onClick={() => toggleHide(c)}>{c.is_hidden ? "Харуулах" : "Нуух"}</Button>
+                <Button mutates variant="ghost" onClick={() => blockVisitor(c)}>Зочныг блоклох</Button>
                 <Button variant="danger" onClick={() => remove(c)}><DeleteLabel /></Button>
               </Td>
             </tr>
@@ -137,7 +137,7 @@ export default function NewsCommentsPage() {
                 <Td>{v.comments_count}</Td>
                 <Td>{v.is_blocked ? <Badge tone="slate">Блоклогдсон</Badge> : <Badge tone="green">Идэвхтэй</Badge>}</Td>
                 <Td className="text-right whitespace-nowrap">
-                  <Button variant="ghost" onClick={() => toggleBlockVisitor(v)}>{v.is_blocked ? "Сэргээх" : "Блоклох"}</Button>
+                  <Button mutates variant="ghost" onClick={() => toggleBlockVisitor(v)}>{v.is_blocked ? "Сэргээх" : "Блоклох"}</Button>
                 </Td>
               </tr>
             ))}

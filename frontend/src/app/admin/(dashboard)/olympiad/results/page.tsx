@@ -143,7 +143,7 @@ export default function ResultsPage() {
                     year: r.year, category: r.category, last_name: r.last_name, first_name: r.first_name, school: r.school,
                     code: r.code, scores: r.scores, score: r.score, rank_label: r.rank_label, medal: r.medal, note: r.note,
                   } })}><EditLabel /></Button>
-                  <Button variant="ghost" className="text-red-600 hover:bg-red-50" onClick={() => remove(r)}><DeleteLabel /></Button>
+                  <Button mutates variant="ghost" className="text-red-600 hover:bg-red-50" onClick={() => remove(r)}><DeleteLabel /></Button>
                 </Td>
               </tr>
             ))}

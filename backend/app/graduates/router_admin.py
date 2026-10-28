@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..auth.deps import require_role
+from ..auth.deps import require_section
 from ..auth.models import User
 from ..common.errors import FieldError
 from ..db import get_db
@@ -22,7 +22,7 @@ from .service import apply_stats, clean_universities, get_stats, list_countries,
 
 router = APIRouter(prefix="/api/graduates/admin", tags=["graduates-admin"])
 DB = Annotated[AsyncSession, Depends(get_db)]
-Manager = Annotated[User, Depends(require_role("manager"))]
+Manager = Annotated[User, Depends(require_section("graduates"))]  # GET — харах, бусад — засах эрх
 
 
 async def _get(db: AsyncSession, cid: int) -> GraduateCountry:

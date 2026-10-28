@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Uplo
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..auth.deps import require_role
+from ..auth.deps import require_section
 from ..auth.models import User
 from ..common.errors import FieldError
 from ..common.media import delete_file, save_upload
@@ -25,7 +25,7 @@ from .service import department_out, get_page, leader_out, list_departments, lis
 
 router = APIRouter(prefix="/api/about/admin", tags=["about-admin"])
 DB = Annotated[AsyncSession, Depends(get_db)]
-Manager = Annotated[User, Depends(require_role("manager"))]
+Manager = Annotated[User, Depends(require_section("about"))]  # GET — харах, бусад — засах эрх
 
 STATS_MAX = 4
 LEVEL_MAX = 10   # удирдлагын түвшний дээд хязгаар (admin "Түвшин нэмэх")

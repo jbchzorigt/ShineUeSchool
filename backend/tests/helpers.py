@@ -1,5 +1,7 @@
 """Тестийн туслахууд: нэвтрэх, staff header."""
 
+MANAGER_ROLES = ("timetable.edit", "clubs.edit", "about.edit", "programs.edit", "graduates.edit")
+
 
 async def login(client, username, password="pass1234"):
     r = await client.post("/api/auth/token/", json={"username": username, "password": password})
@@ -7,7 +9,7 @@ async def login(client, username, password="pass1234"):
     return r.json()
 
 
-async def staff_headers(client, make_user, username="staff", *, roles=("olympiad",), superuser=False):
+async def staff_headers(client, make_user, username="staff", *, roles=("olympiad.edit",), superuser=False):
     await make_user(username, roles=list(roles), superuser=superuser)
     t = await login(client, username)
     return {"Authorization": f"Bearer {t['access']}"}
@@ -50,8 +52,8 @@ async def visitor_headers(client, fb, fb_id="1", name="Бат", token=None):
 
 
 async def manager_headers(client, make_user, username="manager1"):
-    """Сургалтын менежерийн (manager эрх) Authorization header."""
-    return await staff_headers(client, make_user, username, roles=("manager",))
+    """Сургалтын менежерийн (хуваарь, дугуйлан, бидний тухай, хөтөлбөр, төгсөгч — засах эрх) Authorization header."""
+    return await staff_headers(client, make_user, username, roles=MANAGER_ROLES)
 
 
 async def seed_timetable(db):

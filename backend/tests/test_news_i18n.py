@@ -76,7 +76,7 @@ from tests.helpers import staff_headers  # noqa: E402
 
 
 async def test_admin_title_one_required_and_en_slug(client, make_user):
-    h = await staff_headers(client, make_user, roles=("news",))
+    h = await staff_headers(client, make_user, roles=("news.edit",))
     r = await client.post("/api/news/admin/posts/", json={"title": "", "title_en": ""}, headers=h)
     assert r.status_code == 400 and r.json()["title"] == ["Монгол эсвэл англи гарчиг заавал."]
     r = await client.post("/api/news/admin/posts/", headers=h,
@@ -91,7 +91,7 @@ async def test_admin_title_one_required_and_en_slug(client, make_user):
 
 
 async def test_admin_lists_en_only_post_and_category_en(client, db, make_user):
-    h = await staff_headers(client, make_user, roles=("news",))
+    h = await staff_headers(client, make_user, roles=("news.edit",))
     await seed(db)
     items = (await client.get("/api/news/admin/posts/", headers=h)).json()["items"]
     assert "en-only" in [p["slug"] for p in items]
@@ -104,7 +104,7 @@ async def test_admin_lists_en_only_post_and_category_en(client, db, make_user):
 
 
 async def test_admin_image_caption_en(client, db, make_user):
-    h = await staff_headers(client, make_user, roles=("news",))
+    h = await staff_headers(client, make_user, roles=("news.edit",))
     await seed(db)
     from sqlalchemy import select
     img_id = (await db.execute(select(PostImage.id))).scalar_one()
@@ -115,14 +115,14 @@ async def test_admin_image_caption_en(client, db, make_user):
 async def test_facebook_message_falls_back_to_en(client, make_user, fb, monkeypatch):
     from app.config import settings
     monkeypatch.setattr(settings, "public_site_url", "https://shine-ue.edu.mn")
-    h = await staff_headers(client, make_user, roles=("news",))
+    h = await staff_headers(client, make_user, roles=("news.edit",))
     pid = (await client.post("/api/news/admin/posts/", json={"title_en": "Open Day", "excerpt_en": "Short"}, headers=h)).json()["id"]
     r = await client.post(f"/api/news/admin/posts/{pid}/publish/", json={"post_to_facebook": True}, headers=h)
     assert fb.posts == [{"message": "Open Day\n\nShort", "link": f"https://shine-ue.edu.mn/en/news/{r.json()['post']['slug']}"}]
 
 
 async def test_admin_empty_english_body_saved_as_empty(client, make_user):
-    h = await staff_headers(client, make_user, roles=("news",))
+    h = await staff_headers(client, make_user, roles=("news.edit",))
     r = await client.post("/api/news/admin/posts/", headers=h, json={"title": "Т", "title_en": "T", "body_html_en": "<p></p>"})
     assert r.json()["body_html_en"] == ""
     r = await client.patch(f"/api/news/admin/posts/{r.json()['id']}/", headers=h, json={"body_html_en": "<p> </p><p></p>"})

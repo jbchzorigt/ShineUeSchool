@@ -2,10 +2,18 @@
 
 /* Жижиг UI бүрдлүүд — Tailwind классуудыг нэг газар хадгална. */
 
-import { useEffect, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type Ref, type SelectHTMLAttributes, type TdHTMLAttributes, type TextareaHTMLAttributes } from "react";
+import { createContext, useContext, useEffect, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type Ref, type SelectHTMLAttributes, type TdHTMLAttributes, type TextareaHTMLAttributes } from "react";
 import { Pencil } from "lucide-react";
 
 const cx = (...c: (string | false | undefined | null)[]) => c.filter(Boolean).join(" ");
+
+/* ---------- Зөвхөн харах горим ----------
+   Админы layout хэрэглэгч тухайн хэсэгт зөвхөн "харах" эрхтэй үед true болгоно. Тэгвэл хадгалах (submit), устгах (danger)
+   болон `mutates` гэж тэмдэглэсэн товчнууд идэвхгүй болно. Эрхийг жинхэнэ утгаар нь backend шалгана (403). */
+const ReadOnlyContext = createContext(false);
+export const ReadOnlyProvider = ReadOnlyContext.Provider;
+export const useReadOnly = () => useContext(ReadOnlyContext);
+export const READ_ONLY_HINT = "Танд энэ хэсгийг зөвхөн харах эрх байна";
 
 /* ---------- Button ---------- */
 type Variant = "primary" | "secondary" | "danger" | "ghost";
@@ -15,10 +23,13 @@ const variants: Record<Variant, string> = {
   danger: "bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-600",
   ghost: "bg-transparent text-navy hover:bg-navy/10 focus-visible:ring-navy",
 };
-export function Button({ variant = "primary", className, ...p }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant }) {
+export function Button({ variant = "primary", className, mutates, ...p }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant; mutates?: boolean }) {
+  const blocked = useReadOnly() && (p.type === "submit" || variant === "danger" || !!mutates);
   return (
     <button
       {...p}
+      disabled={p.disabled || blocked}
+      title={blocked ? READ_ONLY_HINT : p.title}
       className={cx(
         "inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none",

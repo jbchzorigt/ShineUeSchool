@@ -9,12 +9,12 @@ from tests.helpers import login
 
 
 async def test_user_roles_and_is_staff(db):
-    role = Role(code="manager", name="Сургалтын менежер")
+    role = Role(code="news.edit", name="Мэдээ — засах")
     u = User(username="bat", password_hash="x", full_name="Бат", email="", roles=[role])
     db.add(u)
     await db.flush()
     got = (await db.execute(select(User).where(User.username == "bat"))).scalar_one()
-    assert got.role_codes == ["manager"]
+    assert got.role_codes == ["news.edit"]
     assert got.is_staff is True
     plain = User(username="dorj", password_hash="x", full_name="Дорж", email="")
     assert plain.is_staff is False
@@ -34,7 +34,7 @@ async def test_login_wrong_password(client, make_user):
 
 
 async def test_me(client, make_user):
-    await make_user("mgr", roles=["manager"])
+    await make_user("mgr", roles=["news.edit"])
     t = await login(client, "mgr")
     r = await client.get("/api/auth/me/", headers={"Authorization": f"Bearer {t['access']}"})
     assert r.status_code == 200
@@ -42,7 +42,7 @@ async def test_me(client, make_user):
     assert body["username"] == "mgr"
     assert body["is_staff"] is True
     assert body["is_superuser"] is False
-    assert body["roles"] == ["manager"]
+    assert body["roles"] == ["news.edit"]
     assert set(body) == {"id", "username", "full_name", "email", "is_staff", "is_superuser", "roles"}
 
 
@@ -82,7 +82,7 @@ async def su_headers(client, make_user):
 
 
 async def test_users_requires_superuser(client, make_user):
-    await make_user("mgr", roles=["manager"])
+    await make_user("mgr", roles=["news.edit"])
     t = await login(client, "mgr")
     r = await client.get("/api/auth/users/", headers={"Authorization": f"Bearer {t['access']}"})
     assert r.status_code == 403
@@ -91,12 +91,12 @@ async def test_users_requires_superuser(client, make_user):
 async def test_users_crud(client, make_user):
     h = await su_headers(client, make_user)
     r = await client.get("/api/auth/roles/", headers=h)
-    assert r.status_code == 200 and {x["code"] for x in r.json()} >= {"manager"}
+    assert r.status_code == 200 and [x["code"] for x in r.json()] == ["olympiad", "timetable", "clubs", "about", "programs", "graduates", "news"]
     r = await client.post("/api/auth/users/", headers=h, json={
-        "username": "bat", "password": "pass1234", "full_name": "Бат", "email": "b@x.mn", "roles": ["manager"]})
+        "username": "bat", "password": "pass1234", "full_name": "Бат", "email": "b@x.mn", "roles": ["news.edit"]})
     assert r.status_code == 201, r.text
     uid = r.json()["id"]
-    assert r.json()["roles"] == ["manager"] and r.json()["is_staff"] is True and r.json()["is_active"] is True
+    assert r.json()["roles"] == ["news.edit"] and r.json()["is_staff"] is True and r.json()["is_active"] is True
     assert "password" not in r.json() and "password_hash" not in r.json()
     r = await client.post("/api/auth/users/", headers=h, json={"username": "bat", "password": "pass1234"})
     assert r.status_code == 400 and r.json() == {"username": ["Ийм нэвтрэх нэртэй хэрэглэгч байна."]}

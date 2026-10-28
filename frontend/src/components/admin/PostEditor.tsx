@@ -329,7 +329,7 @@ export function PostEditor({ post, onSaved }: Props) {
               <Field label="Тайлбар"><Input value={galleryCaption} onChange={(e) => setGalleryCaption(e.target.value)} /></Field>
               <Field label="Caption (English)"><Input value={galleryCaptionEn} onChange={(e) => setGalleryCaptionEn(e.target.value)} lang="en" /></Field>
               <Field label="Дараалал"><Input type="number" className="w-20" value={galleryOrder} onChange={(e) => setGalleryOrder(Number(e.target.value))} /></Field>
-              <Button type="button" variant="secondary" disabled={galleryBusy || !galleryFile} onClick={addGalleryImage}>Нэмэх</Button>
+              <Button mutates type="button" variant="secondary" disabled={galleryBusy || !galleryFile} onClick={addGalleryImage}>Нэмэх</Button>
             </div>
             {galleryError && <p className="text-sm text-red-600">{galleryError}</p>}
           </div>

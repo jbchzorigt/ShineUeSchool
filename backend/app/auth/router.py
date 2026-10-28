@@ -17,8 +17,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..common.errors import FieldError
 from ..db import get_db
 from .deps import current_user, require_superuser
-from .models import ROLE_CODES, Role, User
-from .schemas import LoginIn, MeOut, RefreshIn, RoleOut, TokenPair, UserIn, UserOut, UserPatch
+from .models import ROLE_CODES, SECTIONS, Role, User
+from .schemas import LoginIn, MeOut, RefreshIn, SectionOut, TokenPair, UserIn, UserOut, UserPatch
 from .security import create_token, decode_token, hash_password, verify_password
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -72,6 +72,8 @@ def user_out(u: User) -> UserOut:
 async def _roles(db: AsyncSession, codes: list[str]) -> list[Role]:
     """Хүчинтэй кодуудад тохирох Role мөрүүдийг DB-ээс авна; байхгүй бол үүсгэнэ (ROLE_CODES бол цорын ганц эх сурвалж)."""
     codes = list(dict.fromkeys(codes))
+    # "засах" нь "харах"-ыг агуулдаг тул нэг хэсэгт хоёулаа ирвэл зөвхөн "засах"-ыг үлдээнэ
+    codes = [c for c in codes if not (c.endswith(".view") and f"{c[:-5]}.edit" in codes)]
     bad = [c for c in codes if c not in ROLE_CODES]
     if bad:
         raise FieldError("roles", f"Танигдаагүй эрх: {', '.join(bad)}")
@@ -88,10 +90,10 @@ async def _roles(db: AsyncSession, codes: list[str]) -> list[Role]:
     return roles
 
 
-@router.get("/roles/", response_model=list[RoleOut])
+@router.get("/roles/", response_model=list[SectionOut])
 async def roles_list(_: Super):
-    """ROLE_CODES бол боломжит эрхийн жагсаалтын эх сурвалж (Role хүснэгт зөвхөн user-role холбоосын хувьд байдаг)."""
-    return [RoleOut(code=code, name=name) for code, name in ROLE_CODES.items()]
+    """Эрх олгож болох админы хэсгүүд. Хэсэг бүрд "<code>.view" (харах) эсвэл "<code>.edit" (засах) эрх олгоно."""
+    return [SectionOut(code=code, name=name) for code, name in SECTIONS.items()]
 
 
 @router.get("/users/", response_model=list[UserOut])

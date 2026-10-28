@@ -11,7 +11,7 @@ import type {
   ClubAdmin, ClubInput, ClubRegistration, ClubRegistrationAdmin, ClubRegistrationInput, ClubRound, ClubsResponse,
   CommentAdmin, CurriculumCheck, CurriculumEntry, FbStatus, GridCell, ImportResponse, Lesson, NewsCategory, NewsImage, OlympiadPage,
   OlympiadPageInput, Paged, Period, PeriodInput, PeriodSet, PostAdmin, PostInput, ProgramAdmin, ProgramAdminDetail, ProgramInput,
-  ProgramWork, PublishResult, Result, ResultInput, Role, Room, RoomInput, Scholarship, ScholarshipInput, Stage, StageInput, Stats,
+  ProgramWork, PublishResult, Result, ResultInput, Room, RoomInput, Scholarship, ScholarshipInput, SectionInfo, Stage, StageInput, Stats,
   Subject, SubjectInput, Teacher, TeacherInput, TimetableImportResponse, TimetableStats, User, UserInput, VisitorAdmin, WorkInput,
   Years,
   CountryCatalogueItem, GraduateDestination, GraduateDestinationInput, GraduateStats, ProgramRadar,
@@ -151,7 +151,7 @@ export const api = {
   },
 
   /* ---- хэрэглэгч (superuser) ---- */
-  roles: () => request<Role[]>("/api/auth/roles/"),
+  roles: () => request<SectionInfo[]>("/api/auth/roles/"),
   users: {
     list: () => request<User[]>("/api/auth/users/"),
     create: (d: UserInput) => request<User>("/api/auth/users/", { method: "POST", body: d }),

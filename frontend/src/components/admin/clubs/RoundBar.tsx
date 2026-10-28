@@ -47,7 +47,7 @@ export function RoundBar({ rounds, current, onSelect, onChanged }: {
             <>
               <Button variant="ghost" onClick={() => { setMode("rename"); setName(current.name); setError(""); }}><EditLabel text="Нэр засах" /></Button>
               {!current.is_active && (
-                <Button variant="secondary" onClick={() => confirm("Энэ ээлжийг идэвхжүүлэх үү? Бусад ээлж идэвхгүй болно.") &&
+                <Button mutates variant="secondary" onClick={() => confirm("Энэ ээлжийг идэвхжүүлэх үү? Бусад ээлж идэвхгүй болно.") &&
                   run(() => api.clubsAdmin.rounds.update(current.id, { is_active: true }), "Идэвхжүүлж чадсангүй.")}>Идэвхжүүлэх</Button>
               )}
               <Button variant="ghost" onClick={download}>Excel татах</Button>

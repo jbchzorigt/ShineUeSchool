@@ -1,5 +1,7 @@
 /* Backend API-ийн өгөгдлийн төрлүүд (backend/app/olympiad/schemas.py, backend/app/auth/schemas.py-тэй тохирно) */
 
+import type { RoleCode, Section } from "./permissions";
+
 export interface Stage {
   id: number;
   year: number;
@@ -109,9 +111,10 @@ export interface Stats {
   latest_year: number | null;
 }
 
-export type RoleCode = "manager" | "olympiad" | "news";
+export type { RoleCode };
 
-export interface Role { code: RoleCode; name: string }
+/** Эрх олгож болох админы хэсэг (GET /api/auth/roles/). */
+export interface SectionInfo { code: Section; name: string }
 
 export interface User {
   id: number;

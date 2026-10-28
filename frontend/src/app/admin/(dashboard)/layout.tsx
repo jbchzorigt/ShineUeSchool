@@ -1,27 +1,28 @@
 "use client";
 
 /* Нэвтэрсэн хэрэглэгчид зориулсан layout: хажуугийн цэс + дээд мөр.
-   Нэвтрээгүй бол /admin/login руу шилжүүлнэ. */
+   Нэвтрээгүй бол /admin/login руу шилжүүлнэ. Цэсэнд зөвхөн харах эрхтэй хэсгүүд гарна; эрхгүй хэсгийн хуудсыг хаана,
+   зөвхөн харах эрхтэй хэсэгт ReadOnlyProvider-оор хадгалах/устгах товчнуудыг идэвхгүй болгоно. */
 
 import Image from "next/image";
 import Link from "next/link";
-import { BookOpenText, CalendarDays, GraduationCap, LayoutDashboard, Newspaper, School, Shapes, Trophy, Users, type LucideIcon } from "lucide-react";
+import { BookOpenText, CalendarDays, Eye, GraduationCap, LayoutDashboard, Newspaper, School, Shapes, Trophy, Users, type LucideIcon } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useAuth } from "@/lib/auth";
-import { Spinner } from "@/components/ui";
-import type { RoleCode } from "@/lib/types";
+import { ReadOnlyProvider, Spinner } from "@/components/ui";
+import { can, sectionOf, type Section } from "@/lib/permissions";
 
 // Icon: lucide-react (нэг загвартай шугаман icon)
-const NAV: { href: string; label: string; icon: LucideIcon; exact?: boolean; superuser?: boolean; role?: RoleCode }[] = [
+const NAV: { href: string; label: string; icon: LucideIcon; exact?: boolean; superuser?: boolean; section?: Section }[] = [
   { href: "/admin", label: "Нүүр", icon: LayoutDashboard },
-  { href: "/admin/olympiad", label: "Олимпиад", icon: Trophy },
-  { href: "/admin/timetable", label: "Хичээлийн хуваарь", icon: CalendarDays, role: "manager" },
-  { href: "/admin/clubs", label: "Дугуйлан", icon: Shapes, role: "manager" },
-  { href: "/admin/about", label: "Бидний тухай", icon: School, role: "manager" },
-  { href: "/admin/programs", label: "Хөтөлбөр", icon: BookOpenText, role: "manager" },
-  { href: "/admin/graduates", label: "Төгсөгч", icon: GraduationCap, role: "manager" },
-  { href: "/admin/news", label: "Мэдээ", icon: Newspaper, role: "news" },
+  { href: "/admin/olympiad", label: "Олимпиад", icon: Trophy, section: "olympiad" },
+  { href: "/admin/timetable", label: "Хичээлийн хуваарь", icon: CalendarDays, section: "timetable" },
+  { href: "/admin/clubs", label: "Дугуйлан", icon: Shapes, section: "clubs" },
+  { href: "/admin/about", label: "Бидний тухай", icon: School, section: "about" },
+  { href: "/admin/programs", label: "Хөтөлбөр", icon: BookOpenText, section: "programs" },
+  { href: "/admin/graduates", label: "Төгсөгч", icon: GraduationCap, section: "graduates" },
+  { href: "/admin/news", label: "Мэдээ", icon: Newspaper, section: "news" },
   { href: "/admin/users", label: "Хэрэглэгчид", icon: Users, superuser: true },
 ];
 
@@ -36,7 +37,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return <div className="grid min-h-screen place-items-center bg-slate-50"><Spinner className="h-8 w-8" /></div>;
   }
 
-  const nav = NAV.filter((n) => (!n.superuser || user.is_superuser) && (!n.role || user.is_superuser || user.roles.includes(n.role)));
+  const nav = NAV.filter((n) => (!n.superuser || user.is_superuser) && (!n.section || can(user, n.section)));
+  const section = sectionOf(path);
+  const denied = section !== null && !can(user, section);
+  const readOnly = section !== null && !denied && !can(user, section, "edit");
 
   return (
     <div className="flex min-h-screen bg-slate-50 text-slate-900">
@@ -76,7 +80,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <button onClick={() => { logout(); router.replace("/admin/login"); }} className="rounded-lg px-3 py-1.5 text-sm font-semibold text-slate-600 hover:bg-slate-100">Гарах</button>
           </div>
         </header>
-        <main className="flex-1 p-4 md:p-8">{children}</main>
+        <main className="flex-1 p-4 md:p-8">
+          {denied ? (
+            <p className="rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-600">Танд энэ хэсгийг харах эрх байхгүй. Эрх авахыг хүсвэл системийн админд хандана уу.</p>
+          ) : (
+            <ReadOnlyProvider value={readOnly}>
+              {readOnly && (
+                <p className="mb-4 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-medium text-amber-800">
+                  <Eye size={16} aria-hidden="true" className="shrink-0" />Танд энэ хэсгийг зөвхөн харах эрх байна — хадгалах, устгах боломжгүй.
+                </p>
+              )}
+              {children}
+            </ReadOnlyProvider>
+          )}
+        </main>
       </div>
     </div>
   );

@@ -9,7 +9,7 @@ import { api, ApiError } from "@/lib/api";
 import type { ClubAdmin } from "@/lib/types";
 import { QuotaRows } from "@/components/clubs/QuotaRows";
 import { ClipboardList } from "lucide-react";
-import { DeleteLabel, EditLabel, actionBtn } from "@/components/admin/ActionLabel";
+import { DeleteButton, EditLabel, MoveButton, actionBtn } from "@/components/admin/ActionLabel";
 
 
 export function ClubTable({ clubs, onEdit, onChanged }: { clubs: ClubAdmin[]; onEdit: (c: ClubAdmin) => void; onChanged: () => void }) {
@@ -32,8 +32,8 @@ export function ClubTable({ clubs, onEdit, onChanged }: { clubs: ClubAdmin[]; on
       {clubs.map((c, i) => (
         <tr key={c.id}>
           <Td className="whitespace-nowrap">
-            <button onClick={() => move(i, -1)} disabled={i === 0} className="px-1 text-navy disabled:opacity-30" aria-label="Дээш">▲</button>
-            <button onClick={() => move(i, 1)} disabled={i === clubs.length - 1} className="px-1 text-navy disabled:opacity-30" aria-label="Доош">▼</button>
+            <MoveButton dir="up" onClick={() => move(i, -1)} disabled={i === 0} />
+            <MoveButton dir="down" onClick={() => move(i, 1)} disabled={i === clubs.length - 1} />
           </Td>
           <Td className="font-semibold text-navy">{c.name}</Td>
           <Td>{formatGrades(c.grades)}</Td>
@@ -50,7 +50,7 @@ export function ClubTable({ clubs, onEdit, onChanged }: { clubs: ClubAdmin[]; on
             <Link href={`/admin/clubs/${c.id}`} className={`${actionBtn} text-navy hover:bg-navy/10`}>
               <ClipboardList size={15} strokeWidth={2.2} aria-hidden="true" className="shrink-0" />Бүртгэл, зураг
             </Link>
-            <button type="button" onClick={() => remove(c)} className={`${actionBtn} text-red-600 hover:bg-red-50`}><DeleteLabel /></button>
+            <DeleteButton onClick={() => remove(c)} />
           </Td>
         </tr>
       ))}

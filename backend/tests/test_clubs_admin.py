@@ -20,7 +20,7 @@ def club_payload(**over):
 
 async def test_admin_requires_manager(client, db, make_user):
     assert (await client.get(f"{A}/rounds/")).status_code == 401
-    h = await staff_headers(client, make_user, "oly", roles=("olympiad",))
+    h = await staff_headers(client, make_user, "oly", roles=("olympiad.edit",))
     assert (await client.get(f"{A}/rounds/", headers=h)).status_code == 403
     assert (await client.post(f"{A}/rounds/", headers=h, json={"name": "x"})).status_code == 403
     assert (await client.get(f"{A}/rounds/1/registrations.xlsx", headers=h)).status_code == 403

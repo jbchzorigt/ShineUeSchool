@@ -7,7 +7,13 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ..db import Base
 
-ROLE_CODES = {"manager": "Сургалтын менежер", "olympiad": "Олимпиад", "news": "Мэдээ"}
+# Админы хэсэг бүрд 2 түвшин: "view" (харах) ба "edit" (засах; харах эрхийг агуулна). Эрхийн код: "<хэсэг>.<түвшин>".
+SECTIONS = {
+    "olympiad": "Олимпиад", "timetable": "Хичээлийн хуваарь", "clubs": "Дугуйлан", "about": "Бидний тухай",
+    "programs": "Хөтөлбөр", "graduates": "Төгсөгч", "news": "Мэдээ",
+}
+LEVELS = {"view": "харах", "edit": "засах"}
+ROLE_CODES = {f"{s}.{lv}": f"{name} — {lname}" for s, name in SECTIONS.items() for lv, lname in LEVELS.items()}
 
 user_roles = Table(
     "user_roles", Base.metadata,
@@ -44,5 +50,10 @@ class User(Base):
 
     @property
     def is_staff(self) -> bool:
-        """Frontend-ийн одоогийн шалгалт: superuser эсвэл ямар нэг эрхийн бүлэгтэй."""
+        """Админ руу нэвтрэх эсэх: superuser эсвэл ямар нэг хэсгийн эрхтэй."""
         return self.is_superuser or len(self.roles) > 0
+
+    def can(self, section: str, level: str = "view") -> bool:
+        """Хэсгийн эрх: superuser бүгдийг; "edit" нь "view"-г агуулна."""
+        codes = self.role_codes
+        return self.is_superuser or f"{section}.edit" in codes or (level == "view" and f"{section}.view" in codes)

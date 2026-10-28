@@ -20,7 +20,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..auth.deps import optional_user, require_staff
+from ..auth.deps import optional_user, require_section
 from ..auth.models import User
 from ..common.errors import FieldError
 from ..common.media import delete_file, save_upload
@@ -120,12 +120,12 @@ async def results_list(db: DB, year: int | None = None, category: str | None = N
 @router.get("/album/", response_model=list[AlbumOut])
 async def album_list(request: Request, db: DB, user: Annotated[User | None, Depends(optional_user)]):
     q = select(AlbumPhoto).order_by(AlbumPhoto.order, AlbumPhoto.id)
-    if not (user and user.is_staff):
+    if not (user and user.can("olympiad", "view")):
         q = q.where(AlbumPhoto.is_published.is_(True))
     return [album_out(request, p) for p in (await db.execute(q)).scalars().all()]
 
 
-Staff = Annotated[User, Depends(require_staff)]
+Staff = Annotated[User, Depends(require_section("olympiad"))]  # засах эрх (бүгд өөрчлөх үйлдэл)
 
 
 async def _get_or_404(db: AsyncSession, model, id: int):

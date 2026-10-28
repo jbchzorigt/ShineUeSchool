@@ -10,7 +10,7 @@ import { Button, Card, Empty, Input, Table, Td, Th } from "@/components/ui";
 import { api, ApiError } from "@/lib/api";
 import type { Scholarship, ScholarshipInput } from "@/lib/types";
 import { ScholarshipDialog } from "./ScholarshipDialog";
-import { DeleteLabel, EditLabel, actionBtn } from "@/components/admin/ActionLabel";
+import { DeleteButton, EditLabel, MoveButton, actionBtn } from "@/components/admin/ActionLabel";
 
 const iconBtn = "inline-grid h-8 w-8 place-items-center rounded-lg text-base transition hover:bg-navy/10";
 
@@ -60,8 +60,8 @@ export function ScholarshipsPanel({ programId, items, onChanged }: { programId: 
           {items.map((s, i) => (
             <tr key={s.id}>
               <Td className="whitespace-nowrap">
-                <button type="button" onClick={() => move(i, -1)} disabled={moving || i === 0 || items[i - 1]?.year !== s.year} className="px-1 text-navy disabled:opacity-30" aria-label="Дээш">▲</button>
-                <button type="button" onClick={() => move(i, 1)} disabled={moving || i === items.length - 1 || items[i + 1]?.year !== s.year} className="px-1 text-navy disabled:opacity-30" aria-label="Доош">▼</button>
+                <MoveButton dir="up" onClick={() => move(i, -1)} disabled={moving || i === 0 || items[i - 1]?.year !== s.year} />
+                <MoveButton dir="down" onClick={() => move(i, 1)} disabled={moving || i === items.length - 1 || items[i + 1]?.year !== s.year} />
               </Td>
               {editing?.id === s.id ? (
                 <Td colSpan={4}>
@@ -92,7 +92,7 @@ export function ScholarshipsPanel({ programId, items, onChanged }: { programId: 
                 <label className={`${iconBtn} cursor-pointer text-navy`} title="Зураг оруулах"><span aria-hidden="true">🖼</span><input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" aria-label="Зураг оруулах" onChange={(e) => { setPhoto(s, e.target.files?.[0]); e.target.value = ""; }} /></label>
                 {s.photo && <button type="button" onClick={() => removePhoto(s)} className={`${iconBtn} text-slate-500`} aria-label="Зураг устгах" title="Зураг устгах">⊘</button>}
                 <button type="button" onClick={() => setEditing({ id: s.id, student_name: s.student_name, university: s.university, year: s.year, amount_usd: s.amount_usd })} className={`${actionBtn} text-navy hover:bg-navy/10`}><EditLabel /></button>
-                <button type="button" onClick={() => remove(s)} className={`${actionBtn} text-red-600 hover:bg-red-50`}><DeleteLabel /></button>
+                <DeleteButton onClick={() => remove(s)} />
               </Td>
             </tr>
           ))}
