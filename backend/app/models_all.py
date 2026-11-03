@@ -9,3 +9,4 @@ from .clubs import models as clubs_models  # noqa: F401
 from .about import models as about_models  # noqa: F401
 from .programs import models as programs_models  # noqa: F401
 from .graduates import models as graduates_models  # noqa: F401
+from .admissions import models as admissions_models  # noqa: F401

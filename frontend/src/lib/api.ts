@@ -15,6 +15,8 @@ import type {
   Subject, SubjectInput, Teacher, TeacherInput, TimetableImportResponse, TimetableStats, User, UserInput, VisitorAdmin, WorkInput,
   Years,
   CountryCatalogueItem, GraduateDestination, GraduateDestinationInput, GraduateStats, ProgramRadar,
+  AdmissionApplicantAdmin, AdmissionApplication, AdmissionApplicationInput, AdmissionImportReport, AdmissionRoundAdmin,
+  AdmissionRoundInput, AdmissionRoundPatch, AdmissionRoundPublic, AdmissionResult,
 } from "./types";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
@@ -301,6 +303,38 @@ export const api = {
     sendCode: (email: string) => request<{ ok: boolean; expires_in: number }>("/api/clubs/email/send/", { method: "POST", body: { email }, auth: false }),
     verifyCode: (email: string, code: string) => request<{ token: string; expires_in: number }>("/api/clubs/email/verify/", { method: "POST", body: { email, code }, auth: false }),
     register: (d: ClubRegistrationInput) => request<ClubRegistration>("/api/clubs/registrations/", { method: "POST", body: d, auth: false }),
+  },
+
+  /* ---- элсэлт (олон нийт) ---- */
+  admissions: {
+    info: () => request<{ round: AdmissionRoundPublic | null }>("/api/admissions/", { auth: false }),
+    sendCode: (email: string) => request<{ ok: boolean; expires_in: number }>("/api/admissions/email/send/", { method: "POST", body: { email }, auth: false }),
+    verifyCode: (email: string, code: string) => request<{ token: string }>("/api/admissions/email/verify/", { method: "POST", body: { email, code }, auth: false }),
+    apply: (d: AdmissionApplicationInput) => request<AdmissionApplication>("/api/admissions/applications/", { method: "POST", body: d, auth: false }),
+    remind: (email: string) => request<{ ok: boolean }>("/api/admissions/codes/remind/", { method: "POST", body: { email }, auth: false }),
+  },
+
+  /* ---- элсэлт (менежер) ---- */
+  admissionsAdmin: {
+    rounds: {
+      list: () => request<AdmissionRoundAdmin[]>("/api/admissions/admin/rounds/"),
+      create: (d: AdmissionRoundInput) => request<AdmissionRoundAdmin>("/api/admissions/admin/rounds/", { method: "POST", body: d }),
+      update: (id: number, d: AdmissionRoundPatch) =>
+        request<AdmissionRoundAdmin>(`/api/admissions/admin/rounds/${id}/`, { method: "PATCH", body: d }),
+      remove: (id: number) => request<void>(`/api/admissions/admin/rounds/${id}/`, { method: "DELETE" }),
+      async downloadXlsx(id: number): Promise<Blob> {
+        const t = tokens.get();
+        const res = await fetch(`${API_URL}/api/admissions/admin/rounds/${id}/applicants.xlsx`, { headers: t ? { Authorization: `Bearer ${t.access}` } : {} });
+        if (!res.ok) throw new ApiError(res.status, await res.json().catch(() => null));
+        return res.blob();
+      },
+      importResults: (id: number, file: File) => { const fd = new FormData(); fd.append("file", file); return request<AdmissionImportReport>(`/api/admissions/admin/rounds/${id}/results/`, { method: "POST", body: fd }); },
+    },
+    applicants: {
+      list: (roundId: number, p: { grade?: number; q?: string } = {}) => request<AdmissionApplicantAdmin[]>(`/api/admissions/admin/rounds/${roundId}/applicants/${q(p)}`),
+      update: (id: number, d: { score?: number | null; result?: AdmissionResult | null; status?: "registered" | "withdrawn"; clear_result?: boolean }) =>
+        request<AdmissionApplicantAdmin>(`/api/admissions/admin/applicants/${id}/`, { method: "PATCH", body: d }),
+    },
   },
 
   /* ---- дугуйлан (менежер) ---- */

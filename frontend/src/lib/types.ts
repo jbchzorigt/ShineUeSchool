@@ -292,3 +292,39 @@ export interface CountryCatalogueItem { code: string; name: string; numeric: str
 export interface GraduateDestination extends CountryCatalogueItem { id: number; universities: string[]; order: number }
 export interface GraduateDestinationInput { code: string; universities: string[] }
 export interface GraduateStats { total_graduates: number; university_percent: number; university_count: number; abroad_count: number }
+
+/* ---------- Элсэлт (backend/app/admissions) ---------- */
+export type AdmissionResult = "passed" | "failed" | "waitlist" | "absent";
+/** Олон нийт: хэсэг сайтад харагдаж байгаа эсэх (асаалттай БА хугацаа дуусаагүй). */
+export interface AdmissionSectionPublic { open: boolean; deadline: string | null }
+export interface AdmissionRoundPublic {
+  id: number; name: string; grades: number[]; test_info: string;
+  registration: AdmissionSectionPublic; results: AdmissionSectionPublic;
+}
+export interface AdmissionApplicationInput {
+  token: string; grade: number; child_last_name: string; child_first_name: string; birth_date: string; gender: "male" | "female";
+  current_school: string; guardian_last_name: string; guardian_first_name: string; phone: string; consent: boolean;
+}
+export interface AdmissionApplication {
+  code: string; round_name: string; grade: number; child_last_name: string; child_first_name: string; email: string; test_info: string;
+}
+export interface AdmissionResultRow { code: string; grade: number; score: number | null; result: AdmissionResult | null }
+export interface AdmissionResults { round: AdmissionRoundPublic | null; published_at: string | null; rows: AdmissionResultRow[] }
+/** Админ: enabled — товч; expired — эцсийн хугацаа өнгөрсөн (өнгөрмөгц enabled автоматаар false). */
+export interface AdmissionSectionAdmin { enabled: boolean; deadline: string | null; expired: boolean }
+export interface AdmissionRoundAdmin {
+  id: number; name: string; code_prefix: string; grades: number[]; test_info: string; is_active: boolean;
+  registration: AdmissionSectionAdmin; results: AdmissionSectionAdmin; results_published_at: string | null;
+  applicants_count: number; results_count: number; created_at: string;
+}
+export interface AdmissionRoundInput { name: string; code_prefix: string; grades: number[]; test_info: string }
+export interface AdmissionRoundPatch {
+  name?: string; grades?: number[]; test_info?: string; is_active?: boolean;
+  registration_open?: boolean; registration_deadline?: string; results_published?: boolean; results_deadline?: string;
+}
+export interface AdmissionApplicantAdmin {
+  id: number; code: string; email: string; child_last_name: string; child_first_name: string; birth_date: string; gender: string;
+  current_school: string; grade: number; guardian_last_name: string; guardian_first_name: string; phone: string;
+  status: "registered" | "withdrawn"; score: number | null; result: AdmissionResult | null; created_at: string;
+}
+export interface AdmissionImportReport { applied: boolean; updated: number; unchanged: number; skipped_blank: number; errors: string[] }
