@@ -36,6 +36,9 @@ class Settings(BaseSettings):
     visitor_ttl_days: int = 30
     # Олон нийтэд харагдах backend-ийн хаяг (media URL-д ашиглана); хоосон бол request.base_url ашиглана
     media_base_url: str = ""
+    # Facebook Page → мэдээний булан sync-ийн давтамж (минут, news/fb_sync.py). 0 = унтраах.
+    # Зөвхөн FB_PAGE_ID, FB_PAGE_ACCESS_TOKEN шаардана (App ID/secret хэрэггүй).
+    fb_sync_interval_minutes: int = 5
 
     # Имэйл (дугуйлангийн бүртгэлийн код). smtp_host, smtp_from хоосон бол код серверийн логт хэвлэгдэнэ.
     smtp_host: str = ""

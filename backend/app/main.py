@@ -1,4 +1,8 @@
-"""FastAPI app. Router-ууд, CORS, media, алдааны handler энд бүртгэгдэнэ."""
+"""FastAPI app. Router-ууд, CORS, media, алдааны handler, Facebook sync энд бүртгэгдэнэ."""
+
+import asyncio
+import contextlib
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,6 +15,7 @@ from .clubs.router_admin import router as clubs_admin_router
 from .clubs.router_public import router as clubs_public_router
 from .common import errors
 from .config import settings
+from .news import fb_sync
 from .news.router_admin import router as news_admin_router
 from .news.router_public import router as news_public_router
 from .olympiad.router import router as olympiad_router
@@ -22,7 +27,18 @@ from .social.router import router as social_router
 from .timetable.router_lessons import router as timetable_lessons_router
 from .timetable.router_setup import router as timetable_setup_router
 
-app = FastAPI(title="Шинэ Үе сургууль API", version="0.2.0")
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    # Facebook Page-ийн нийтлэлүүдийг /news руу үе үе татна (news/fb_sync.py); тохируулаагүй бол ажиллахгүй.
+    task = asyncio.create_task(fb_sync.run_forever()) if fb_sync.sync_enabled() else None
+    yield
+    if task:
+        task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await task
+
+
+app = FastAPI(title="Шинэ Үе сургууль API", version="0.2.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
