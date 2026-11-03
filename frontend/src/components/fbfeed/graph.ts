@@ -15,8 +15,9 @@ export const GRAPH_VERSION = "v26.0";
 const GRAPH = `https://graph.facebook.com/${GRAPH_VERSION}`;
 
 export const FEED_PAGE_SIZE = 10;
-/** Next fetch cache: Graph-ийг 5 минут тутамд нэг л удаа дуудна (rate limit, хурд). */
-export const FEED_REVALIDATE_SECONDS = 300;
+/** Next fetch cache: Graph-ийг минутад нэг л удаа дуудна (rate limit: өдөрт ~1440 дуудлага).
+    Нээлттэй хуудас мөн REFRESH_MS тутам /api/fbfeed-ээс шинэчлэгдэнэ (FacebookFeed.tsx). */
+export const FEED_REVALIDATE_SECONDS = 60;
 
 export interface FeedPost {
   id: string;
@@ -72,10 +73,25 @@ interface RawFeed {
   error?: { message?: string; code?: number; type?: string };
 }
 
+/* Нэг зураг full_picture болон attachment-д өөр гарын үсэгтэй (oh=, stp= query) URL-аар ирдэг тул
+   давхардлыг бүтэн URL-аар биш, CDN дээрх файлын замаар шалгана. */
+function imageKey(src: string): string {
+  try {
+    return new URL(src).pathname;
+  } catch {
+    return src;
+  }
+}
+
 function collectImages(p: RawPost): string[] {
   const out: string[] = [];
+  const seen = new Set<string>();
   const push = (src?: string) => {
-    if (src && !out.includes(src) && out.length < 4) out.push(src);
+    if (!src || out.length >= 4) return;
+    const key = imageKey(src);
+    if (seen.has(key)) return;
+    seen.add(key);
+    out.push(src);
   };
   push(p.full_picture);
   for (const a of p.attachments?.data ?? []) {
@@ -85,7 +101,8 @@ function collectImages(p: RawPost): string[] {
   return out;
 }
 
-function toPost(p: RawPost): FeedPost {
+/* withEngagement: тоог хүссэн бол Graph 0 хуваалцалтад `shares` талбарыг огт буцаадаггүй тул 0 гэж үзнэ. */
+function toPost(p: RawPost, withEngagement: boolean): FeedPost {
   return {
     id: p.id,
     message: p.message ?? p.story ?? "",
@@ -94,7 +111,7 @@ function toPost(p: RawPost): FeedPost {
     images: collectImages(p),
     reactions: p.reactions?.summary?.total_count ?? null,
     comments: p.comments?.summary?.total_count ?? null,
-    shares: p.shares?.count ?? null,
+    shares: p.shares?.count ?? (withEngagement ? 0 : null),
   };
 }
 
@@ -131,18 +148,20 @@ export async function fetchFeed({ after }: { after?: string } = {}): Promise<Fee
     return { ok: false, reason: "unconfigured", message: "FB_PAGE_ID, FB_PAGE_ACCESS_TOKEN тохируулаагүй байна." };
   }
   let raw: RawFeed;
+  let withEngagement = true;
   try {
     try {
       raw = await graphPosts(pageId, token, `${BASE_FIELDS},${ENGAGEMENT_FIELDS}`, after);
     } catch (e) {
       // Эрхийн алдаа (ихэвчлэн code 100/10/200) бол тоогүйгээр дахин оролдоно.
       if (!(e instanceof GraphError) || e.code === undefined) throw e;
+      withEngagement = false;
       raw = await graphPosts(pageId, token, BASE_FIELDS, after);
     }
   } catch (e) {
     return { ok: false, reason: "error", message: e instanceof Error ? e.message : "Graph API алдаа" };
   }
-  const posts = (raw.data ?? []).map(toPost);
+  const posts = (raw.data ?? []).map((p) => toPost(p, withEngagement));
   const next = raw.paging?.next && raw.paging.cursors?.after ? raw.paging.cursors.after : null;
   return { ok: true, page: { posts, next } };
 }

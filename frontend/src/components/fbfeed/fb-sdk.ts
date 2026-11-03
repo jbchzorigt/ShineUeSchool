@@ -63,19 +63,22 @@ export function loadFacebookSdk(appId: string | undefined): Promise<FbSdk> {
       reject(new Error("Facebook App ID тохируулаагүй байна (NEXT_PUBLIC_FB_APP_ID)."));
       return;
     }
+    // window.FB init-ээс өмнө үүсдэг тул init дууссаны дараа л resolve хийнэ (init-гүй дуудлагууд callback-гүй өлгөөтэй үлддэг).
     const prevInit = window.fbAsyncInit;
     window.fbAsyncInit = () => {
       prevInit?.();
-      getFB()?.init({ appId, version: SDK_VERSION, xfbml: false });
+      const fb = getFB();
+      if (!fb) return reject(new Error("Facebook SDK ачаалж чадсангүй."));
+      fb.init({ appId, version: SDK_VERSION, xfbml: false });
+      resolve(fb);
     };
     const script = document.createElement("script");
     script.id = SCRIPT_ID;
     script.src = "https://connect.facebook.net/mn_MN/sdk.js";
     script.async = true;
     script.defer = true;
-    script.onerror = () => reject(new Error("Facebook SDK ачаалж чадсангүй."));
+    script.onerror = () => reject(new Error("Facebook SDK ачаалж чадсангүй. Ad blocker-оо унтраагаад дахин оролдоно уу."));
     document.body.appendChild(script);
-    waitForGlobal();
   }).catch((e) => {
     sdkPromise = null; // дараагийн оролдлогод дахин ачаалж үзнэ
     throw e;
@@ -89,14 +92,57 @@ export class FbLoginCancelled extends Error {
   }
 }
 
-/** Зочин Facebook-т нэвтэрсэн эсэхийг шалгаж, үгүй бол нэвтрэх цонх нээнэ. */
-export async function ensureFacebookLogin(appId: string | undefined): Promise<FbSdk> {
-  const FB = await loadFacebookSdk(appId);
-  const status = await new Promise<FbLoginStatus>((resolve) => FB.getLoginStatus(resolve, true));
-  if (status.status === "connected" && status.authResponse) return FB;
-  const res = await new Promise<FbLoginStatus>((resolve) => FB.login(resolve, { scope: "public_profile" }));
-  if (res.status !== "connected" || !res.authResponse) throw new FbLoginCancelled();
-  return FB;
+/* Facebook 2018 оноос http хуудсанд FB.login/getLoginStatus-ийг хаасан — callback нь огт дуудагдахгүй тул
+   урьдчилан шалгана (локал тест: `npx next dev --experimental-https`). */
+function assertSecureContext(): void {
+  if (window.location.protocol !== "https:") {
+    throw new Error("Facebook нэвтрэлт зөвхөн https:// хаяг дээр ажиллана.");
+  }
+}
+
+const STATUS_TIMEOUT_MS = 10_000;
+
+function getLoginStatus(FB: FbSdk): Promise<FbLoginStatus> {
+  return new Promise((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error("Facebook хариу өгсөнгүй. Дахин оролдоно уу.")), STATUS_TIMEOUT_MS);
+    FB.getLoginStatus((res) => {
+      clearTimeout(t);
+      resolve(res);
+    }, true);
+  });
+}
+
+/* Хөтөч popup-ийг зөвхөн click-ийн дотор шууд нээвэл зөвшөөрнө. Сүлжээ хүлээсний дараа дуудсан FB.login-ийн
+   popup чимээгүй хаагдаж callback нь огт ирэхгүй. Тиймээс SDK болон нэвтрэлтийн төлөвийг урьдчилан
+   (диалог нээгдэхэд) prepareFacebook-оор бэлдэж, click дээр loginFromClick-ийг ямар ч await-гүй дуудна. */
+let cachedStatus: FbLoginStatus | null = null;
+
+/** SDK ачаалж, нэвтрэлтийн төлөвийг авна. https биш эсвэл SDK ачаалагдаагүй бол алдаа. */
+export async function prepareFacebook(appId: string | undefined): Promise<void> {
+  assertSecureContext();
+  cachedStatus = await getLoginStatus(await loadFacebookSdk(appId));
+}
+
+const LOGIN_TIMEOUT_MS = 5 * 60_000;
+
+/** prepareFacebook дууссаны дараа click handler дотроос ШУУД (await-гүй) дуудна. Нэвтэрсэн бол шууд FB-г буцаана. */
+export function loginFromClick(): Promise<FbSdk> {
+  const FB = getFB();
+  if (!FB) return Promise.reject(new Error("Facebook SDK ачаалагдаагүй байна."));
+  if (cachedStatus?.status === "connected" && cachedStatus.authResponse) return Promise.resolve(FB);
+  return new Promise((resolve, reject) => {
+    // Popup хаагдахад Facebook callback-аа дууддаг; энэ нь зөвхөн хэзээ ч ирэхгүй тохиолдлын хамгаалалт.
+    const t = setTimeout(() => reject(new FbLoginCancelled()), LOGIN_TIMEOUT_MS);
+    FB.login(
+      (res) => {
+        clearTimeout(t);
+        cachedStatus = res;
+        if (res.status === "connected" && res.authResponse) resolve(FB);
+        else reject(new FbLoginCancelled());
+      },
+      { scope: "public_profile" },
+    );
+  });
 }
 
 /** Facebook-ийн Share dialog (нэвтэрсэн зочны профайл/story руу). true = хуваалцсан, false = хаасан. */

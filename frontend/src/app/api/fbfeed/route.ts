@@ -1,4 +1,5 @@
-/* GET /api/fbfeed?after=<cursor> — Facebook feed-ийн дараагийн хуудас ("Цааш" товч, components/fbfeed/FacebookFeed.tsx).
+/* GET /api/fbfeed?after=<cursor> — Facebook feed-ийн дараагийн хуудас ("Цааш" товч, components/fbfeed/FacebookFeed.tsx);
+   after-гүй бол эхний хуудас — нээлттэй хуудас үүгээр минут тутам шинэчлэгдэнэ.
    Page токен зөвхөн server дээр (graph.ts) хэрэглэгдэнэ; client-д FeedResult JSON л очно. */
 
 import { NextResponse, type NextRequest } from "next/server";
@@ -11,5 +12,5 @@ export async function GET(req: NextRequest) {
   }
   const result = await fetchFeed({ after });
   const status = result.ok ? 200 : result.reason === "unconfigured" ? 503 : 502;
-  return NextResponse.json(result, { status, headers: { "Cache-Control": "public, max-age=60, s-maxage=300" } });
+  return NextResponse.json(result, { status, headers: { "Cache-Control": "public, max-age=0, s-maxage=30" } });
 }
