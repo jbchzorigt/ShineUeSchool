@@ -7,7 +7,7 @@ export const LANGS: Lang[] = ["mn", "en"];
 export const isLang = (v: string): v is Lang => v === "mn" || v === "en";
 
 /** Зөвхөн монголоор байх хуудсууд (угтвар): англи хувилбаргүй, `/en/…` → монгол руу шилжүүлнэ. */
-export const MN_ONLY = ["/calendar", "/timetable", "/clubs", "/survey", "/admission"];
+export const MN_ONLY = ["/calendar", "/timetable", "/clubs", "/survey"];
 
 const under = (path: string, prefix: string) => path === prefix || path.startsWith(`${prefix}/`);
 const isMnOnly = (path: string) => MN_ONLY.some((p) => under(path, p));

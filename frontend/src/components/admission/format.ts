@@ -1,4 +1,4 @@
-/* Элсэлтийн шошго, өнгө (олон нийт + админ). */
+/* Элсэлтийн шошго, өнгө. RESULT_LABEL — админд (монгол); нийтийн хуудсууд толь бичгийн `admission.result`-ийг хэрэглэнэ. */
 
 import type { AdmissionResult, AdmissionSectionAdmin } from "@/lib/types";
 
@@ -11,6 +11,13 @@ export function sectionStatus(s: AdmissionSectionAdmin): { label: string; tone: 
   if (s.enabled) return { label: "Асаалттай — сайтад харагдаж байна", tone: "green" };
   if (s.expired) return { label: "Хугацаа дууссан — автоматаар унтарсан", tone: "red" };
   return { label: "Унтраалттай — сайтад харагдахгүй", tone: "slate" };
+}
+
+/** Ангиудын хүрээ: [1,2,3] → "1–3", [1,6] → "1, 6". Хэлний шошгыг толь бичиг нэмнэ (`admission.grades`). */
+export function gradeSpan(grades: number[]): string {
+  const g = [...grades].sort((a, b) => a - b);
+  const consecutive = g.every((v, i) => i === 0 || v === g[i - 1] + 1);
+  return g.length > 1 && consecutive ? `${g[0]}–${g[g.length - 1]}` : g.join(", ");
 }
 
 /** Хайлтын оролтыг кодтой харьцуулах хэлбэрт: зай, зураас хасна, том үсэг ("su27 7kq" → "SU277KQ"). */

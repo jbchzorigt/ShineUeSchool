@@ -18,6 +18,7 @@ import type {
   AdmissionApplicantAdmin, AdmissionApplication, AdmissionApplicationInput, AdmissionImportReport, AdmissionRoundAdmin,
   AdmissionRoundInput, AdmissionRoundPatch, AdmissionRoundPublic, AdmissionResult,
 } from "./types";
+import type { Lang } from "./i18n";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
 const TOKEN_KEY = "shineue.tokens";
@@ -311,11 +312,12 @@ export const api = {
 
   /* ---- элсэлт (олон нийт) ---- */
   admissions: {
-    info: () => request<{ round: AdmissionRoundPublic | null }>("/api/admissions/", { auth: false }),
-    sendCode: (email: string) => request<{ ok: boolean; expires_in: number }>("/api/admissions/email/send/", { method: "POST", body: { email }, auth: false }),
-    verifyCode: (email: string, code: string) => request<{ token: string }>("/api/admissions/email/verify/", { method: "POST", body: { email, code }, auth: false }),
+    info: (lang: Lang = "mn") => request<{ round: AdmissionRoundPublic | null }>(`/api/admissions/?lang=${lang}`, { auth: false }),
+    // lang: алдааны мессеж, имэйлүүд тухайн хэлээр
+    sendCode: (email: string, lang: Lang) => request<{ ok: boolean; expires_in: number }>("/api/admissions/email/send/", { method: "POST", body: { email, lang }, auth: false }),
+    verifyCode: (email: string, code: string, lang: Lang) => request<{ token: string }>("/api/admissions/email/verify/", { method: "POST", body: { email, code, lang }, auth: false }),
     apply: (d: AdmissionApplicationInput) => request<AdmissionApplication>("/api/admissions/applications/", { method: "POST", body: d, auth: false }),
-    remind: (email: string) => request<{ ok: boolean }>("/api/admissions/codes/remind/", { method: "POST", body: { email }, auth: false }),
+    remind: (email: string, lang: Lang) => request<{ ok: boolean }>("/api/admissions/codes/remind/", { method: "POST", body: { email, lang }, auth: false }),
   },
 
   /* ---- элсэлт (менежер) ---- */

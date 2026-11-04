@@ -5,11 +5,13 @@
 
 import { useDeferredValue, useMemo, useRef, useState } from "react";
 import { gsap, reduceMotion, useGSAP } from "@/components/site/gsap";
+import { useDict } from "@/components/site/LangProvider";
 import { Badge } from "@/components/ui";
 import type { AdmissionResultRow } from "@/lib/types";
-import { codeKey, formatScore, RESULT_LABEL, RESULT_ORDER, RESULT_TONE } from "./format";
+import { codeKey, formatScore, RESULT_ORDER, RESULT_TONE } from "./format";
 
 export function ResultsList({ rows }: { rows: AdmissionResultRow[] }) {
+  const t = useDict().admission;
   const [query, setQuery] = useState("");
   const [grade, setGrade] = useState<number | null>(null);
   const q = codeKey(useDeferredValue(query));
@@ -58,14 +60,14 @@ export function ResultsList({ rows }: { rows: AdmissionResultRow[] }) {
   return (
     <div ref={root} className="flex flex-col gap-6">
       <div className="flex flex-col gap-3">
-        <label htmlFor="code-search" className="text-sm font-semibold text-ink">Элсэгчийн кодоор хайх</label>
+        <label htmlFor="code-search" className="text-sm font-semibold text-ink">{t.searchLabel}</label>
         <div className="relative max-w-xl">
           <input
             id="code-search"
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Жишээ нь: SU27-7KQ4M"
+            placeholder={t.searchPlaceholder}
             autoComplete="off"
             autoCapitalize="characters"
             spellCheck={false}
@@ -74,42 +76,42 @@ export function ResultsList({ rows }: { rows: AdmissionResultRow[] }) {
         </div>
         {exact ? (
           <div key={exact.code} data-anim="match" role="status" className="max-w-xl rounded-2xl border-2 border-navy bg-white p-5 shadow-sm">
-            <p className="font-mono text-sm font-semibold tracking-wider text-muted">{exact.code} · {exact.grade}-р анги</p>
+            <p className="font-mono text-sm font-semibold tracking-wider text-muted">{exact.code} · {t.grade(exact.grade)}</p>
             <div className="mt-2 flex flex-wrap items-baseline gap-x-5 gap-y-2">
-              {exact.result && <span data-anim="verdict" className="font-display text-[30px] font-extrabold leading-none text-navy">{RESULT_LABEL[exact.result]}</span>}
-              {exact.score !== null && <span className="text-lg text-ink"><span data-anim="score" className="font-bold tabular-nums">{formatScore(exact.score)}</span> оноо</span>}
+              {exact.result && <span data-anim="verdict" className="font-display text-[30px] font-extrabold leading-none text-navy">{t.result[exact.result]}</span>}
+              {exact.score !== null && <span className="text-lg text-ink"><span data-anim="score" className="font-bold tabular-nums">{formatScore(exact.score)}</span> {t.points}</span>}
             </div>
           </div>
         ) : q.length >= 6 && shown.length === 0 ? (
           <p role="status" className="max-w-xl rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
-            «{query.trim()}» код олдсонгүй. Кодоо бүртгүүлсэн имэйлээсээ шалгана уу.
+            {t.codeNotFound(query.trim())}
           </p>
         ) : null}
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         {grades.length > 1 && (
-          <nav aria-label="Ангиар шүүх" className="flex flex-wrap gap-2">
-            <button type="button" onClick={() => setGrade(null)} aria-pressed={grade === null} className={`${chip} ${grade === null ? chipOn : chipOff}`}>Бүх анги</button>
+          <nav aria-label={t.gradeFilter} className="flex flex-wrap gap-2">
+            <button type="button" onClick={() => setGrade(null)} aria-pressed={grade === null} className={`${chip} ${grade === null ? chipOn : chipOff}`}>{t.allGrades}</button>
             {grades.map((g) => (
-              <button key={g} type="button" onClick={() => setGrade(g)} aria-pressed={grade === g} className={`${chip} ${grade === g ? chipOn : chipOff}`}>{g}-р анги</button>
+              <button key={g} type="button" onClick={() => setGrade(g)} aria-pressed={grade === g} className={`${chip} ${grade === g ? chipOn : chipOff}`}>{t.grade(g)}</button>
             ))}
           </nav>
         )}
         <p className="text-sm text-muted tabular-nums">
-          {RESULT_ORDER.filter((r) => counts[r]).map((r) => `${RESULT_LABEL[r]} ${counts[r]}`).join(" · ")}
+          {RESULT_ORDER.filter((r) => counts[r]).map((r) => `${t.result[r]} ${counts[r]}`).join(" · ")}
         </p>
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-sm">
         <table className="w-full text-left text-[15px]">
-          <caption className="sr-only">Элсэлтийн шалгалтын дүн, элсэгчийн кодоор</caption>
+          <caption className="sr-only">{t.tableCaption}</caption>
           <thead className="bg-navy text-xs uppercase tracking-wider text-white">
             <tr>
-              <th scope="col" className="px-4 py-3 font-semibold sm:px-6">Код</th>
-              <th scope="col" className="px-4 py-3 font-semibold">Анги</th>
-              <th scope="col" className="px-4 py-3 text-right font-semibold">Оноо</th>
-              <th scope="col" className="px-4 py-3 font-semibold sm:px-6">Дүн</th>
+              <th scope="col" className="px-4 py-3 font-semibold sm:px-6">{t.colCode}</th>
+              <th scope="col" className="px-4 py-3 font-semibold">{t.colGrade}</th>
+              <th scope="col" className="px-4 py-3 text-right font-semibold">{t.colScore}</th>
+              <th scope="col" className="px-4 py-3 font-semibold sm:px-6">{t.colResult}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-line/70">
@@ -118,14 +120,14 @@ export function ResultsList({ rows }: { rows: AdmissionResultRow[] }) {
                 <td className="px-4 py-2.5 font-mono font-semibold tracking-wider text-ink sm:px-6">{r.code}</td>
                 <td className="px-4 py-2.5 tabular-nums text-muted">{r.grade}</td>
                 <td className="px-4 py-2.5 text-right tabular-nums text-ink">{formatScore(r.score)}</td>
-                <td className="px-4 py-2.5 sm:px-6">{r.result ? <Badge tone={RESULT_TONE[r.result]}>{RESULT_LABEL[r.result]}</Badge> : <span className="text-muted">—</span>}</td>
+                <td className="px-4 py-2.5 sm:px-6">{r.result ? <Badge tone={RESULT_TONE[r.result]}>{t.result[r.result]}</Badge> : <span className="text-muted">—</span>}</td>
               </tr>
             ))}
           </tbody>
         </table>
-        {shown.length === 0 && <p className="px-6 py-8 text-center text-sm text-muted">Илэрц алга.</p>}
+        {shown.length === 0 && <p className="px-6 py-8 text-center text-sm text-muted">{t.noMatches}</p>}
       </div>
-      <p className="text-sm text-muted tabular-nums">Нийт {shown.length} / {rows.length} элсэгч</p>
+      <p className="text-sm text-muted tabular-nums">{t.total(shown.length, rows.length)}</p>
     </div>
   );
 }

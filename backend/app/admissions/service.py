@@ -9,7 +9,9 @@ from fastapi import HTTPException, status
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..common.i18n import Lang, localized
 from ..config import settings
+from .messages import msg
 from .models import APP_REGISTERED, AdmissionRound, Applicant
 from .schemas import RoundAdminOut, RoundPublic, SectionAdmin, SectionPublic
 
@@ -80,22 +82,24 @@ def create_app_token(email: str) -> str:
     return jwt.encode(payload, settings.secret_key, algorithm="HS256")
 
 
-def decode_app_token(token: str) -> str:
+def decode_app_token(token: str, lang: Lang = "mn") -> str:
     """Имэйл буцаана; буруу/хугацаа дууссан/scope зөрсөн бол 401."""
     try:
         payload = jwt.decode(token, settings.secret_key, algorithms=["HS256"])
     except jwt.PyJWTError:
         payload = None
     if not payload or payload.get("scope") != TOKEN_SCOPE or not payload.get("sub"):
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Баталгаажуулалтын хугацаа дууссан. Кодоо дахин авна уу")
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, msg("token_expired", lang))
     return str(payload["sub"])
 
 
-def round_public(rnd: AdmissionRound, now: datetime) -> RoundPublic:
-    """Унтраалттай хэсгийн хугацааг ч нуух шаардлагагүй ч харуулахгүй (open=False бол deadline=None)."""
+def round_public(rnd: AdmissionRound, now: datetime, lang: Lang = "mn") -> RoundPublic:
+    """Унтраалттай хэсгийн хугацааг ч нуух шаардлагагүй ч харуулахгүй (open=False бол deadline=None).
+    Англи нэр/мэдээлэл хоосон бол монголоор."""
     reg, res = registration_live(rnd, now), results_live(rnd, now)
     return RoundPublic(
-        id=rnd.id, name=rnd.name, grades=list(rnd.grades), test_info=rnd.test_info if reg else "",
+        id=rnd.id, name=localized(rnd.name, rnd.name_en, lang), grades=list(rnd.grades),
+        test_info=localized(rnd.test_info, rnd.test_info_en, lang) if reg else "",
         registration=SectionPublic(open=reg, deadline=rnd.registration_deadline if reg else None),
         results=SectionPublic(open=res, deadline=rnd.results_deadline if res else None),
     )
@@ -111,7 +115,8 @@ async def round_admin_out(db: AsyncSession, rnd: AdmissionRound) -> RoundAdminOu
         return SectionAdmin(enabled=enabled, deadline=deadline, expired=deadline is not None and deadline <= now)
 
     return RoundAdminOut(
-        id=rnd.id, name=rnd.name, code_prefix=rnd.code_prefix, grades=list(rnd.grades), test_info=rnd.test_info,
+        id=rnd.id, name=rnd.name, name_en=rnd.name_en, code_prefix=rnd.code_prefix, grades=list(rnd.grades),
+        test_info=rnd.test_info, test_info_en=rnd.test_info_en,
         is_active=rnd.is_active, registration=section(rnd.registration_open, rnd.registration_deadline),
         results=section(rnd.results_published, rnd.results_deadline), results_published_at=rnd.results_published_at,
         applicants_count=int(applicants), results_count=int(results), created_at=rnd.created_at,

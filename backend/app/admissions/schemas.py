@@ -4,7 +4,10 @@ import re
 from datetime import date, datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator
+
+from ..common.i18n import Lang
+from .messages import msg
 
 Gender = Literal["male", "female"]
 ResultCode = Literal["passed", "failed", "waitlist", "absent"]
@@ -44,15 +47,18 @@ class RoundPublic(BaseModel):
 
 class EmailIn(BaseModel):
     email: str = Field(min_length=3, max_length=254)
+    lang: Lang = "mn"       # хариу мессеж, имэйлийн хэл
 
 
 class VerifyIn(BaseModel):
     email: str = Field(min_length=3, max_length=254)
     code: str = Field(min_length=6, max_length=6)
+    lang: Lang = "mn"
 
 
 class ApplicationIn(BaseModel):
     token: str
+    lang: Lang = "mn"       # validator-ууд info.data-аас уншдаг тул бусад талбараас ӨМНӨ; имэйлүүд энэ хэлээр
     grade: int = Field(ge=1, le=12)
     child_last_name: str = Field(min_length=1, max_length=80)
     child_first_name: str = Field(min_length=1, max_length=80)
@@ -61,7 +67,7 @@ class ApplicationIn(BaseModel):
     current_school: str = Field(default="", max_length=160)
     guardian_last_name: str = Field(min_length=1, max_length=80)
     guardian_first_name: str = Field(min_length=1, max_length=80)
-    phone: str = Field(min_length=6, max_length=30)
+    phone: str = Field(max_length=30)       # урт, тэмдэгтийг _phone шалгана (хэлтэй мессеж)
     consent: bool
 
     @field_validator("child_last_name", "child_first_name", "current_school", "guardian_last_name",
@@ -72,17 +78,17 @@ class ApplicationIn(BaseModel):
 
     @field_validator("phone")
     @classmethod
-    def _phone(cls, v: str) -> str:
+    def _phone(cls, v: str, info: ValidationInfo) -> str:
         if not re.fullmatch(r"[0-9+\-\s()]{6,30}", v) or sum(c.isdigit() for c in v) < 6:
-            raise ValueError("Утасны дугаар буруу байна.")
+            raise ValueError(msg("phone", info.data.get("lang", "mn")))
         return v
 
     @field_validator("birth_date")
     @classmethod
-    def _birth(cls, v: date) -> date:
+    def _birth(cls, v: date, info: ValidationInfo) -> date:
         today = date.today()
         if not (today.replace(year=today.year - 20) <= v <= today.replace(year=today.year - 3)):
-            raise ValueError("Төрсөн огноо буруу байна.")
+            raise ValueError(msg("birth_date", info.data.get("lang", "mn")))
         return v
 
 
@@ -114,11 +120,13 @@ class ResultsOut(BaseModel):
 class RoundIn(BaseModel):
     """Шинэ ээлж хоёр хэсэг нь унтраалттай үүснэ — хугацаа тавьж асаахыг RoundPatch-аар."""
     name: str = Field(min_length=1, max_length=120)
+    name_en: str = Field(default="", max_length=120)
     code_prefix: str = Field(min_length=2, max_length=8)
     grades: list[int]
     test_info: str = Field(default="", max_length=5000)
+    test_info_en: str = Field(default="", max_length=5000)
 
-    @field_validator("name", "test_info", mode="before")
+    @field_validator("name", "name_en", "test_info", "test_info_en", mode="before")
     @classmethod
     def _s(cls, v):
         return _strip(v)
@@ -141,15 +149,17 @@ class RoundIn(BaseModel):
 
 class RoundPatch(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=120)
+    name_en: str | None = Field(default=None, max_length=120)
     grades: list[int] | None = None
     test_info: str | None = Field(default=None, max_length=5000)
+    test_info_en: str | None = Field(default=None, max_length=5000)
     is_active: bool | None = None
     registration_open: bool | None = None
     registration_deadline: datetime | None = None
     results_published: bool | None = None
     results_deadline: datetime | None = None
 
-    @field_validator("name", "test_info", mode="before")
+    @field_validator("name", "name_en", "test_info", "test_info_en", mode="before")
     @classmethod
     def _s(cls, v):
         return _strip(v)
@@ -171,9 +181,11 @@ class RoundAdminOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
     name: str
+    name_en: str
     code_prefix: str
     grades: list[int]
     test_info: str
+    test_info_en: str
     is_active: bool
     registration: SectionAdmin
     results: SectionAdmin
@@ -198,6 +210,7 @@ class ApplicantAdminOut(BaseModel):
     guardian_first_name: str
     phone: str
     status: str
+    lang: str
     score: float | None
     result: ResultCode | None
     created_at: datetime

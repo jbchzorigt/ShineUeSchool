@@ -39,9 +39,11 @@ class AdmissionRound(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(120))                 # "2027–2028 оны хичээлийн жилийн элсэлт"
+    name_en: Mapped[str] = mapped_column(String(120), default="", server_default="")  # хоосон бол /en дээр монголоор
     code_prefix: Mapped[str] = mapped_column(String(8))            # "SU27" — элсэгчийн кодын эхлэл
     grades: Mapped[list[int]] = mapped_column(ARRAY(Integer))      # элсэлт авах ангиуд, эрэмбэлсэн
     test_info: Mapped[str] = mapped_column(Text, default="")       # шалгалтын огноо, байршил, авчрах зүйл
+    test_info_en: Mapped[str] = mapped_column(Text, default="", server_default="")
     is_active: Mapped[bool] = mapped_column(Boolean, default=False)
     # Шалгалтын бүртгэл
     registration_open: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -75,6 +77,7 @@ class Applicant(Base):
     guardian_first_name: Mapped[str] = mapped_column(String(80))
     phone: Mapped[str] = mapped_column(String(30))
     status: Mapped[str] = mapped_column(String(12), default=APP_REGISTERED)
+    lang: Mapped[str] = mapped_column(String(2), default="mn", server_default="mn")  # бүртгүүлсэн хэл — имэйлүүд энэ хэлээр
     score: Mapped[float | None] = mapped_column(Numeric(6, 2), nullable=True)
     result: Mapped[str | None] = mapped_column(String(12), nullable=True)
     consent_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

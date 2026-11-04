@@ -120,6 +120,9 @@ export default function AdmissionsAdminPage() {
                 {formatGrades(current.grades)} · код <span className="font-mono">{current.code_prefix}-XXXXX</span> ·{" "}
                 <span className="tabular-nums">{current.applicants_count} элсэгч · {current.results_count} дүнтэй</span>
               </p>
+              <p className="text-sm text-slate-500">
+                {current.name_en ? <>English: {current.name_en}</> : "English нэр бөглөөгүй — англи хуудсанд монголоор харагдана («Засах»)."}
+              </p>
             </div>
             <div className="flex flex-wrap gap-2">
               <Button variant="ghost" onClick={() => setForm(current)}>Засах</Button>
@@ -143,7 +146,12 @@ export default function AdmissionsAdminPage() {
             >
               <div className="flex flex-wrap items-center gap-3 border-t border-slate-100 pt-3 text-sm">
                 <span className="tabular-nums text-slate-600">{current.applicants_count} элсэгч бүртгүүлсэн</span>
-                {current.registration.enabled && current.is_active && <Link href="/admission" target="_blank" className="ml-auto font-semibold text-navy hover:underline">Бүртгэлийн хуудас ↗</Link>}
+                {current.registration.enabled && current.is_active && (
+                  <span className="ml-auto flex gap-3">
+                    <Link href="/admission" target="_blank" className="font-semibold text-navy hover:underline">Бүртгэлийн хуудас ↗</Link>
+                    <Link href="/en/admission" target="_blank" className="font-semibold text-navy hover:underline">English ↗</Link>
+                  </span>
+                )}
               </div>
             </SectionPanel>
 
@@ -163,7 +171,12 @@ export default function AdmissionsAdminPage() {
                   <Button variant="ghost" className="border border-slate-300" disabled={busy} onClick={download}>⇩ Excel татах</Button>
                   <Button variant="ghost" className="border border-slate-300" disabled={busy} onClick={() => fileRef.current?.click()}>⇧ Дүн оруулах (Excel)</Button>
                   <input ref={fileRef} type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden onChange={upload} />
-                  {current.results.enabled && current.is_active && <Link href="/admission/results" target="_blank" className="ml-auto text-sm font-semibold text-navy hover:underline">Дүнгийн хуудас ↗</Link>}
+                  {current.results.enabled && current.is_active && (
+                    <span className="ml-auto flex gap-3 text-sm">
+                      <Link href="/admission/results" target="_blank" className="font-semibold text-navy hover:underline">Дүнгийн хуудас ↗</Link>
+                      <Link href="/en/admission/results" target="_blank" className="font-semibold text-navy hover:underline">English ↗</Link>
+                    </span>
+                  )}
                 </div>
                 <p className="text-xs text-slate-500">
                   Татсан файлын «Оноо», «Дүн» баганыг бөглөөд оруулна. Дүн: Тэнцсэн / Нөөц / Тэнцээгүй / Ирээгүй.
@@ -217,6 +230,7 @@ export default function AdmissionsAdminPage() {
                   <Td>
                     {a.guardian_last_name} {a.guardian_first_name}
                     <span className="block text-xs text-slate-500">{a.phone} · {a.email}</span>
+                    {a.lang === "en" && <span title="Англи хуудаснаас бүртгүүлсэн — имэйлүүд англиар очно"><Badge tone="slate">EN</Badge></span>}
                   </Td>
                   <Td className="text-right tabular-nums">{formatScore(a.score)}</Td>
                   <Td>{a.result ? <Badge tone={RESULT_TONE[a.result]}>{RESULT_LABEL[a.result]}</Badge> : <span className="text-slate-400">—</span>}</Td>

@@ -13,18 +13,18 @@ from tests.helpers import staff_headers
 
 @pytest.fixture
 def outbox(monkeypatch):
-    """Илгээсэн имэйлүүд: ("code", email, code) | ("confirm", applicant) | ("remind", email, [codes])."""
+    """Илгээсэн имэйлүүд: ("code", email, code, lang) | ("confirm", applicant) | ("remind", email, [codes], lang)."""
     router_public._ip_hits.clear()
     sent: list[tuple] = []
 
-    async def code(email, c):
-        sent.append(("code", email, c))
+    async def code(email, c, lang="mn"):
+        sent.append(("code", email, c, lang))
 
     async def confirm(a, rnd):
         sent.append(("confirm", a))
 
-    async def remind(email, apps, rnd):
-        sent.append(("remind", email, [a.code for a in apps]))
+    async def remind(email, apps, rnd, lang="mn"):
+        sent.append(("remind", email, [a.code for a in apps], lang))
 
     monkeypatch.setattr(mailer, "send_code", code)
     monkeypatch.setattr(mailer, "send_confirmation", confirm)
@@ -148,7 +148,7 @@ async def test_remind_always_ok_and_mails_only_registered(client, make_user, out
     code = (await apply(client, outbox)).json()["code"]
     assert (await client.post("/api/admissions/codes/remind/", json={"email": "nobody@gmail.com"})).json() == {"ok": True}
     assert (await client.post("/api/admissions/codes/remind/", json={"email": "EH@gmail.com"})).json() == {"ok": True}
-    assert outbox[-1] == ("remind", "eh@gmail.com", [code])
+    assert outbox[-1] == ("remind", "eh@gmail.com", [code], "mn")
 
 
 def results_xlsx(rows) -> bytes:
@@ -327,3 +327,69 @@ async def test_inactive_round_shows_nothing_even_if_switched_on(client, make_use
     rnd = await make_round(client, h)
     await client.patch(f"/api/admissions/admin/rounds/{rnd['id']}/", headers=h, json={"is_active": False})
     assert (await client.get("/api/admissions/")).json() == {"round": None}
+
+
+# ---- англи хувилбар ----
+
+async def test_english_round_texts_fall_back_to_mongolian(client, make_user):
+    h = await manager(client, make_user)
+    rnd = await make_round(client, h)
+    r = await client.get("/api/admissions/?lang=en")
+    assert r.json()["round"]["name"] == "2027–2028 оны элсэлт"          # англи хоосон → монгол
+    r = await client.patch(f"/api/admissions/admin/rounds/{rnd['id']}/", headers=h,
+                           json={"name_en": "  2027–2028 admission ", "test_info_en": "6 December, 10:00"})
+    assert r.status_code == 200 and r.json()["name_en"] == "2027–2028 admission"
+    en = (await client.get("/api/admissions/?lang=en")).json()["round"]
+    assert en["name"] == "2027–2028 admission" and en["test_info"] == "6 December, 10:00"
+    mn = (await client.get("/api/admissions/")).json()["round"]
+    assert mn["name"] == "2027–2028 оны элсэлт" and mn["test_info"].startswith("12-р сарын 6")
+
+
+async def test_english_signup_messages_and_applicant_language(client, make_user, outbox):
+    h = await manager(client, make_user)
+    rnd = await make_round(client, h)
+    await client.patch(f"/api/admissions/admin/rounds/{rnd['id']}/", headers=h, json={"name_en": "2027 admission"})
+    r = await client.post("/api/admissions/email/send/", json={"email": "bad", "lang": "en"})
+    assert r.json() == {"email": ["Invalid email address"]}
+    r = await client.post("/api/admissions/email/send/", json={"email": "en@gmail.com", "lang": "en"})
+    assert r.status_code == 200 and outbox[-1][3] == "en"
+    r = await client.post("/api/admissions/email/verify/", json={"email": "en@gmail.com", "code": "000000", "lang": "en"})
+    assert r.json() == {"code": ["Incorrect code"]}
+    code = outbox[-1][2]
+    token = (await client.post("/api/admissions/email/verify/", json={"email": "en@gmail.com", "code": code})).json()["token"]
+    r = await client.post("/api/admissions/applications/", json={"token": token, "lang": "en", **child(phone="12")})
+    assert r.json()["phone"] == ["Invalid phone number."]
+    r = await client.post("/api/admissions/applications/", json={"token": token, "lang": "en", **child(grade=3)})
+    assert r.json() == {"grade": ["Grade 3 is not part of this admission"]}
+    r = await client.post("/api/admissions/applications/", json={"token": token, "lang": "en", **child()})
+    assert r.status_code == 201 and r.json()["round_name"] == "2027 admission"
+    confirmed = next(m[1] for m in outbox if m[0] == "confirm")
+    assert confirmed.lang == "en"
+    listed = (await client.get(f"/api/admissions/admin/rounds/{rnd['id']}/applicants/", headers=h)).json()
+    assert listed[0]["lang"] == "en"
+    await client.post("/api/admissions/codes/remind/", json={"email": "en@gmail.com", "lang": "en"})
+    assert outbox[-1][0] == "remind" and outbox[-1][3] == "en"
+    r = await client.post("/api/admissions/applications/", json={"token": "bad", "lang": "en", **child()})
+    assert r.status_code == 401 and "expired" in r.json()["detail"]
+
+
+async def test_english_emails(monkeypatch):
+    from app.admissions.models import AdmissionRound, Applicant
+    out = []
+
+    async def capture(m):
+        out.append(m)
+
+    monkeypatch.setattr(mailer, "_send", capture)
+    rnd = AdmissionRound(name="2027 элсэлт", name_en="2027 admission", test_info="Мягмар", test_info_en="Tuesday")
+    a = Applicant(code="SU27-ABCDE", email="x@gmail.com", child_last_name="Bat", child_first_name="Saraa", grade=1, lang="en")
+    await mailer.send_confirmation(a, rnd)
+    await mailer.send_code("x@gmail.com", "123456", "en")
+    await mailer.send_reminder("x@gmail.com", [a], rnd, "en")
+    a.lang = "mn"
+    await mailer.send_confirmation(a, rnd)
+    texts = [m.get_content() for m in out]
+    assert "registered for grade 1 in “2027 admission”" in texts[0] and "Tuesday" in texts[0] and "Shine Ue School" in texts[0]
+    assert "123456" in texts[1] and "valid for" in texts[1]
+    assert "SU27-ABCDE — Bat Saraa, grade 1" in texts[2]
+    assert "«2027 элсэлт»-д 1-р ангид" in texts[3] and "Мягмар" in texts[3]
