@@ -11,17 +11,20 @@
 
 import Link from "next/link";
 import { useRef } from "react";
-import { GRADUATION } from "@/lib/home-data";
 import type { GraduateDestination, GraduateStats } from "@/lib/types";
 import type { MapData } from "@/lib/world-map";
 import { GraduationMap } from "./GraduationMap";
 import { Typewriter } from "@/components/site/Typewriter";
+import { useDict, useLang } from "@/components/site/LangProvider";
+import { localePath } from "@/lib/i18n";
 import { gsap, reduceMotion, useGSAP } from "@/components/site/gsap";
 
 const fmt = new Intl.NumberFormat("en-US");
 
 export function Graduation({ stats, map, destinations }: { stats: GraduateStats; map: MapData | null; destinations: GraduateDestination[] }) {
   const root = useRef<HTMLElement>(null);
+  const lang = useLang();
+  const t = useDict().home.graduation;
 
   useGSAP(() => {
     const el = root.current;
@@ -51,34 +54,34 @@ export function Graduation({ stats, map, destinations }: { stats: GraduateStats;
       <div className="mx-auto flex max-w-[1440px] flex-col gap-10 px-4 py-14 md:px-10 lg:flex-row lg:items-center lg:gap-16 lg:px-24 lg:py-[88px]">
         {/* Зүүн: гарчиг + нийт төгсөгч */}
         <div className="flex flex-1 flex-col gap-4">
-          <span className="text-sm font-semibold uppercase tracking-[0.2em] text-gold">Төгсөлт</span>
-          <h2 className="font-display text-[32px] font-extrabold leading-tight lg:text-[44px]">{GRADUATION.title}</h2>
-          <p className="max-w-[34em] text-white/80 lg:text-lg">{GRADUATION.text}</p>
+          <span className="text-sm font-semibold uppercase tracking-[0.2em] text-gold">{t.eyebrow}</span>
+          <h2 className="font-display text-[32px] font-extrabold leading-tight lg:text-[44px]">{t.title}</h2>
+          <p className="max-w-[34em] text-white/80 lg:text-lg">{t.text}</p>
           <div className="mt-2 flex items-baseline gap-3">
-            <span data-count={stats.total_graduates} data-big="true" className="font-display text-[72px] font-extrabold leading-none text-gold tabular-nums lg:text-[120px]" aria-label={`${fmt.format(stats.total_graduates)} төгсөгч`}>
+            <span data-count={stats.total_graduates} data-big="true" className="font-display text-[72px] font-extrabold leading-none text-gold tabular-nums lg:text-[120px]" aria-label={t.totalAria(fmt.format(stats.total_graduates))}>
               {fmt.format(stats.total_graduates)}
             </span>
-            <span className="text-lg font-semibold text-white/80 lg:text-2xl">төгсөгч (2022–2026)</span>
+            <span className="text-lg font-semibold text-white/80 lg:text-2xl">{t.totalLabel}</span>
           </div>
-          <Link href="/about#history" className="mt-2 inline-flex w-fit items-center gap-2 text-[15px] font-semibold text-gold underline decoration-2 underline-offset-[5px] hover:text-white">
-            Сургуулийн түүх →
+          <Link href={localePath(lang, "/about") + "#history"} className="mt-2 inline-flex w-fit items-center gap-2 text-[15px] font-semibold text-gold underline decoration-2 underline-offset-[5px] hover:text-white">
+            {t.history}
           </Link>
         </div>
 
         {/* Баруун: их дээд сургуульд элссэн хувь + тоо, гадаадын их сургууль */}
-        <ul className="grid flex-1 grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-1 lg:gap-5" aria-label="Төгсөлтийн үзүүлэлт">
+        <ul className="grid flex-1 grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-1 lg:gap-5" aria-label={t.statsLabel}>
           {(stats.university_percent > 0 || stats.university_count > 0) && (
           <li className="rounded-2xl border border-white/15 bg-white/5 px-6 py-5 lg:flex lg:items-baseline lg:justify-between lg:gap-6">
             <span className="flex items-baseline gap-3">
               <span data-count={stats.university_percent} data-suffix="%" className="font-display text-[40px] font-extrabold leading-none text-white tabular-nums lg:text-[48px]">{stats.university_percent}%</span>
-              <span className="text-sm text-white/75"><span data-count={stats.university_count} className="font-semibold text-white tabular-nums">{fmt.format(stats.university_count)}</span> сурагч</span>
+              <span className="text-sm text-white/75"><span data-count={stats.university_count} className="font-semibold text-white tabular-nums">{fmt.format(stats.university_count)}</span> {t.students}</span>
             </span>
-            <span className="mt-2 block text-sm text-white/75 lg:mt-0 lg:text-right lg:text-base">Их, дээд сургуульд элссэн</span>
+            <span className="mt-2 block text-sm text-white/75 lg:mt-0 lg:text-right lg:text-base">{t.university}</span>
           </li>
           )}
           <li className="rounded-2xl border border-white/15 bg-white/5 px-6 py-5 lg:flex lg:items-baseline lg:justify-between lg:gap-6">
             <span data-count={stats.abroad_count} className="block font-display text-[40px] font-extrabold leading-none text-white tabular-nums lg:text-[48px]">{fmt.format(stats.abroad_count)}</span>
-            <span className="mt-2 block text-sm text-white/75 lg:mt-0 lg:text-right lg:text-base">Гадаадын их, дээд сургуульд элссэн (2022–2026)</span>
+            <span className="mt-2 block text-sm text-white/75 lg:mt-0 lg:text-right lg:text-base">{t.abroad}</span>
           </li>
         </ul>
       </div>
@@ -86,7 +89,7 @@ export function Graduation({ stats, map, destinations }: { stats: GraduateStats;
       {/* Дэлхийн зураг: Монголоос очсон улсууд руу нум, улс сонгоход сургуулиудын жагсаалт (админаас улс нэмээгүй бол нуугдана) */}
       {map && destinations.length > 0 && (
         <div className="mx-auto max-w-[1440px] px-4 pb-14 md:px-10 lg:px-24 lg:pb-[88px]">
-          <Typewriter as="h3" text="ТӨГСӨГЧИД МААНЬ ДЭЛХИЙН ХААНА СУРЧ БАЙНА" className="mb-8 text-center font-display text-[22px] font-extrabold uppercase tracking-wide lg:text-[30px]" />
+          <Typewriter as="h3" text={t.mapHeading.toUpperCase()} className="mb-8 text-center font-display text-[22px] font-extrabold uppercase tracking-wide lg:text-[30px]" />
           <GraduationMap map={map} destinations={destinations} />
         </div>
       )}

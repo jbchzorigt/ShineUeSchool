@@ -36,7 +36,7 @@ async def test_years_crud_and_current(client, make_user):
 
 async def test_write_requires_manager(client, make_user):
     assert (await client.post("/api/timetable/years/", json=YEAR)).status_code == 401
-    h = await staff_headers(client, make_user, "olymp", roles=("olympiad",))
+    h = await staff_headers(client, make_user, "olymp", roles=("olympiad.edit",))
     assert (await client.post("/api/timetable/years/", headers=h, json=YEAR)).status_code == 403
     su = await staff_headers(client, make_user, "root", superuser=True)
     assert (await client.post("/api/timetable/years/", headers=su, json=YEAR)).status_code == 201

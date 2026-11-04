@@ -2,7 +2,7 @@
 
 /* Дугуйлангийн бүртгэлүүд: огноо, анги, сурагч, бүртгүүлэгч, утас, имэйл, төлсөн (төлбөртэй бол), хасах. */
 
-import { Badge, Button, Empty, Spinner, Table, Td, Th } from "@/components/ui";
+import { Badge, Button, Empty, Spinner, Table, Td, Th, useReadOnly } from "@/components/ui";
 import { api, ApiError } from "@/lib/api";
 import { useFetch } from "@/lib/useFetch";
 import type { ClubAdmin } from "@/lib/types";
@@ -10,6 +10,7 @@ import type { ClubAdmin } from "@/lib/types";
 const fmt = (iso: string) => new Date(iso).toLocaleString("mn-MN", { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" });
 
 export function RegistrationsTable({ club, onChanged }: { club: ClubAdmin; onChanged: () => void }) {
+  const readOnly = useReadOnly();
   const q = useFetch(() => api.clubsAdmin.registrations.list(club.id), [club.id, club.taken]);
 
   async function remove(id: number, name: string) {
@@ -38,7 +39,7 @@ export function RegistrationsTable({ club, onChanged }: { club: ClubAdmin; onCha
             <Td>{r.guardian_last_name} {r.guardian_first_name}</Td>
             <Td className="whitespace-nowrap">{r.phone}</Td>
             <Td>{r.email}</Td>
-            {club.is_paid && <Td>{!removed && <input type="checkbox" checked={r.is_paid_marked} onChange={(e) => setPaid(r.id, e.target.checked)} aria-label="Төлсөн" />}</Td>}
+            {club.is_paid && <Td>{!removed && <input type="checkbox" checked={r.is_paid_marked} onChange={(e) => setPaid(r.id, e.target.checked)} disabled={readOnly} aria-label="Төлсөн" />}</Td>}
             <Td className="whitespace-nowrap text-right">
               {removed ? <Badge tone="slate">Хасагдсан {r.removed_at ? fmt(r.removed_at) : ""}</Badge>
                        : <Button variant="danger" onClick={() => remove(r.id, `${r.student_last_name} ${r.student_first_name}`)}>Хасах</Button>}

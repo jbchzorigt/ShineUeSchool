@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { ApiError } from "@/lib/api";
@@ -33,12 +34,10 @@ export default function LoginPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-50 p-6">
       <div className="w-full max-w-sm">
-        <div className="mb-6 flex items-center gap-3">
-          <span className="grid h-11 w-11 place-items-center rounded-full bg-navy text-lg font-black text-gold">ШҮ</span>
-          <div className="leading-tight">
-            <div className="font-black text-navy">ШИНЭ ҮЕ СУРГУУЛЬ</div>
-            <div className="text-xs font-semibold tracking-widest text-slate-500">УДИРДЛАГЫН САМБАР</div>
-          </div>
+        {/* Сургуулийн бүтэн лого + "Удирдлагын самбар" */}
+        <div className="mb-6 flex flex-col items-center gap-2">
+          <Image src="/logo-full.png" alt="Шинэ Үе сургууль" width={483} height={143} priority className="h-16 w-auto" />
+          <div className="text-xs font-semibold tracking-widest text-slate-500">УДИРДЛАГЫН САМБАР</div>
         </div>
 
         <form onSubmit={onSubmit} className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">

@@ -11,7 +11,7 @@ import type {
   ClubAdmin, ClubInput, ClubRegistration, ClubRegistrationAdmin, ClubRegistrationInput, ClubRound, ClubsResponse,
   CommentAdmin, CurriculumCheck, CurriculumEntry, FbStatus, GridCell, ImportResponse, Lesson, NewsCategory, NewsImage, OlympiadPage,
   OlympiadPageInput, Paged, Period, PeriodInput, PeriodSet, PostAdmin, PostInput, ProgramAdmin, ProgramAdminDetail, ProgramInput,
-  ProgramWork, PublishResult, Result, ResultInput, Role, Room, RoomInput, Scholarship, ScholarshipInput, Stage, StageInput, Stats,
+  ProgramWork, PublishResult, Result, ResultInput, Room, RoomInput, Scholarship, ScholarshipInput, SectionInfo, Stage, StageInput, Stats,
   Subject, SubjectInput, Teacher, TeacherInput, TimetableImportResponse, TimetableStats, User, UserInput, VisitorAdmin, WorkInput,
   Years,
   CountryCatalogueItem, GraduateDestination, GraduateDestinationInput, GraduateStats, ProgramRadar,
@@ -91,15 +91,18 @@ async function refresh(refreshToken: string): Promise<boolean> {
 }
 
 /** Админ хадгалсны дараа нүүр зэрэг хуудасны ISR cache-ийг шууд цэвэрлэнэ (Next route handler app/api/revalidate).
-    Fire-and-forget: амжилтгүй бол чимээгүй — cache 60 сек дараа өөрөө шинэчлэгдэнэ. */
-export async function revalidateCache(tags: string[], paths: string[] = ["/"]): Promise<void> {
+    Нүүр хуудас дотооддоо "/mn" (монгол, proxy rewrite) ба "/en" — хоёуланг нь. Fire-and-forget: амжилтгүй бол чимээгүй —
+    cache 60 сек дараа өөрөө шинэчлэгдэнэ. */
+export async function revalidateCache(tags: string[], paths: string[] = ["/mn", "/en"]): Promise<void> {
   const t = tokens.get();
   if (!t) return;
   try {
     await fetch("/api/revalidate", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${t.access}` }, body: JSON.stringify({ tags, paths }) });
   } catch { /* ignore */ }
 }
-const afterSave = <T,>(p: Promise<T>, tags: string[]): Promise<T> => p.then((r) => { void revalidateCache(tags); return r; });
+const afterSave = <T,>(p: Promise<T>, tags: string[], paths?: string[]): Promise<T> => p.then((r) => { void revalidateCache(tags, paths); return r; });
+/** Олимпиадын хуудас + header-ийн оны хавтантай нүүр хуудсууд */
+const OLYMPIAD_PATHS = ["/olympiad", "/mn", "/en"];
 
 const q = (params: Record<string, string | number | boolean | undefined>) => {
   const s = new URLSearchParams();
@@ -125,18 +128,18 @@ export const api = {
   /* ---- хуваарь ---- */
   stages: {
     list: (year?: number) => request<Stage[]>(`/api/olympiad/schedule/${q({ year })}`, { auth: false }),
-    create: (d: StageInput) => request<Stage>("/api/olympiad/schedule/", { method: "POST", body: d }),
-    update: (id: number, d: Partial<StageInput>) => request<Stage>(`/api/olympiad/schedule/${id}/`, { method: "PATCH", body: d }),
-    remove: (id: number) => request<void>(`/api/olympiad/schedule/${id}/`, { method: "DELETE" }),
+    create: (d: StageInput) => afterSave(request<Stage>("/api/olympiad/schedule/", { method: "POST", body: d }), ["olympiad"], OLYMPIAD_PATHS),
+    update: (id: number, d: Partial<StageInput>) => afterSave(request<Stage>(`/api/olympiad/schedule/${id}/`, { method: "PATCH", body: d }), ["olympiad"], OLYMPIAD_PATHS),
+    remove: (id: number) => afterSave(request<void>(`/api/olympiad/schedule/${id}/`, { method: "DELETE" }), ["olympiad"], OLYMPIAD_PATHS),
   },
 
   /* ---- үр дүн ---- */
   categories: (year?: number) => request<CategoryItem[]>(`/api/olympiad/categories/${q({ year })}`, { auth: false }),
   results: {
     list: (year?: number, category?: string) => request<Result[]>(`/api/olympiad/results/${q({ year, category })}`, { auth: false }),
-    create: (d: ResultInput) => request<Result>("/api/olympiad/results/", { method: "POST", body: d }),
-    update: (id: number, d: Partial<ResultInput>) => request<Result>(`/api/olympiad/results/${id}/`, { method: "PATCH", body: d }),
-    remove: (id: number) => request<void>(`/api/olympiad/results/${id}/`, { method: "DELETE" }),
+    create: (d: ResultInput) => afterSave(request<Result>("/api/olympiad/results/", { method: "POST", body: d }), ["olympiad"], OLYMPIAD_PATHS),
+    update: (id: number, d: Partial<ResultInput>) => afterSave(request<Result>(`/api/olympiad/results/${id}/`, { method: "PATCH", body: d }), ["olympiad"], OLYMPIAD_PATHS),
+    remove: (id: number) => afterSave(request<void>(`/api/olympiad/results/${id}/`, { method: "DELETE" }), ["olympiad"], OLYMPIAD_PATHS),
     /** Excel импорт. dryRun=true бол зөвхөн шалгаад тайлан буцаана. */
     importExcel: (file: File, year: number | "", dryRun: boolean, replace = true) => {
       const fd = new FormData();
@@ -144,12 +147,13 @@ export const api = {
       if (year !== "") fd.append("year", String(year));
       fd.append("dry_run", String(dryRun));
       fd.append("replace", String(replace));
-      return request<ImportResponse>("/api/olympiad/results/import/", { method: "POST", body: fd });
+      const r = request<ImportResponse>("/api/olympiad/results/import/", { method: "POST", body: fd });
+      return dryRun ? r : afterSave(r, ["olympiad"], OLYMPIAD_PATHS);
     },
   },
 
   /* ---- хэрэглэгч (superuser) ---- */
-  roles: () => request<Role[]>("/api/auth/roles/"),
+  roles: () => request<SectionInfo[]>("/api/auth/roles/"),
   users: {
     list: () => request<User[]>("/api/auth/users/"),
     create: (d: UserInput) => request<User>("/api/auth/users/", { method: "POST", body: d }),
@@ -167,27 +171,27 @@ export const api = {
       fd.append("caption", caption);
       fd.append("order", String(order));
       fd.append("is_published", String(isPublished));
-      return request<AlbumPhoto>("/api/olympiad/album/", { method: "POST", body: fd });
+      return afterSave(request<AlbumPhoto>("/api/olympiad/album/", { method: "POST", body: fd }), ["olympiad"], OLYMPIAD_PATHS);
     },
     update: (id: number, d: { title?: string; caption?: string; order?: number; is_published?: boolean }) =>
-      request<AlbumPhoto>(`/api/olympiad/album/${id}/`, { method: "PATCH", body: d }),
-    remove: (id: number) => request<void>(`/api/olympiad/album/${id}/`, { method: "DELETE" }),
+      afterSave(request<AlbumPhoto>(`/api/olympiad/album/${id}/`, { method: "PATCH", body: d }), ["olympiad"], OLYMPIAD_PATHS),
+    remove: (id: number) => afterSave(request<void>(`/api/olympiad/album/${id}/`, { method: "DELETE" }), ["olympiad"], OLYMPIAD_PATHS),
   },
 
   /* ---- олимпиадын хуудасны тохиргоо ---- */
   olympiadPage: {
     get: () => request<OlympiadPage>("/api/olympiad/page/", { auth: false }),
-    update: (d: Partial<OlympiadPageInput>) => request<OlympiadPage>("/api/olympiad/page/", { method: "PATCH", body: d }),
-    setPortrait: (file: File) => { const fd = new FormData(); fd.append("image", file); return request<OlympiadPage>("/api/olympiad/page/portrait/", { method: "POST", body: fd }); },
-    removePortrait: () => request<OlympiadPage>("/api/olympiad/page/portrait/", { method: "DELETE" }),
+    update: (d: Partial<OlympiadPageInput>) => afterSave(request<OlympiadPage>("/api/olympiad/page/", { method: "PATCH", body: d }), ["olympiad"], OLYMPIAD_PATHS),
+    setPortrait: (file: File) => { const fd = new FormData(); fd.append("image", file); return afterSave(request<OlympiadPage>("/api/olympiad/page/portrait/", { method: "POST", body: fd }), ["olympiad"], OLYMPIAD_PATHS); },
+    removePortrait: () => afterSave(request<OlympiadPage>("/api/olympiad/page/portrait/", { method: "DELETE" }), ["olympiad"], OLYMPIAD_PATHS),
   },
 
   /* ---- мэдээ (админ) ---- */
   news: {
     categories: {
       list: () => request<NewsCategory[]>("/api/news/admin/categories/"),
-      create: (d: { name: string; slug?: string; order: number }) => request<NewsCategory>("/api/news/admin/categories/", { method: "POST", body: d }),
-      update: (id: number, d: Partial<{ name: string; slug: string; order: number }>) => request<NewsCategory>(`/api/news/admin/categories/${id}/`, { method: "PATCH", body: d }),
+      create: (d: { name: string; name_en?: string; slug?: string; order: number }) => request<NewsCategory>("/api/news/admin/categories/", { method: "POST", body: d }),
+      update: (id: number, d: Partial<{ name: string; name_en: string; slug: string; order: number }>) => request<NewsCategory>(`/api/news/admin/categories/${id}/`, { method: "PATCH", body: d }),
       remove: (id: number) => request<void>(`/api/news/admin/categories/${id}/`, { method: "DELETE" }),
     },
     posts: {
@@ -199,8 +203,8 @@ export const api = {
       remove: (id: number) => request<void>(`/api/news/admin/posts/${id}/`, { method: "DELETE" }),
       setCover: (id: number, file: File) => { const fd = new FormData(); fd.append("image", file); return request<PostAdmin>(`/api/news/admin/posts/${id}/cover/`, { method: "POST", body: fd }); },
       removeCover: (id: number) => request<PostAdmin>(`/api/news/admin/posts/${id}/cover/`, { method: "DELETE" }),
-      addImage: (id: number, file: File, caption: string, order: number) => { const fd = new FormData(); fd.append("image", file); fd.append("caption", caption); fd.append("order", String(order)); return request<NewsImage>(`/api/news/admin/posts/${id}/images/`, { method: "POST", body: fd }); },
-      updateImage: (imageId: number, d: { caption?: string; order?: number }) => request<NewsImage>(`/api/news/admin/images/${imageId}/`, { method: "PATCH", body: d }),
+      addImage: (id: number, file: File, caption: string, order: number, captionEn = "") => { const fd = new FormData(); fd.append("image", file); fd.append("caption", caption); fd.append("caption_en", captionEn); fd.append("order", String(order)); return request<NewsImage>(`/api/news/admin/posts/${id}/images/`, { method: "POST", body: fd }); },
+      updateImage: (imageId: number, d: { caption?: string; caption_en?: string; order?: number }) => request<NewsImage>(`/api/news/admin/images/${imageId}/`, { method: "PATCH", body: d }),
       removeImage: (imageId: number) => request<void>(`/api/news/admin/images/${imageId}/`, { method: "DELETE" }),
       uploadImage: (file: File) => { const fd = new FormData(); fd.append("image", file); return request<{ url: string }>("/api/news/admin/upload-image/", { method: "POST", body: fd }); },
       publish: (id: number, toFacebook: boolean) => request<PublishResult>(`/api/news/admin/posts/${id}/publish/`, { method: "POST", body: { post_to_facebook: toFacebook } }),
@@ -383,7 +387,7 @@ export const api = {
       list: () => request<AboutLeader[]>("/api/about/admin/leaders/"),
       create: (d: AboutLeaderInput, photo: File | null) => {
         const fd = new FormData();
-        fd.append("full_name", d.full_name); fd.append("position", d.position); fd.append("level", String(d.level));
+        fd.append("full_name", d.full_name); fd.append("position", d.position); fd.append("position_en", d.position_en ?? ""); fd.append("level", String(d.level));
         if (photo) fd.append("photo", photo);
         return request<AboutLeader>("/api/about/admin/leaders/", { method: "POST", body: fd });
       },
@@ -395,8 +399,8 @@ export const api = {
     },
     departments: {
       list: () => request<AboutDepartment[]>("/api/about/admin/departments/"),
-      create: (name: string) => request<AboutDepartment>("/api/about/admin/departments/", { method: "POST", body: { name } }),
-      update: (id: number, name: string) => request<AboutDepartment>(`/api/about/admin/departments/${id}/`, { method: "PATCH", body: { name } }),
+      create: (name: string, nameEn = "") => request<AboutDepartment>("/api/about/admin/departments/", { method: "POST", body: { name, name_en: nameEn } }),
+      update: (id: number, name: string, nameEn?: string) => request<AboutDepartment>(`/api/about/admin/departments/${id}/`, { method: "PATCH", body: nameEn === undefined ? { name } : { name, name_en: nameEn } }),
       remove: (id: number) => request<void>(`/api/about/admin/departments/${id}/`, { method: "DELETE" }),
       reorder: (ids: number[]) => request<AboutDepartment[]>("/api/about/admin/departments/order/", { method: "PUT", body: { ids } }),
     },
@@ -425,6 +429,7 @@ export const api = {
       create: (programId: number, d: WorkInput, image: File) => {
         const fd = new FormData();
         fd.append("title", d.title); fd.append("student", d.student); fd.append("caption", d.caption); fd.append("image", image);
+        fd.append("title_en", d.title_en ?? ""); fd.append("caption_en", d.caption_en ?? "");
         return request<ProgramWork>(`/api/programs/admin/programs/${programId}/works/`, { method: "POST", body: fd });
       },
       update: (id: number, d: Partial<WorkInput>) => request<ProgramWork>(`/api/programs/admin/works/${id}/`, { method: "PATCH", body: d }),

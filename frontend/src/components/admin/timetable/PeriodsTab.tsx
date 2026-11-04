@@ -10,6 +10,7 @@ import type { PeriodInput, PeriodSet } from "@/lib/types";
 import { Badge, Button, Card, Empty, Field, Input, Modal, Spinner, Table, Td, Th } from "@/components/ui";
 import { hm } from "@/components/timetable/format";
 import { confirmRemove, FormError, useModalForm } from "./forms";
+import { DeleteLabel, EditLabel } from "@/components/admin/ActionLabel";
 
 /** Дараагийн ЗАВСАРЛАГЫН order: 101 + одоо байгаа завсарлагын тоо, авагдсан бол цааш нэмнэ. */
 function nextBreakOrder(s: PeriodSet | undefined): number {
@@ -55,8 +56,8 @@ export function PeriodsTab({ yearId }: { yearId: number }) {
             <h2 className="font-bold text-navy">{s.name}</h2>
             <div className="space-x-2">
               <Button variant="ghost" onClick={() => periodForm.open({ period_set_id: s.id, order: nextOrder(s), start_time: lastEnd(s), end_time: "", is_break: false })}>+ Цаг</Button>
-              <Button variant="ghost" onClick={() => setForm.open({ name: s.name }, s.id)}>Нэр засах</Button>
-              <Button variant="danger" onClick={() => confirmRemove(`"${s.name}" хүснэгтийг устгах уу?`, () => api.timetable.periodSets.remove(s.id), setsQ.reload)}>Устгах</Button>
+              <Button variant="ghost" onClick={() => setForm.open({ name: s.name }, s.id)}><EditLabel text="Нэр засах" /></Button>
+              <Button variant="danger" onClick={() => confirmRemove(`"${s.name}" хүснэгтийг устгах уу?`, () => api.timetable.periodSets.remove(s.id), setsQ.reload)}><DeleteLabel /></Button>
             </div>
           </div>
           {s.periods.length === 0 ? <p className="text-sm text-slate-500">Цаг нэмээгүй байна.</p> : (
@@ -65,9 +66,9 @@ export function PeriodsTab({ yearId }: { yearId: number }) {
                 <tr key={p.id} className={p.is_break ? "bg-slate-50" : ""}>
                   <Td>{p.is_break ? "—" : p.order}</Td><Td>{hm(p.start_time)}</Td><Td>{hm(p.end_time)}</Td>
                   <Td>{p.is_break ? <Badge tone="slate">Завсарлага</Badge> : <Badge tone="navy">Хичээл</Badge>}</Td>
-                  <Td className="text-right space-x-2">
-                    <Button variant="ghost" onClick={() => periodForm.open({ period_set_id: s.id, order: p.order, start_time: hm(p.start_time), end_time: hm(p.end_time), is_break: p.is_break }, p.id)}>Засах</Button>
-                    <Button variant="danger" onClick={() => confirmRemove(p.is_break ? "Завсарлагыг устгах уу?" : `${p.order}-р цагийг устгах уу?`, () => api.timetable.periods.remove(p.id), setsQ.reload)}>Устгах</Button>
+                  <Td className="whitespace-nowrap text-right space-x-2">
+                    <Button variant="ghost" onClick={() => periodForm.open({ period_set_id: s.id, order: p.order, start_time: hm(p.start_time), end_time: hm(p.end_time), is_break: p.is_break }, p.id)}><EditLabel /></Button>
+                    <Button variant="danger" onClick={() => confirmRemove(p.is_break ? "Завсарлагыг устгах уу?" : `${p.order}-р цагийг устгах уу?`, () => api.timetable.periods.remove(p.id), setsQ.reload)}><DeleteLabel /></Button>
                   </Td>
                 </tr>
               ))}

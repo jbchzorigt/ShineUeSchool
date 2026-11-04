@@ -33,7 +33,7 @@ def outbox(monkeypatch):
 
 
 async def manager(client, make_user):
-    return await staff_headers(client, make_user, "admin1", roles=("manager",))
+    return await staff_headers(client, make_user, "admin1", roles=("admissions.edit",))
 
 
 def future(days=7) -> str:
@@ -213,9 +213,13 @@ async def test_export_round_trips_into_import(client, make_user, outbox):
     assert r["applied"] and r["updated"] == 1
 
 
-async def test_admin_requires_manager(client, make_user):
-    h = await staff_headers(client, make_user, "olymp", roles=("olympiad",))
+async def test_admin_requires_admissions_section(client, make_user):
+    h = await staff_headers(client, make_user, "olymp", roles=("olympiad.edit",))
     assert (await client.get("/api/admissions/admin/rounds/", headers=h)).status_code == 403
+    h = await staff_headers(client, make_user, "viewer", roles=("admissions.view",))
+    assert (await client.get("/api/admissions/admin/rounds/", headers=h)).status_code == 200
+    r = await client.post("/api/admissions/admin/rounds/", headers=h, json={"name": "x", "code_prefix": "SU27", "grades": [1]})
+    assert r.status_code == 403
     assert (await client.get("/api/admissions/admin/rounds/")).status_code == 401
 
 

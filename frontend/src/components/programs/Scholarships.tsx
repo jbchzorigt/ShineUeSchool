@@ -2,23 +2,25 @@
    оноор бүлэглэсэн (шинэ эхэнд — backend year DESC-ээр ирнэ) мөрүүд. */
 
 import Image from "next/image";
+import { getDict, type Lang } from "@/lib/i18n";
 import type { Scholarship } from "@/lib/types";
 import { formatUsd } from "./money";
 import { ScholarshipChart } from "./ScholarshipChart";
 
-export function Scholarships({ items, total }: { items: Scholarship[]; total: number }) {
+export function Scholarships({ items, total, lang = "mn" }: { items: Scholarship[]; total: number; lang?: Lang }) {
+  const t = getDict(lang).programs;
   const years = [...new Set(items.map((s) => s.year))];
   return (
     <div className="flex flex-col gap-6">
-      <h2 className="font-display text-[26px] font-extrabold text-navy lg:text-[32px]">Тэтгэлэгт хамрагдсан сурагчид</h2>
+      <h2 className="font-display text-[26px] font-extrabold text-navy lg:text-[32px]">{t.scholarshipsTitle}</h2>
       <div className="flex flex-col gap-1 rounded-2xl bg-navy px-6 py-6 text-white lg:flex-row lg:items-baseline lg:gap-4 lg:px-8">
         <span className="font-display text-4xl font-extrabold text-gold lg:text-[48px]">{formatUsd(total)}</span>
-        <span className="text-sm text-white/80 lg:text-base">нийт тэтгэлэг · {items.length} сурагч</span>
+        <span className="text-sm text-white/80 lg:text-base">{t.scholarshipsTotal(items.length)}</span>
       </div>
       <ScholarshipChart items={items} />
       {years.map((y) => (
         <section key={y} aria-labelledby={`sch-${y}`} className="flex flex-col gap-2">
-          <h3 id={`sch-${y}`} className="text-sm font-semibold uppercase tracking-wider text-muted">{y} он</h3>
+          <h3 id={`sch-${y}`} className="text-sm font-semibold uppercase tracking-wider text-muted">{t.year(y)}</h3>
           <ul className="divide-y divide-line rounded-2xl border border-line bg-white">
             {items.filter((s) => s.year === y).map((s) => (
               <li key={s.id} className="flex items-center gap-4 px-4 py-3 lg:px-6">

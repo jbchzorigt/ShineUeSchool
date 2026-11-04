@@ -1,6 +1,7 @@
 """Мэдээний Pydantic схемүүд (frontend/src/lib/types.ts-тэй тохирно)."""
 
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -8,6 +9,7 @@ from pydantic import BaseModel, Field
 class CategoryOut(BaseModel):
     id: int
     name: str
+    name_en: str = ""
     slug: str
     order: int
     post_count: int = 0
@@ -16,6 +18,7 @@ class CategoryOut(BaseModel):
 class CategoryRef(BaseModel):
     id: int
     name: str
+    name_en: str = ""
     slug: str
 
 
@@ -23,14 +26,18 @@ class ImageOut(BaseModel):
     id: int
     image: str
     caption: str
+    caption_en: str = ""
     order: int
 
 
 class PostCard(BaseModel):
+    """Нийтийн хариунд `title`, `excerpt` нь `?lang`-аар сонгогдсон хэлээр; `_en` талбарууд админ засварлагчид."""
     id: int
     title: str
+    title_en: str = ""
     slug: str
     excerpt: str
+    excerpt_en: str = ""
     cover_image: str | None
     category: CategoryRef | None
     published_at: datetime | None
@@ -40,6 +47,8 @@ class PostCard(BaseModel):
 
 class PostDetail(PostCard):
     body_html: str
+    body_html_en: str = ""
+    languages: list[Literal["mn", "en"]] = []   # бөглөгдсөн хэлнүүд (гарчгаар)
     images: list[ImageOut]
     liked_by_me: bool
     fb_post_id: str | None
@@ -119,19 +128,26 @@ class VisitorBlockIn(BaseModel):
 
 
 class PostIn(BaseModel):
-    title: str = Field(min_length=1, max_length=200)
+    """Монгол эсвэл англи гарчгийн аль нэг заавал (router шалгана); англи хэсэг хоосон бол англи сайтад гарахгүй."""
+    title: str = Field(default="", max_length=200)
+    title_en: str = Field(default="", max_length=200)
     slug: str | None = Field(default=None, max_length=220)
     excerpt: str = Field(default="", max_length=280)
+    excerpt_en: str = Field(default="", max_length=280)
     body_html: str = ""
+    body_html_en: str = ""
     category_id: int | None = None
     published_at: datetime | None = None
 
 
 class PostPatch(BaseModel):
-    title: str | None = Field(default=None, min_length=1, max_length=200)
+    title: str | None = Field(default=None, max_length=200)
+    title_en: str | None = Field(default=None, max_length=200)
     slug: str | None = Field(default=None, max_length=220)
     excerpt: str | None = Field(default=None, max_length=280)
+    excerpt_en: str | None = Field(default=None, max_length=280)
     body_html: str | None = None
+    body_html_en: str | None = None
     category_id: int | None = None
     published_at: datetime | None = None
 
@@ -158,18 +174,21 @@ class PostAdminPage(BaseModel):
 
 class CategoryIn(BaseModel):
     name: str = Field(min_length=1, max_length=80)
+    name_en: str = Field(default="", max_length=80)
     slug: str | None = Field(default=None, max_length=80)
     order: int = 0
 
 
 class CategoryPatch(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=80)
+    name_en: str | None = Field(default=None, max_length=80)
     slug: str | None = Field(default=None, max_length=80)
     order: int | None = None
 
 
 class ImagePatch(BaseModel):
     caption: str | None = Field(default=None, max_length=200)
+    caption_en: str | None = Field(default=None, max_length=200)
     order: int | None = None
 
 

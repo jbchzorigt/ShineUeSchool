@@ -12,7 +12,7 @@ import type { AboutLeader, AboutLeaderInput } from "@/lib/types";
 export function LeaderDialog({ leader, defaultLevel, levels, open, onClose, onSaved }: {
   leader: AboutLeader | null; defaultLevel: number; levels: number[]; open: boolean; onClose: () => void; onSaved: () => void;
 }) {
-  const [d, setD] = useState<AboutLeaderInput>(() => leader ? { full_name: leader.full_name, position: leader.position, level: leader.level } : { full_name: "", position: "", level: defaultLevel });
+  const [d, setD] = useState<AboutLeaderInput>(() => leader ? { full_name: leader.full_name, position: leader.position, position_en: leader.position_en, level: leader.level } : { full_name: "", position: "", position_en: "", level: defaultLevel });
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [photo, setPhoto] = useState<string | null>(leader?.photo ?? null);
@@ -29,7 +29,7 @@ export function LeaderDialog({ leader, defaultLevel, levels, open, onClose, onSa
   async function save(e: FormEvent) {
     e.preventDefault();
     setBusy(true); setErrors({});
-    const body = { full_name: d.full_name.trim(), position: d.position.trim(), level: d.level };
+    const body = { full_name: d.full_name.trim(), position: d.position.trim(), position_en: (d.position_en ?? "").trim(), level: d.level };
     try {
       if (leader) {
         await api.about.leaders.update(leader.id, body);
@@ -58,6 +58,7 @@ export function LeaderDialog({ leader, defaultLevel, levels, open, onClose, onSa
         {errors.non_field_errors && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{errors.non_field_errors}</p>}
         <Field label="Овог, нэр" error={errors.full_name}><Input value={d.full_name} onChange={(e) => setD({ ...d, full_name: e.target.value })} maxLength={120} autoFocus /></Field>
         <Field label="Албан тушаал" error={errors.position}><Input value={d.position} onChange={(e) => setD({ ...d, position: e.target.value })} maxLength={160} placeholder="Захирал" /></Field>
+        <Field label="Албан тушаал (English)" error={errors.position_en} hint="Англи сайтад; хоосон бол монгол"><Input value={d.position_en ?? ""} onChange={(e) => setD({ ...d, position_en: e.target.value })} maxLength={160} placeholder="Principal" lang="en" /></Field>
         <Field label="Түвшин" error={errors.level} hint="1 — захирал, 2 — дэд захирлууд, 3+ — менежер, ахлахууд. Шинэ түвшинг жагсаалтын «Түвшин нэмэх»-ээр нэмнэ.">
           <Select value={d.level} onChange={(e) => setD({ ...d, level: Number(e.target.value) })}>
             {levels.map((lv) => <option key={lv} value={lv}>{lv}-р түвшин</option>)}

@@ -5,6 +5,7 @@
    annotation (улбар тасархай шугам, шар хаяг), хамгийн их жилийг бордоо point annotation-оор тэмдэглэнэ. Tooltip-д сурагчийн тоо. ApexCharts window хэрэглэдэг тул client дээр
    dynamic import; unmount-д destroy. Өнгө: хэрэглэгчийн өгсөн палитр (P). Өгөгдөл: ProgramDetail.scholarships (year, amount_usd) → жилээр нэгтгэнэ. */
 
+import { useDict } from "@/components/site/LangProvider";
 import { useEffect, useRef } from "react";
 import type ApexCharts from "apexcharts";
 import type { ApexOptions } from "apexcharts";
@@ -28,6 +29,7 @@ export function byYear(items: Scholarship[]) {
 
 export function ScholarshipChart({ items }: { items: Scholarship[] }) {
   const box = useRef<HTMLDivElement>(null);
+  const t = useDict().programs;
 
   useEffect(() => {
     const el = box.current;
@@ -51,7 +53,7 @@ export function ScholarshipChart({ items }: { items: Scholarship[] }) {
           type: "line", height: 320, fontFamily: "inherit", background: P.white, toolbar: { show: false }, zoom: { enabled: false },
           animations: { enabled: !reduce, speed: 900 },
         },
-        series: [{ name: "Тэтгэлэг", data: totals }],
+        series: [{ name: t.chartSeries, data: totals }],
         colors: [P.blue],
         fill: { type: "solid", opacity: 1 },   // шугам бүтэн тод (анхдагч 0.85 тунгалаг)
         stroke: { curve: "straight", width: 3 },
@@ -73,17 +75,17 @@ export function ScholarshipChart({ items }: { items: Scholarship[] }) {
           // Apex-ийн саарал tooltip-ийн оронд хөх карт (гадна хүрээг .scholarship-chart CSS-ээр арилгана, globals.css)
           custom: ({ dataPointIndex }) => {
             const r = rows[dataPointIndex];
-            return r ? `<div class="rounded-lg bg-[#223A62] px-3 py-2 text-sm text-white shadow-lg"><div class="font-semibold text-[#FFF457]">${r.year} он</div><div>${formatUsd(r.total)} · ${r.count} сурагч</div></div>` : "";
+            return r ? `<div class="rounded-lg bg-[#223A62] px-3 py-2 text-sm text-white shadow-lg"><div class="font-semibold text-[#FFF457]">${t.year(r.year)}</div><div>${formatUsd(r.total)} · ${t.students(r.count)}</div></div>` : "";
           },
         },
         annotations: {
           yaxis: [{
             y: avg, borderColor: P.orange, strokeDashArray: 6,
-            label: { position: "right", textAnchor: "end", offsetX: -4, offsetY: 20, borderColor: P.orange, style: { color: P.black, background: P.yellow, fontWeight: 700 }, text: `Дундаж ${formatUsd(avg)}` },
+            label: { position: "right", textAnchor: "end", offsetX: -4, offsetY: 20, borderColor: P.orange, style: { color: P.black, background: P.yellow, fontWeight: 700 }, text: t.average(formatUsd(avg)) },
           }],
           points: [{
             x: years[maxI], y: totals[maxI], marker: { size: 10, fillColor: P.yellow, strokeColor: P.maroon, strokeWidth: 3 },
-            label: { offsetY: -4, borderColor: P.maroon, style: { color: P.white, background: P.maroon, fontWeight: 700 }, text: "Хамгийн их" },
+            label: { offsetY: -4, borderColor: P.maroon, style: { color: P.white, background: P.maroon, fontWeight: 700 }, text: t.highest },
           }],
         },
         responsive: [{ breakpoint: 640, options: { chart: { height: 260 }, dataLabels: { style: { fontSize: "11px" } }, yaxis: { labels: { formatter: (v: number) => `$${Math.round(v / 1000)}k` } } } }],
@@ -94,12 +96,12 @@ export function ScholarshipChart({ items }: { items: Scholarship[] }) {
     })();
 
     return () => { cancelled = true; chart?.destroy(); };
-  }, [items]);
+  }, [items, t]);
 
   return (
     <figure className="scholarship-chart rounded-2xl border border-line bg-white p-4 lg:p-6">
-      <figcaption className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted">Тэтгэлгийн дүн, жилээр</figcaption>
-      <div ref={box} className="min-h-[260px] sm:min-h-[320px]" role="img" aria-label="Тэтгэлгийн нийт дүн жил бүрээр, шугаман график" />
+      <figcaption className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted">{t.chartCaption}</figcaption>
+      <div ref={box} className="min-h-[260px] sm:min-h-[320px]" role="img" aria-label={t.chartAria} />
     </figure>
   );
 }

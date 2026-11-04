@@ -2,9 +2,18 @@
 
 /* Жижиг UI бүрдлүүд — Tailwind классуудыг нэг газар хадгална. */
 
-import { useEffect, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type Ref, type SelectHTMLAttributes, type TdHTMLAttributes, type TextareaHTMLAttributes } from "react";
+import { createContext, useContext, useEffect, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type Ref, type SelectHTMLAttributes, type TdHTMLAttributes, type TextareaHTMLAttributes } from "react";
+import { Pencil } from "lucide-react";
 
 const cx = (...c: (string | false | undefined | null)[]) => c.filter(Boolean).join(" ");
+
+/* ---------- Зөвхөн харах горим ----------
+   Админы layout хэрэглэгч тухайн хэсэгт зөвхөн "харах" эрхтэй үед true болгоно. Тэгвэл хадгалах (submit), устгах (danger)
+   болон `mutates` гэж тэмдэглэсэн товчнууд идэвхгүй болно. Эрхийг жинхэнэ утгаар нь backend шалгана (403). */
+const ReadOnlyContext = createContext(false);
+export const ReadOnlyProvider = ReadOnlyContext.Provider;
+export const useReadOnly = () => useContext(ReadOnlyContext);
+export const READ_ONLY_HINT = "Танд энэ хэсгийг зөвхөн харах эрх байна";
 
 /* ---------- Button ---------- */
 type Variant = "primary" | "secondary" | "danger" | "ghost";
@@ -14,10 +23,13 @@ const variants: Record<Variant, string> = {
   danger: "bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-600",
   ghost: "bg-transparent text-navy hover:bg-navy/10 focus-visible:ring-navy",
 };
-export function Button({ variant = "primary", className, ...p }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant }) {
+export function Button({ variant = "primary", className, mutates, ...p }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant; mutates?: boolean }) {
+  const blocked = useReadOnly() && (p.type === "submit" || variant === "danger" || !!mutates);
   return (
     <button
       {...p}
+      disabled={p.disabled || blocked}
+      title={blocked ? READ_ONLY_HINT : p.title}
       className={cx(
         "inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none",
@@ -84,7 +96,11 @@ export function Modal({ open, title, onClose, children, footer, size = "md" }: {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4" onClick={onClose} role="dialog" aria-modal="true">
       <div className={cx("w-full rounded-2xl bg-white shadow-xl", size === "lg" ? "max-w-2xl" : "max-w-lg")} onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-          <h2 className="text-lg font-bold text-navy">{title}</h2>
+          <h2 className="flex items-center gap-2 text-lg font-bold text-navy">
+            {/* Засах горим ("… засах" гарчиг): харандаа icon */}
+            {/засах$/i.test(title.trim()) && <Pencil size={18} strokeWidth={2.2} aria-hidden="true" className="shrink-0" />}
+            {title}
+          </h2>
           <button onClick={onClose} className="rounded-md p-1 text-slate-500 hover:bg-slate-100" aria-label="Хаах">✕</button>
         </div>
         <div className="max-h-[70vh] overflow-y-auto px-5 py-4">{children}</div>

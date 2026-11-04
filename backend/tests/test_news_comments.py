@@ -53,7 +53,7 @@ async def test_admin_hide_and_block(client, db, fb, make_user):
     await make_post(db)
     h1 = await visitor_headers(client, fb, "1", "Бат")
     cid = (await client.post("/api/news/posts/shine/comments/", json={"body": "Муу үг"}, headers=h1)).json()["id"]
-    a = await staff_headers(client, make_user, username="ed", roles=("news",))
+    a = await staff_headers(client, make_user, username="ed", roles=("news.edit",))
     r = await client.get("/api/news/admin/comments/", headers=a)
     assert r.json()["total"] == 1 and r.json()["items"][0]["post"]["slug"] == "shine" and r.json()["items"][0]["is_hidden"] is False
     r = await client.patch(f"/api/news/admin/comments/{cid}/", json={"is_hidden": True}, headers=a)

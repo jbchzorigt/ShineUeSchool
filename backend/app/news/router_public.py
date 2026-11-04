@@ -5,6 +5,8 @@
   GET /api/news/posts/{slug}/              → PostDetail
   GET /api/news/posts/{slug}/related/?limit= → [PostCard] агуулгаар ойр мэдээ (related.py), дутууг шинэ мэдээгээр нөхнө
   GET /api/news/posts/{slug}/comments/     → [CommentOut]
+Хэл: `?lang=mn|en` (анхдагч mn) — жагсаалт/дэлгэрэнгүй/related/ангиллын тоо тухайн хэлний гарчигтай мэдээг л авна,
+текст талбарууд сонгосон хэлээр (`localized`; мэдээний их бие англи хоосон бол хоосон — fallback-гүй).
 """
 
 from datetime import UTC, datetime
@@ -16,6 +18,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..common.errors import FieldError
+from ..common.i18n import Lang, localized
 from ..config import settings
 from ..db import get_db
 from ..social.deps import current_visitor, optional_visitor
@@ -44,6 +47,15 @@ def public_filter():
     return and_(Post.is_published.is_(True), Post.published_at.is_not(None), Post.published_at <= now)
 
 
+def lang_filter(lang: Lang):
+    """Тухайн хэлний гарчиг бөглөгдсөн мэдээ (mn → title, en → title_en)."""
+    return Post.title_en != "" if lang == "en" else Post.title != ""
+
+
+def post_languages(p: Post) -> list[Lang]:
+    return [l for l, t in (("mn", p.title), ("en", p.title_en)) if (t or "").strip()]
+
+
 def paginate(page: int, page_size: int) -> tuple[int, int, int]:
     if page < 1:
         raise FieldError("page", "Хуудас 1-ээс эхэлнэ.")
@@ -63,41 +75,51 @@ async def counts_for(db: AsyncSession, post_ids: list[int]) -> dict[int, tuple[i
     return {pid: (likes.get(pid, 0), comments.get(pid, 0)) for pid in post_ids}
 
 
-def post_card(request: Request, p: Post, likes: int, comments: int) -> PostCard:
+def post_card(request: Request, p: Post, likes: int, comments: int, lang: Lang = "mn") -> PostCard:
+    c = p.category
     return PostCard(
-        id=p.id, title=p.title, slug=p.slug, excerpt=p.excerpt, cover_image=media_url(request, p.cover_image),
-        category={"id": p.category.id, "name": p.category.name, "slug": p.category.slug} if p.category else None,
+        id=p.id, title=localized(p.title, p.title_en, lang), title_en=p.title_en, slug=p.slug,
+        excerpt=localized(p.excerpt, p.excerpt_en, lang), excerpt_en=p.excerpt_en, cover_image=media_url(request, p.cover_image),
+        category={"id": c.id, "name": localized(c.name, c.name_en, lang), "name_en": c.name_en, "slug": c.slug} if c else None,
         published_at=p.published_at, likes_count=likes, comments_count=comments,
     )
 
 
-def post_detail(request: Request, p: Post, likes: int, comments: int, liked: bool) -> PostDetail:
+def post_detail(request: Request, p: Post, likes: int, comments: int, liked: bool, lang: Lang = "mn") -> PostDetail:
     return PostDetail(
-        **post_card(request, p, likes, comments).model_dump(),
-        body_html=p.body_html, liked_by_me=liked, fb_post_id=p.fb_post_id,
-        images=[ImageOut(id=i.id, image=media_url(request, i.image), caption=i.caption, order=i.order) for i in p.images],
+        **post_card(request, p, likes, comments, lang).model_dump(),
+        body_html=p.body_html_en if lang == "en" else p.body_html, body_html_en=p.body_html_en,
+        languages=post_languages(p), liked_by_me=liked, fb_post_id=p.fb_post_id,
+        images=[ImageOut(id=i.id, image=media_url(request, i.image), caption=localized(i.caption, i.caption_en, lang),
+                         caption_en=i.caption_en, order=i.order) for i in p.images],
     )
 
 
-async def get_public_post(db: AsyncSession, slug: str) -> Post:
-    p = (await db.execute(select(Post).where(Post.slug == slug, public_filter()))).scalar_one_or_none()
+async def get_public_post(db: AsyncSession, slug: str, lang: Lang | None = None) -> Post:
+    """lang өгвөл тухайн хэлгүй мэдээ 404 (коммент/лайк endpoint-ууд хэлгүйгээр дуудна)."""
+    where = [Post.slug == slug, public_filter()]
+    if lang:
+        where.append(lang_filter(lang))
+    p = (await db.execute(select(Post).where(*where))).scalar_one_or_none()
     if p is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Олдсонгүй.")
     return p
 
 
 @router.get("/categories/", response_model=list[CategoryOut])
-async def categories(db: DB):
+async def categories(db: DB, lang: Lang = "mn"):
     counts = dict((await db.execute(
-        select(Post.category_id, func.count()).where(public_filter()).group_by(Post.category_id))).all())
+        select(Post.category_id, func.count()).where(public_filter(), lang_filter(lang)).group_by(Post.category_id))).all())
     cats = (await db.execute(select(Category).order_by(Category.order, Category.name))).scalars().all()
-    return [CategoryOut(id=c.id, name=c.name, slug=c.slug, order=c.order, post_count=counts.get(c.id, 0)) for c in cats]
+    return [CategoryOut(id=c.id, name=localized(c.name, c.name_en, lang), name_en=c.name_en, slug=c.slug, order=c.order,
+                        post_count=counts.get(c.id, 0)) for c in cats]
 
 
 @router.get("/posts/", response_model=PostPage)
-async def posts_list(request: Request, db: DB, page: int = 1, page_size: int = PAGE_SIZE_DEFAULT, category: str | None = None):
+async def posts_list(request: Request, db: DB, page: int = 1, page_size: int = PAGE_SIZE_DEFAULT, category: str | None = None,
+                     lang: Lang = "mn"):
     page, page_size, offset = paginate(page, page_size)
-    where = [public_filter()]
+    where = [public_filter(), lang_filter(lang)]
     if category:
         where.append(Post.category.has(Category.slug == category))
     total = (await db.execute(select(func.count(Post.id)).where(*where))).scalar_one()
@@ -105,30 +127,32 @@ async def posts_list(request: Request, db: DB, page: int = 1, page_size: int = P
         select(Post).where(*where).order_by(Post.published_at.desc(), Post.id.desc()).offset(offset).limit(page_size)
     )).scalars().all()
     counts = await counts_for(db, [p.id for p in posts])
-    return PostPage(items=[post_card(request, p, *counts[p.id]) for p in posts], total=total, page=page, page_size=page_size)
+    return PostPage(items=[post_card(request, p, *counts[p.id], lang=lang) for p in posts], total=total, page=page, page_size=page_size)
 
 
 @router.get("/posts/{slug}/", response_model=PostDetail)
-async def post_get(slug: str, request: Request, db: DB, v: Annotated[Visitor | None, Depends(optional_visitor)]):
-    p = await get_public_post(db, slug)
+async def post_get(slug: str, request: Request, db: DB, v: Annotated[Visitor | None, Depends(optional_visitor)], lang: Lang = "mn"):
+    p = await get_public_post(db, slug, lang)
     counts = await counts_for(db, [p.id])
     liked = v is not None and (await db.get(Like, (p.id, v.id))) is not None
-    return post_detail(request, p, *counts[p.id], liked=liked)
+    return post_detail(request, p, *counts[p.id], liked=liked, lang=lang)
 
 
 RELATED_MAX = 10
 
 
 @router.get("/posts/{slug}/related/", response_model=list[PostCard])
-async def post_related(slug: str, request: Request, db: DB, limit: int = 3):
+async def post_related(slug: str, request: Request, db: DB, limit: int = 3, lang: Lang = "mn"):
     """Агуулгаар ойр мэдээ: бүх нийтлэгдсэн мэдээг уншиж (цөөн тул) TF-IDF cosine-оор эрэмбэлнэ.
     Ойр (оноо > 0) мэдээ limit хүрэхгүй бол хамгийн шинэ мэдээгээр нөхнө."""
     limit = max(1, min(limit, RELATED_MAX))
-    target = await get_public_post(db, slug)
+    target = await get_public_post(db, slug, lang)
     posts = (await db.execute(
-        select(Post).where(public_filter()).order_by(Post.published_at.desc(), Post.id.desc()))).scalars().all()
+        select(Post).where(public_filter(), lang_filter(lang)).order_by(Post.published_at.desc(), Post.id.desc()))).scalars().all()
     by_id = {p.id: p for p in posts}
-    docs = {p.id: doc_tokens(p.title, p.excerpt, p.body_html) for p in posts}
+    en = lang == "en"
+    docs = {p.id: doc_tokens(p.title_en if en else p.title, p.excerpt_en if en else p.excerpt, p.body_html_en if en else p.body_html)
+            for p in posts}
     cats = {p.id: p.category_id for p in posts}
     chosen = [pid for pid, _ in rank(target.id, docs, cats)[:limit]]
     for p in posts:                      # нөхөлт: шинэ мэдээгээр
@@ -137,7 +161,7 @@ async def post_related(slug: str, request: Request, db: DB, limit: int = 3):
         if p.id != target.id and p.id not in chosen:
             chosen.append(p.id)
     counts = await counts_for(db, chosen)
-    return [post_card(request, by_id[pid], *counts[pid]) for pid in chosen]
+    return [post_card(request, by_id[pid], *counts[pid], lang=lang) for pid in chosen]
 
 
 @router.get("/posts/{slug}/comments/", response_model=list[CommentOut])

@@ -1,4 +1,5 @@
-/* Server-side fetch (олимпиадын хуудас). Алдаанд null; 60 сек revalidate. news-api.ts-тэй ижил загвар. */
+/* Server-side fetch (олимпиадын хуудас, header-ийн оны хавтан). Алдаанд null; 60 сек revalidate + "olympiad" tag
+   (админ хадгалмагц /api/revalidate шууд цэвэрлэнэ). */
 
 import type { AlbumPhoto, OlympiadPage, Result, Stage, Years } from "./types";
 
@@ -6,7 +7,7 @@ const API = process.env.INTERNAL_API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "
 
 async function getJson<T>(path: string): Promise<T | null> {
   try {
-    const res = await fetch(`${API}${path}`, { next: { revalidate: 60 } });
+    const res = await fetch(`${API}${path}`, { next: { revalidate: 60, tags: ["olympiad"] } });
     if (!res.ok) return null;
     return (await res.json()) as T;
   } catch {

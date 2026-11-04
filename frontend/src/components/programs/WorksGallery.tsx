@@ -5,10 +5,12 @@
 import Image from "next/image";
 import { useRef, useState } from "react";
 import type { ProgramWork } from "@/lib/types";
+import { useDict } from "@/components/site/LangProvider";
 
 export function WorksGallery({ works }: { works: ProgramWork[] }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [i, setI] = useState<number | null>(null);
+  const t = useDict().programs;
   const open = (idx: number) => { setI(idx); dialogRef.current?.showModal(); };
   const close = () => dialogRef.current?.close();
   const step = (d: -1 | 1) => setI((cur) => (cur === null ? cur : (cur + d + works.length) % works.length));
@@ -16,11 +18,11 @@ export function WorksGallery({ works }: { works: ProgramWork[] }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <h2 className="font-display text-[26px] font-extrabold text-navy lg:text-[32px]">Сурагчдын бүтээлийн булан</h2>
+      <h2 className="font-display text-[26px] font-extrabold text-navy lg:text-[32px]">{t.worksTitle}</h2>
       <ul className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
         {works.map((w, idx) => (
           <li key={w.id} className="flex flex-col gap-2">
-            <button type="button" onClick={() => open(idx)} aria-label={`${w.title} — томруулж харах`}
+            <button type="button" onClick={() => open(idx)} aria-label={t.enlarge(w.title)}
                     className="group relative block aspect-square overflow-hidden rounded-xl border border-line bg-white">
               <Image src={w.image} alt={w.title} fill unoptimized sizes="(max-width: 768px) 50vw, 25vw" className="object-cover transition group-hover:scale-[1.03]" />
             </button>
@@ -37,14 +39,14 @@ export function WorksGallery({ works }: { works: ProgramWork[] }) {
           <div className="flex flex-col">
             <div className="flex items-center justify-between gap-2 p-2 pl-4">
               <span className="text-sm text-muted">{i! + 1} / {works.length}</span>
-              <button type="button" onClick={close} aria-label="Хаах" className="grid h-9 w-9 place-items-center rounded-full text-ink hover:bg-paper-3">✕</button>
+              <button type="button" onClick={close} aria-label={t.close} className="grid h-9 w-9 place-items-center rounded-full text-ink hover:bg-paper-3">✕</button>
             </div>
             <span className="relative block h-[65vh] w-[min(92vw,900px)]">
               <Image src={active.image} alt={active.title} fill unoptimized sizes="92vw" className="object-contain" />
               {works.length > 1 && (
                 <>
-                  <button type="button" onClick={() => step(-1)} aria-label="Өмнөх" className="absolute left-2 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-navy shadow">‹</button>
-                  <button type="button" onClick={() => step(1)} aria-label="Дараах" className="absolute right-2 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-navy shadow">›</button>
+                  <button type="button" onClick={() => step(-1)} aria-label={t.prev} className="absolute left-2 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-navy shadow">‹</button>
+                  <button type="button" onClick={() => step(1)} aria-label={t.next} className="absolute right-2 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-navy shadow">›</button>
                 </>
               )}
             </span>

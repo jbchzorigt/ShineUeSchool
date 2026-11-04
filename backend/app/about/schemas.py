@@ -6,17 +6,23 @@ from pydantic import BaseModel, Field, field_validator
 class StatItem(BaseModel):
     value: str = Field(min_length=1, max_length=20)
     label: str = Field(min_length=1, max_length=60)
+    label_en: str = Field(default="", max_length=60)   # англи шошго (хоосон бол монгол)
 
 
 class PageOut(BaseModel):
+    """Нийтийн хариунд `intro_title`, `intro_html`, stats `label` нь `?lang`-аар; `_en` талбарууд админд."""
     intro_title: str
+    intro_title_en: str = ""
     intro_html: str
+    intro_html_en: str = ""
     stats: list[StatItem]
 
 
 class PagePatch(BaseModel):
     intro_title: str | None = Field(default=None, min_length=1, max_length=160)
+    intro_title_en: str | None = Field(default=None, max_length=160)
     intro_html: str | None = None
+    intro_html_en: str | None = None
     stats: list[StatItem] | None = None
 
     @field_validator("stats", mode="before")
@@ -29,7 +35,7 @@ class PagePatch(BaseModel):
         for s in v:
             if not isinstance(s, dict) or not str(s.get("value", "")).strip() or not str(s.get("label", "")).strip():
                 raise ValueError("Үзүүлэлт бүр утга ба нэртэй байна.")
-            if len(str(s["value"]).strip()) > 20 or len(str(s["label"]).strip()) > 60:
+            if len(str(s["value"]).strip()) > 20 or len(str(s["label"]).strip()) > 60 or len(str(s.get("label_en") or "").strip()) > 60:
                 raise ValueError("Үзүүлэлтийн утга 20, нэр 60 тэмдэгтээс урт байж болохгүй.")
         return v
 
@@ -38,6 +44,7 @@ class LeaderOut(BaseModel):
     id: int
     full_name: str
     position: str
+    position_en: str = ""
     level: int
     photo: str | None
 
@@ -45,6 +52,7 @@ class LeaderOut(BaseModel):
 class LeaderPatch(BaseModel):
     full_name: str | None = Field(default=None, max_length=120)
     position: str | None = Field(default=None, max_length=160)
+    position_en: str | None = Field(default=None, max_length=160)
     level: int | None = None
 
 
@@ -66,33 +74,39 @@ class TeacherOut(BaseModel):
     id: int
     full_name: str
     role: str
+    role_en: str = ""
     is_head: bool
 
 
 class TeacherIn(BaseModel):
     full_name: str = Field(max_length=120)
     role: str = Field(default="", max_length=120)
+    role_en: str = Field(default="", max_length=120)
     is_head: bool = False
 
 
 class TeacherPatch(BaseModel):
     full_name: str | None = Field(default=None, max_length=120)
     role: str | None = Field(default=None, max_length=120)
+    role_en: str | None = Field(default=None, max_length=120)
     is_head: bool | None = None
 
 
 class DepartmentOut(BaseModel):
     id: int
     name: str
+    name_en: str = ""
     teachers: list[TeacherOut]
 
 
 class DepartmentIn(BaseModel):
     name: str = Field(max_length=120)
+    name_en: str = Field(default="", max_length=120)
 
 
 class DepartmentPatch(BaseModel):
     name: str | None = Field(default=None, max_length=120)
+    name_en: str | None = Field(default=None, max_length=120)
 
 
 class AboutOut(BaseModel):

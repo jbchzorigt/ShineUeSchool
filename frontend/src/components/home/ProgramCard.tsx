@@ -2,10 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { getDict, localePath, type Lang } from "@/lib/i18n";
 import type { ProgramCard as ProgramCardData } from "@/lib/types";
 
-export function ProgramCard({ program }: { program: ProgramCardData }) {
-  const href = `/programs/${program.slug}`;
+export function ProgramCard({ program, lang = "mn" }: { program: ProgramCardData; lang?: Lang }) {
+  const href = localePath(lang, `/programs/${program.slug}`);
   return (
     <li className="flex flex-col overflow-hidden rounded-2xl border border-line bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md">
       <Link href={href} className="relative block aspect-[16/10] w-full bg-navy" aria-hidden="true" tabIndex={-1}>
@@ -23,7 +24,7 @@ export function ProgramCard({ program }: { program: ProgramCardData }) {
         </h3>
         {program.summary && <p className="text-[15px] leading-relaxed text-muted">{program.summary}</p>}
         <Link href={href} className="mt-auto inline-flex items-center gap-2 rounded-lg bg-navy px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-navy/90">
-          Дэлгэрэнгүй <span aria-hidden="true">→</span>
+          {getDict(lang).home.programs.more} <span aria-hidden="true">→</span>
         </Link>
       </div>
     </li>

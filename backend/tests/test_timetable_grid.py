@@ -134,7 +134,7 @@ async def test_grid_validation(client, make_user, db):
     r = await client.put(f"/api/timetable/classes/{c9}/grid/", headers=h, json=[{**ok, "room_id": 999999}])
     assert r.status_code == 400 and "room_id" in r.json()
     assert (await client.put("/api/timetable/classes/999999/grid/", headers=h, json=[])).status_code == 404
-    oh = await staff_headers(client, make_user, "olymp", roles=("olympiad",))
+    oh = await staff_headers(client, make_user, "olymp", roles=("olympiad.edit",))
     assert (await client.put(f"/api/timetable/classes/{c9}/grid/", headers=oh, json=[])).status_code == 403
 
 

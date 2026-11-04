@@ -4,11 +4,14 @@ from pydantic import BaseModel, Field
 
 
 class ProgramCard(BaseModel):
+    """Нийтийн хариунд `name`, `summary` нь `?lang`-аар (англи хоосон бол монгол); `_en` талбарууд админд."""
     id: int
     slug: str
     name: str
+    name_en: str = ""
     badge: str
     summary: str
+    summary_en: str = ""
     cover_image: str | None
     grade_from: int
     grade_to: int
@@ -18,8 +21,10 @@ class WorkOut(BaseModel):
     id: int
     image: str
     title: str
+    title_en: str = ""
     student: str
     caption: str
+    caption_en: str = ""
 
 
 class ScholarshipOut(BaseModel):
@@ -45,6 +50,7 @@ class RadarIn(BaseModel):
 
 class ProgramDetail(ProgramCard):
     body_html: str
+    body_html_en: str = ""
     radar: RadarIn | None
     works: list[WorkOut]
     scholarships: list[ScholarshipOut]
@@ -54,6 +60,7 @@ class ProgramDetail(ProgramCard):
 
 class ProgramAdmin(ProgramCard):
     body_html: str
+    body_html_en: str = ""
     is_published: bool
     order: int
     works_count: int
@@ -68,28 +75,36 @@ class ProgramAdminDetail(ProgramAdmin):
 
 class ProgramIn(BaseModel):
     name: str = Field(max_length=120)
+    name_en: str = Field(default="", max_length=120)
     badge: str = Field(max_length=40)
     summary: str = Field(default="", max_length=280)
+    summary_en: str = Field(default="", max_length=280)
     grade_from: int = 11
     grade_to: int = 12
     body_html: str = ""
+    body_html_en: str = ""
     is_published: bool = True
 
 
 class ProgramPatch(BaseModel):
     name: str | None = Field(default=None, max_length=120)
+    name_en: str | None = Field(default=None, max_length=120)
     badge: str | None = Field(default=None, max_length=40)
     summary: str | None = Field(default=None, max_length=280)
+    summary_en: str | None = Field(default=None, max_length=280)
     grade_from: int | None = None
     grade_to: int | None = None
     body_html: str | None = None
+    body_html_en: str | None = None
     is_published: bool | None = None
 
 
 class WorkPatch(BaseModel):
     title: str | None = Field(default=None, max_length=160)
+    title_en: str | None = Field(default=None, max_length=160)
     student: str | None = Field(default=None, max_length=120)
     caption: str | None = Field(default=None, max_length=280)
+    caption_en: str | None = Field(default=None, max_length=280)
 
 
 class ScholarshipIn(BaseModel):

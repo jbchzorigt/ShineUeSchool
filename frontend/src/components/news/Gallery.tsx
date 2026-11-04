@@ -5,11 +5,13 @@
 
 import Image from "next/image";
 import { useRef, useState } from "react";
+import { useDict } from "@/components/site/LangProvider";
 import type { NewsImage as NewsImageData } from "@/lib/types";
 
 export function Gallery({ images }: { images: NewsImageData[] }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [active, setActive] = useState<NewsImageData | null>(null);
+  const t = useDict().news;
 
   const open = (img: NewsImageData) => {
     setActive(img);
@@ -19,14 +21,14 @@ export function Gallery({ images }: { images: NewsImageData[] }) {
 
   return (
     <div className="flex flex-col gap-3">
-      <h2 className="font-display text-xl font-extrabold text-navy">Галерей</h2>
+      <h2 className="font-display text-xl font-extrabold text-navy">{t.gallery}</h2>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
         {images.map((img) => (
           <button
             key={img.id}
             type="button"
             onClick={() => open(img)}
-            aria-label={img.caption || "Зургийг томруулж харах"}
+            aria-label={img.caption || t.enlarge}
             className="group relative block h-[140px] overflow-hidden rounded-lg border border-line lg:h-[180px]"
           >
             <Image src={img.image} alt={img.caption} fill unoptimized sizes="(max-width: 768px) 50vw, 33vw" className="object-cover transition group-hover:opacity-90" />
@@ -45,7 +47,7 @@ export function Gallery({ images }: { images: NewsImageData[] }) {
         {active && (
           <div className="flex flex-col">
             <div className="flex justify-end p-2">
-              <button type="button" onClick={close} aria-label="Хаах" className="grid h-9 w-9 place-items-center rounded-full text-ink hover:bg-paper-3">
+              <button type="button" onClick={close} aria-label={t.close} className="grid h-9 w-9 place-items-center rounded-full text-ink hover:bg-paper-3">
                 <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M5 5l14 14M19 5L5 19" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
                 </svg>

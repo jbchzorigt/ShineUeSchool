@@ -55,7 +55,7 @@ from app.auth.security import hash_password
 
 @pytest.fixture
 async def make_user(db):
-    """make_user("bat", roles=["manager"]) → User. Role байхгүй бол үүсгэнэ."""
+    """make_user("bat", roles=["news.edit"]) → User. Role байхгүй бол үүсгэнэ."""
     async def _make(username, password="pass1234", *, superuser=False, roles=()):
         role_objs = []
         for code in roles:

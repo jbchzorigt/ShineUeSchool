@@ -16,7 +16,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, Request, Response, 
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..auth.deps import require_role
+from ..auth.deps import require_section
 from ..auth.models import User
 from ..common.errors import FieldError
 from ..common.media import delete_file, save_upload
@@ -28,7 +28,7 @@ from .service import club_admin_out, taken_by_grade
 
 router = APIRouter(prefix="/api/clubs/admin", tags=["clubs-admin"])
 DB = Annotated[AsyncSession, Depends(get_db)]
-Manager = Annotated[User, Depends(require_role("manager"))]
+Manager = Annotated[User, Depends(require_section("clubs"))]  # GET — харах, бусад — засах эрх
 
 
 async def _get_or_404(db: AsyncSession, model, id: int):

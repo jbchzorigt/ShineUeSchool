@@ -1,7 +1,8 @@
 /* Мэдээллийн мөр: хэрэгжих анги · бүтээлийн тоо · тэтгэлгийн нийт дүн (тэтгэлэггүй бол сүүлийнх нуугдана). */
 
+import { getDict, type Lang } from "@/lib/i18n";
 import type { ProgramDetail } from "@/lib/types";
-import { formatUsd, gradeRange } from "./money";
+import { formatUsd } from "./money";
 
 function Fact({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
@@ -13,12 +14,13 @@ function Fact({ label, value, sub }: { label: string; value: string; sub?: strin
   );
 }
 
-export function ProgramFacts({ program }: { program: ProgramDetail }) {
+export function ProgramFacts({ program, lang = "mn" }: { program: ProgramDetail; lang?: Lang }) {
+  const t = getDict(lang).programs;
   return (
     <ul className="grid gap-4 md:grid-cols-3">
-      <Fact label="Хэрэгжих анги" value={gradeRange(program.grade_from, program.grade_to)} />
-      <Fact label="Бүтээлийн булан" value={String(program.works.length)} sub="сурагчдын бүтээл" />
-      {program.scholarship_count > 0 && <Fact label="Тэтгэлэг" value={formatUsd(program.scholarship_total_usd)} sub={`${program.scholarship_count} сурагч`} />}
+      <Fact label={t.grades} value={t.gradeRange(program.grade_from, program.grade_to)} />
+      <Fact label={t.worksLabel} value={String(program.works.length)} sub={t.worksSub} />
+      {program.scholarship_count > 0 && <Fact label={t.scholarship} value={formatUsd(program.scholarship_total_usd)} sub={t.students(program.scholarship_count)} />}
     </ul>
   );
 }

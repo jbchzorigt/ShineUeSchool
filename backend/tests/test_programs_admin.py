@@ -75,7 +75,7 @@ async def test_upload_image_and_auth(client, make_user, tmp_path, monkeypatch):
     r = await client.post(f"{A}/upload-image/", headers=h, files={"image": ("a.png", png_bytes(), "image/png")})
     assert r.status_code == 201 and "/media/programs/body/" in r.json()["url"]
     assert (await client.get(f"{A}/programs/")).status_code == 401
-    n = await staff_headers(client, make_user, "editor", roles=("news",))
+    n = await staff_headers(client, make_user, "editor", roles=("news.edit",))
     assert (await client.get(f"{A}/programs/", headers=n)).status_code == 403
     assert (await client.post(f"{A}/upload-image/", headers=n, files={"image": ("a.png", png_bytes(), "image/png")})).status_code == 403
 

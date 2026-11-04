@@ -5,9 +5,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Badge, Table, Td, Th } from "@/components/ui";
-import { gradeRange } from "@/components/programs/money";
+import { getDict } from "@/lib/i18n";
+
+const gradeRange = getDict("mn").programs.gradeRange;   // админ монголоор
 import { api, ApiError } from "@/lib/api";
 import type { ProgramAdmin } from "@/lib/types";
+import { DeleteButton, EditLabel, MoveButton, actionBtn } from "@/components/admin/ActionLabel";
 
 const iconBtn = "inline-grid h-8 w-8 place-items-center rounded-lg text-base transition hover:bg-navy/10";
 
@@ -28,8 +31,8 @@ export function ProgramTable({ programs, onEdit, onChanged }: { programs: Progra
       {programs.map((p, i) => (
         <tr key={p.id}>
           <Td className="whitespace-nowrap">
-            <button onClick={() => move(i, -1)} disabled={i === 0} className="px-1 text-navy disabled:opacity-30" aria-label="Дээш">▲</button>
-            <button onClick={() => move(i, 1)} disabled={i === programs.length - 1} className="px-1 text-navy disabled:opacity-30" aria-label="Доош">▼</button>
+            <MoveButton dir="up" onClick={() => move(i, -1)} disabled={i === 0} />
+            <MoveButton dir="down" onClick={() => move(i, 1)} disabled={i === programs.length - 1} />
           </Td>
           <Td>
             <span className="flex items-center gap-3">
@@ -47,9 +50,9 @@ export function ProgramTable({ programs, onEdit, onChanged }: { programs: Progra
           <Td>{p.scholarships_count}</Td>
           <Td>{!p.is_published && <Badge tone="gold">Нийтлээгүй</Badge>}</Td>
           <Td className="whitespace-nowrap text-right">
-            <button type="button" onClick={() => onEdit(p)} className={`${iconBtn} text-navy`} aria-label="Засах" title="Засах">✎</button>
+            <button type="button" onClick={() => onEdit(p)} className={`${actionBtn} text-navy hover:bg-navy/10`}><EditLabel /></button>
             <Link href={`/admin/programs/${p.id}`} className={`${iconBtn} text-navy`} aria-label="Бүтээл, тэтгэлэг" title="Бүтээл, тэтгэлэг">☷</Link>
-            <button type="button" onClick={() => remove(p)} className={`${iconBtn} text-red-600 hover:bg-red-50`} aria-label="Устгах" title="Устгах">🗑</button>
+            <DeleteButton onClick={() => remove(p)} />
           </Td>
         </tr>
       ))}

@@ -18,12 +18,15 @@ class Program(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     slug: Mapped[str] = mapped_column(String(200), unique=True, index=True)
     name: Mapped[str] = mapped_column(String(120))
+    name_en: Mapped[str] = mapped_column(String(120), default="", server_default="")
     badge: Mapped[str] = mapped_column(String(40))            # картын tag: "IBDP", "Cambridge"
     summary: Mapped[str] = mapped_column(String(280), default="")
+    summary_en: Mapped[str] = mapped_column(String(280), default="", server_default="")
     cover_image: Mapped[str | None] = mapped_column(String(255), nullable=True)   # "programs/uuid.jpg"
     grade_from: Mapped[int] = mapped_column(SmallInteger, default=11)
     grade_to: Mapped[int] = mapped_column(SmallInteger, default=12)
     body_html: Mapped[str] = mapped_column(Text, default="")
+    body_html_en: Mapped[str] = mapped_column(Text, default="", server_default="")
     # Радар график (ЭЕШ-ийн оноо г.м.): {"title", "subjects": [..], "series": [{"name", "values": [..]}]} — хоосон {} бол харуулахгүй
     radar: Mapped[dict] = mapped_column(JSONB, default=dict)
     order: Mapped[int] = mapped_column(SmallInteger, default=0)
@@ -44,8 +47,10 @@ class ProgramWork(Base):
     program_id: Mapped[int] = mapped_column(ForeignKey("programs.id", ondelete="CASCADE"), index=True)
     image: Mapped[str] = mapped_column(String(255))
     title: Mapped[str] = mapped_column(String(160))
+    title_en: Mapped[str] = mapped_column(String(160), default="", server_default="")
     student: Mapped[str] = mapped_column(String(120), default="")   # "Б.Ану, 11а"
     caption: Mapped[str] = mapped_column(String(280), default="")
+    caption_en: Mapped[str] = mapped_column(String(280), default="", server_default="")
     order: Mapped[int] = mapped_column(SmallInteger, default=0)
 
 

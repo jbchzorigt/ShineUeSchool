@@ -7,7 +7,7 @@ async def test_about_defaults_and_empty_lists(client):
     r = await client.get("/api/about/")
     assert r.status_code == 200, r.text
     d = r.json()
-    assert d["page"] == {"intro_title": "Шинэ Үе сургууль", "intro_html": "", "stats": []}
+    assert d["page"] == {"intro_title": "Шинэ Үе сургууль", "intro_title_en": "", "intro_html": "", "intro_html_en": "", "stats": []}
     assert d["leaders"] == [] and d["departments"] == []
     assert (await client.get("/api/about/")).json() == d   # хоёр дахь удаад ижил мөр
 

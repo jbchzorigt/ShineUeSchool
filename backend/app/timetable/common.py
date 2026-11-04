@@ -7,14 +7,14 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..auth.deps import require_role
+from ..auth.deps import require_section
 from ..auth.models import User
 from ..common.errors import FieldError
 from ..db import get_db
 from .models import AcademicYear
 
 DB = Annotated[AsyncSession, Depends(get_db)]
-Manager = Annotated[User, Depends(require_role("manager"))]
+Manager = Annotated[User, Depends(require_section("timetable"))]  # GET — харах, бусад — засах эрх
 
 
 async def get_or_404(db: AsyncSession, model, id: int):

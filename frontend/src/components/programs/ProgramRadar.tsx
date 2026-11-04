@@ -9,12 +9,15 @@ import { useEffect, useRef } from "react";
 import type ApexCharts from "apexcharts";
 import type { ApexOptions } from "apexcharts";
 import type { ProgramRadar as RadarData } from "@/lib/types";
+import { useDict } from "@/components/site/LangProvider";
 
 const P = { blue: "#223A62", green: "#2EC23C", yellow: "#FFF457", orange: "#FFAB1A", red: "#D1460A", maroon: "#980B01", black: "#000000", white: "#FFFFFF" };
 // 12 хүртэлх хичээлд давхардалгүй өнгө: палитрын 6 өнгө + тэдгээрийн цайвар/бараан тон
 const SERIES_COLORS = [P.blue, P.green, P.orange, P.red, P.maroon, P.black, "#5A7FC0", "#1F8A2B", "#B8760A", "#F08A6A", "#C2443A", "#6B6B6B"];
 
 export function ProgramRadar({ radar }: { radar: RadarData }) {
+  const t = useDict().programs;
+  const title = radar.title || t.radarTitle;
   const box = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -66,9 +69,9 @@ export function ProgramRadar({ radar }: { radar: RadarData }) {
 
   return (
     <section aria-labelledby="radar-title" className="flex flex-col gap-4">
-      <h2 id="radar-title" className="font-display text-[26px] font-extrabold text-navy lg:text-[32px]">{radar.title || "ЭЕШ-ийн оноо"}</h2>
+      <h2 id="radar-title" className="font-display text-[26px] font-extrabold text-navy lg:text-[32px]">{title}</h2>
       <figure className="scholarship-chart max-w-4xl rounded-2xl border border-line bg-white p-4 lg:p-6">
-        <div ref={box} className="min-h-[440px] sm:min-h-[520px]" role="img" aria-label={`${radar.title || "ЭЕШ-ийн оноо"}: ${radar.subjects.join(", ")} хичээлээр ${radar.series.map((s) => s.name).join(", ")} онуудын налуу график`} />
+        <div ref={box} className="min-h-[440px] sm:min-h-[520px]" role="img" aria-label={t.radarAria(title, radar.subjects.join(", "), radar.series.map((s) => s.name).join(", "))} />
       </figure>
     </section>
   );

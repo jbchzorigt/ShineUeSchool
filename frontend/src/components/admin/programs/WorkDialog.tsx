@@ -9,7 +9,7 @@ import { api, ApiError } from "@/lib/api";
 import type { WorkInput } from "@/lib/types";
 
 export function WorkDialog({ programId, open, onClose, onSaved }: { programId: number; open: boolean; onClose: () => void; onSaved: () => void }) {
-  const [d, setD] = useState<WorkInput>({ title: "", student: "", caption: "" });
+  const [d, setD] = useState<WorkInput>({ title: "", title_en: "", student: "", caption: "", caption_en: "" });
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -26,7 +26,7 @@ export function WorkDialog({ programId, open, onClose, onSaved }: { programId: n
     e.preventDefault();
     if (!file) { setErrors({ image: "Зураг оруулна уу." }); return; }
     setBusy(true); setErrors({});
-    try { await api.programs.works.create(programId, { title: d.title.trim(), student: d.student.trim(), caption: d.caption.trim() }, file); onSaved(); onClose(); }
+    try { await api.programs.works.create(programId, { title: d.title.trim(), title_en: (d.title_en ?? "").trim(), student: d.student.trim(), caption: d.caption.trim(), caption_en: (d.caption_en ?? "").trim() }, file); onSaved(); onClose(); }
     catch (err) { const fe = err instanceof ApiError ? err.fieldErrors : {}; setErrors(Object.keys(fe).length ? fe : { non_field_errors: "Хадгалж чадсангүй." }); }
     finally { setBusy(false); }
   }
@@ -50,6 +50,8 @@ export function WorkDialog({ programId, open, onClose, onSaved }: { programId: n
         <Field label="Гарчиг" error={errors.title}><Input value={d.title} onChange={(e) => setD({ ...d, title: e.target.value })} maxLength={160} autoFocus /></Field>
         <Field label="Сурагч" error={errors.student} hint="Нэр, анги (ж: Б.Ану, 11а)"><Input value={d.student} onChange={(e) => setD({ ...d, student: e.target.value })} maxLength={120} /></Field>
         <Field label="Тайлбар" error={errors.caption}><Textarea value={d.caption} onChange={(e) => setD({ ...d, caption: e.target.value })} maxLength={280} className="min-h-20" /></Field>
+        <Field label="Title (English)" error={errors.title_en} hint="Хоосон бол англи сайтад монгол гарчиг"><Input value={d.title_en ?? ""} onChange={(e) => setD({ ...d, title_en: e.target.value })} maxLength={160} lang="en" /></Field>
+        <Field label="Caption (English)" error={errors.caption_en}><Textarea value={d.caption_en ?? ""} onChange={(e) => setD({ ...d, caption_en: e.target.value })} maxLength={280} lang="en" className="min-h-16" /></Field>
       </form>
     </Modal>
   );

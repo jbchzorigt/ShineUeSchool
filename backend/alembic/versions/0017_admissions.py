@@ -1,15 +1,18 @@
-"""admissions: admission_rounds, admission_applicants
+"""admissions: admission_rounds, admission_applicants + "admissions.view|edit" эрх
 
-Revision ID: 0015
-Revises: 0014
+Revision ID: 0017
+Revises: 0016
 Create Date: 2026-11-02
+
+Эрх: хуучин "manager" бүлэг (0016-аар "clubs.edit" болсон) элсэлтийг удирддаг байсан тул clubs.edit эрхтэй хүмүүст
+admissions.edit олгоно.
 """
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
-revision = "0015"
-down_revision = "0014"
+revision = "0017"
+down_revision = "0016"
 branch_labels = None
 depends_on = None
 
@@ -60,8 +63,20 @@ def upgrade() -> None:
         ["round_id", "email", "child_last_name", "child_first_name", "birth_date"],
         unique=True, postgresql_where=sa.text("status = 'registered'"),
     )
+    conn = op.get_bind()
+    for lv, lname in (("view", "харах"), ("edit", "засах")):
+        conn.execute(sa.text("INSERT INTO roles (code, name) VALUES (:c, :n) ON CONFLICT (code) DO NOTHING"),
+                     {"c": f"admissions.{lv}", "n": f"Элсэлт — {lname}"})
+    conn.execute(sa.text("""
+        INSERT INTO user_roles (user_id, role_id)
+        SELECT ur.user_id, new.id FROM user_roles ur
+        JOIN roles old ON old.id = ur.role_id AND old.code = 'clubs.edit'
+        JOIN roles new ON new.code = 'admissions.edit'
+        ON CONFLICT DO NOTHING
+    """))
 
 
 def downgrade() -> None:
+    op.execute("DELETE FROM roles WHERE code IN ('admissions.view', 'admissions.edit')")
     op.drop_table("admission_applicants")
     op.drop_table("admission_rounds")

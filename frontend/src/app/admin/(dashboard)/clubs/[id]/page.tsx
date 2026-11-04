@@ -14,6 +14,7 @@ import { STATE_LABEL, STATE_TONE, formatFee, formatGrades, formatPeriod } from "
 import { api } from "@/lib/api";
 import { useFetch } from "@/lib/useFetch";
 import type { ClubAdmin } from "@/lib/types";
+import { EditLabel } from "@/components/admin/ActionLabel";
 
 export default function ClubDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -48,7 +49,7 @@ export default function ClubDetailPage() {
             <Badge tone="navy">Нийт {club.taken}/{club.capacity} бүртгэгдсэн</Badge>
           </div>
         </div>
-        <Button variant="ghost" onClick={() => setEditing(true)}>Засах</Button>
+        <Button variant="ghost" onClick={() => setEditing(true)}><EditLabel /></Button>
       </div>
 
       <section className="space-y-3">

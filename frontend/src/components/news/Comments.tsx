@@ -11,6 +11,7 @@ import { useEffect, useState } from "react";
 import type { CommentItem } from "@/lib/types";
 import { useVisitor, visitorFetch } from "@/lib/visitor";
 import { formatDateTime } from "./format";
+import { useDict, useLang } from "@/components/site/LangProvider";
 
 const MAX_LEN = 2000;
 
@@ -23,6 +24,8 @@ interface CommentErrorResponse {
 
 export function Comments({ slug, initialCount }: { slug: string; initialCount: number }) {
   const { token, loading, fbEnabled, login } = useVisitor();
+  const lang = useLang();
+  const t = useDict().news;
   const [comments, setComments] = useState<CommentItem[] | null>(null);
   const [blocked, setBlocked] = useState(false);
   const [body, setBody] = useState("");
@@ -58,7 +61,7 @@ export function Comments({ slug, initialCount }: { slug: string; initialCount: n
     }
     const text = body.trim();
     if (!text) {
-      setError("Сэтгэгдэл хоосон байж болохгүй.");
+      setError(t.commentEmpty);
       return;
     }
     setSubmitting(true);
@@ -67,14 +70,14 @@ export function Comments({ slug, initialCount }: { slug: string; initialCount: n
       .then(async (res) => {
         if (!res.ok) {
           const data = (await res.json().catch(() => null)) as CommentErrorResponse | null;
-          setError(typeof data?.detail === "string" ? data.detail : (data?.body?.join(" ") ?? "Илгээж чадсангүй."));
+          setError(typeof data?.detail === "string" ? data.detail : (data?.body?.join(" ") ?? t.sendFailed));
           return;
         }
         const comment = (await res.json()) as CommentItem;
         setComments((prev) => [comment, ...(prev ?? [])]);
         setBody("");
       })
-      .catch(() => setError("Илгээж чадсангүй."))
+      .catch(() => setError(t.sendFailed))
       .finally(() => setSubmitting(false));
   };
 
@@ -90,14 +93,14 @@ export function Comments({ slug, initialCount }: { slug: string; initialCount: n
 
   return (
     <div className="flex flex-col gap-5">
-      <h2 className="font-display text-xl font-extrabold text-navy">Сэтгэгдэл ({count})</h2>
+      <h2 className="font-display text-xl font-extrabold text-navy">{t.commentsTitle(count)}</h2>
 
       {!loading && fbEnabled && !blocked && (
         <div className="flex flex-col gap-2">
           <textarea
             value={body}
             onChange={(e) => setBody(e.target.value.slice(0, MAX_LEN))}
-            placeholder="Сэтгэгдэл бичих..."
+            placeholder={t.commentPlaceholder}
             rows={3}
             maxLength={MAX_LEN}
             className="w-full rounded-lg border border-line px-3 py-2 text-[15px] text-ink focus:border-navy focus:outline-none"
@@ -112,7 +115,7 @@ export function Comments({ slug, initialCount }: { slug: string; initialCount: n
               disabled={submitting}
               className="inline-flex items-center rounded-lg bg-navy px-4 py-2 text-sm font-semibold text-white hover:bg-navy/90 disabled:opacity-50"
             >
-              {token ? "Илгээх" : "Facebook-ээр нэвтэрч илгээх"}
+              {token ? t.send : t.loginSend}
             </button>
           </div>
           {error && <p className="text-sm font-medium text-red-600">{error}</p>}
@@ -120,11 +123,11 @@ export function Comments({ slug, initialCount }: { slug: string; initialCount: n
       )}
 
       {blocked ? (
-        <p className="text-sm font-medium text-red-600">Таны хандалт хаагдсан байна.</p>
+        <p className="text-sm font-medium text-red-600">{t.blocked}</p>
       ) : comments === null ? (
-        <p className="text-sm text-muted">Ачаалж байна…</p>
+        <p className="text-sm text-muted">{t.loading}</p>
       ) : comments.length === 0 ? (
-        <p className="text-sm text-muted">Сэтгэгдэл алга.</p>
+        <p className="text-sm text-muted">{t.noComments}</p>
       ) : (
         <ul className="flex flex-col gap-4">
           {comments.map((c) => (
@@ -138,13 +141,13 @@ export function Comments({ slug, initialCount }: { slug: string; initialCount: n
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold text-ink">{c.visitor.name}</span>
                   <time dateTime={c.created_at} className="text-xs text-muted tabular-nums">
-                    {formatDateTime(c.created_at)}
+                    {formatDateTime(c.created_at, lang)}
                   </time>
                 </div>
                 <p className="whitespace-pre-line text-[15px] text-ink">{c.body}</p>
                 {c.is_mine && (
                   <button type="button" onClick={() => remove(c.id)} className="w-fit text-xs font-medium text-red-600 hover:underline">
-                    Устгах
+                    {t.deleteComment}
                   </button>
                 )}
               </div>

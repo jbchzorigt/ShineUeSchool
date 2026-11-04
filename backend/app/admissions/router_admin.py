@@ -1,5 +1,5 @@
 """
-Элсэлт — менежерийн API (manager эрх).
+Элсэлт — админы API ("admissions" хэсгийн эрх: GET — харах, бусад — засах).
   GET/POST /api/admissions/admin/rounds/          PATCH/DELETE /rounds/{id}/
      PATCH: registration_open/registration_deadline, results_published/results_deadline — асаахад ирээдүйн хугацаа заавал;
      хугацаа өнгөрмөгц service.expire_sections() автоматаар унтраана.
@@ -15,7 +15,7 @@ from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFil
 from sqlalchemy import func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..auth.deps import require_role
+from ..auth.deps import require_section
 from ..auth.models import User
 from ..common.errors import FieldError
 from ..db import get_db
@@ -26,7 +26,7 @@ from .service import expire_sections, normalize_code, round_admin_out
 
 router = APIRouter(prefix="/api/admissions/admin", tags=["admissions-admin"])
 DB = Annotated[AsyncSession, Depends(get_db)]
-Manager = Annotated[User, Depends(require_role("manager"))]
+Manager = Annotated[User, Depends(require_section("admissions"))]
 MAX_UPLOAD = 5 * 1024 * 1024
 
 

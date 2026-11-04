@@ -68,8 +68,9 @@ async def test_posts_list_public_only_and_ordered(client, db):
     assert body["total"] == 3 and body["page"] == 1 and body["page_size"] == 12
     assert [p["slug"] for p in body["items"]] == ["shine", "surguuliin", "huuchin"]
     card = body["items"][0]
-    assert set(card) == {"id", "title", "slug", "excerpt", "cover_image", "category", "published_at", "likes_count", "comments_count"}
-    assert card["category"] == {"id": card["category"]["id"], "name": "Олимпиад", "slug": "olimpiad"}
+    assert set(card) == {"id", "title", "title_en", "slug", "excerpt", "excerpt_en", "cover_image", "category", "published_at",
+                         "likes_count", "comments_count"}
+    assert card["category"] == {"id": card["category"]["id"], "name": "Олимпиад", "name_en": "", "slug": "olimpiad"}
     assert card["cover_image"] is None and card["likes_count"] == 0
 
 
@@ -99,8 +100,8 @@ async def test_categories_with_counts(client, db):
     await seed_posts(db)
     r = await client.get("/api/news/categories/")
     assert r.json() == [
-        {"id": r.json()[0]["id"], "name": "Олимпиад", "slug": "olimpiad", "order": 1, "post_count": 2},
-        {"id": r.json()[1]["id"], "name": "Сургууль", "slug": "surguuli", "order": 2, "post_count": 1},
+        {"id": r.json()[0]["id"], "name": "Олимпиад", "name_en": "", "slug": "olimpiad", "order": 1, "post_count": 2},
+        {"id": r.json()[1]["id"], "name": "Сургууль", "name_en": "", "slug": "surguuli", "order": 2, "post_count": 1},
     ]
 
 

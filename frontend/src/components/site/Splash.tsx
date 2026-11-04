@@ -7,12 +7,14 @@
    үед анимацигүй, шууд алга. Dev StrictMode-ийн давхар effect: тэмдэг зөвхөн хаагдах үед тавигддаг тул асуудалгүй. */
 
 import { useEffect, useState } from "react";
+import { useDict } from "./LangProvider";
 import { LogoDraw } from "./LogoDraw";
 
 const KEY = "shineue.splash";
 const MIN_MS = 2500;   // хамгийн багадаа 2.5 сек харагдана (хэрэглэгчийн хүсэлт)
 
 export function Splash() {
+  const name = useDict().footer.name;
   const [phase, setPhase] = useState<"show" | "hide" | "gone">("show");
 
   useEffect(() => {
@@ -51,7 +53,7 @@ export function Splash() {
     <div aria-hidden="true"
          className={`site-splash fixed inset-0 z-[100] flex flex-col items-center justify-center gap-5 bg-navy text-white transition-opacity duration-500 ${phase === "hide" ? "pointer-events-none opacity-0" : "opacity-100"}`}>
       <LogoDraw size={168} exiting={phase === "hide"} />
-      <div className="font-display text-2xl font-extrabold tracking-wide lg:text-3xl">Шинэ Үе сургууль</div>
+      <div className="font-display text-2xl font-extrabold tracking-wide lg:text-3xl">{name}</div>
     </div>
   );
 }

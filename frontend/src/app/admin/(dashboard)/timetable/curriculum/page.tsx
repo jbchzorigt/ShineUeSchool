@@ -9,6 +9,7 @@ import { Badge, Button, Empty, Field, Input, Modal, Select, Spinner, Table, Td, 
 import { useYear } from "@/components/timetable/useYear";
 import { YearSelect } from "@/components/timetable/YearSelect";
 import { confirmRemove, FormError, useModalForm } from "@/components/admin/timetable/forms";
+import { DeleteLabel, EditLabel } from "@/components/admin/ActionLabel";
 
 interface EntryForm { subject_id: number; hours_per_week: number }
 
@@ -61,9 +62,9 @@ export default function CurriculumPage() {
               <Td className="tabular-nums">{e.hours_per_week}</Td>
               <Td className="tabular-nums">{scheduled(e.subject_id)}</Td>
               <Td>{status(e.hours_per_week, scheduled(e.subject_id))}</Td>
-              <Td className="text-right space-x-2">
-                <Button variant="ghost" onClick={() => form.open({ subject_id: e.subject_id, hours_per_week: e.hours_per_week }, e.id)}>Засах</Button>
-                <Button variant="danger" onClick={() => confirmRemove(`${e.subject.name}-ийг хөтөлбөрөөс хасах уу?`, () => api.timetable.curriculum.remove(e.id), reload)}>Устгах</Button>
+              <Td className="whitespace-nowrap text-right space-x-2">
+                <Button variant="ghost" onClick={() => form.open({ subject_id: e.subject_id, hours_per_week: e.hours_per_week }, e.id)}><EditLabel /></Button>
+                <Button variant="danger" onClick={() => confirmRemove(`${e.subject.name}-ийг хөтөлбөрөөс хасах уу?`, () => api.timetable.curriculum.remove(e.id), reload)}><DeleteLabel /></Button>
               </Td>
             </tr>
           ))}

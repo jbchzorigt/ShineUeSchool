@@ -10,6 +10,7 @@ import { APPLIES_TO, EVENT_CATEGORIES, EVENT_COLORS, eventColor } from "@/compon
 import { useYear } from "@/components/timetable/useYear";
 import { YearSelect } from "@/components/timetable/YearSelect";
 import { confirmRemove, FormError, useModalForm } from "@/components/admin/timetable/forms";
+import { DeleteLabel, EditLabel } from "@/components/admin/ActionLabel";
 
 const TONE: Record<EventCategory, "navy" | "green" | "gold" | "slate"> = { term: "navy", holiday: "green", exam: "gold", event: "gold", other: "slate" };
 
@@ -44,9 +45,9 @@ export default function CalendarAdminPage() {
               <Td><div className="font-semibold">{e.title}</div>{e.description && <div className="text-xs text-slate-500">{e.description}</div>}</Td>
               <Td><span className="mr-2 inline-block h-3 w-3 rounded-full align-middle" style={{ background: eventColor(e) }} aria-hidden="true" /><Badge tone={TONE[e.category]}>{EVENT_CATEGORIES[e.category]}</Badge></Td>
               <Td>{APPLIES_TO[e.applies_to]}</Td>
-              <Td className="text-right space-x-2">
-                <Button variant="ghost" onClick={() => form.open({ year_id: e.year_id, title: e.title, category: e.category, start_date: e.start_date, end_date: e.end_date, description: e.description, applies_to: e.applies_to, color: e.color }, e.id)}>Засах</Button>
-                <Button variant="danger" onClick={() => confirmRemove(`"${e.title}"-г устгах уу?`, () => api.timetable.calendar.remove(e.id), q.reload)}>Устгах</Button>
+              <Td className="whitespace-nowrap text-right space-x-2">
+                <Button variant="ghost" onClick={() => form.open({ year_id: e.year_id, title: e.title, category: e.category, start_date: e.start_date, end_date: e.end_date, description: e.description, applies_to: e.applies_to, color: e.color }, e.id)}><EditLabel /></Button>
+                <Button variant="danger" onClick={() => confirmRemove(`"${e.title}"-г устгах уу?`, () => api.timetable.calendar.remove(e.id), q.reload)}><DeleteLabel /></Button>
               </Td>
             </tr>
           ))}

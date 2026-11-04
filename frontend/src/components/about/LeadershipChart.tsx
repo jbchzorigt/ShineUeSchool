@@ -11,6 +11,7 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { gsap, reduceMotion, useGSAP } from "@/components/site/gsap";
 import { Reveal } from "@/components/site/Reveal";
+import { useDict } from "@/components/site/LangProvider";
 import type { AboutLeader } from "@/lib/types";
 
 function Card({ leader }: { leader: AboutLeader }) {
@@ -32,6 +33,7 @@ function Card({ leader }: { leader: AboutLeader }) {
 
 export function LeadershipChart({ leaders }: { leaders: AboutLeader[] }) {
   const root = useRef<HTMLDivElement>(null);
+  const t = useDict().about;
   // reduced motion-ийг effect-д уншина (SSR-тэй ижил эхний render → hydration зөрчилгүй)
   const [reduce, setReduce] = useState(false);
   useEffect(() => { if (reduceMotion()) setReduce(true); }, []);   // eslint-disable-line react-hooks/set-state-in-effect -- client-only media query
@@ -72,13 +74,13 @@ export function LeadershipChart({ leaders }: { leaders: AboutLeader[] }) {
   return (
     <section aria-labelledby="team-title" className="overflow-hidden bg-paper-2">
       <div className="mx-auto flex max-w-[1440px] flex-col items-center gap-3 px-4 pt-12 text-center md:px-10 lg:px-24 lg:pt-[72px]">
-        <Reveal><h2 id="team-title" className="font-display text-[32px] font-extrabold text-navy lg:text-[44px]">Сургуулийн хамт олон</h2></Reveal>
-        <Reveal><p className="max-w-[34em] text-muted lg:text-lg">Удирдлага, багш, ажилтнууд — сурагч бүрийн амжилтын төлөө хамтдаа ажилладаг.</p></Reveal>
+        <Reveal><h2 id="team-title" className="font-display text-[32px] font-extrabold text-navy lg:text-[44px]">{t.teamTitle}</h2></Reveal>
+        <Reveal><p className="max-w-[34em] text-muted lg:text-lg">{t.teamLead}</p></Reveal>
       </div>
       {/* Marquee: бүтэн өргөнөөр, захууд бүдгэрнэ */}
       <div ref={root} className={`relative mt-8 pb-12 lg:mt-10 lg:pb-[72px] ${reduce ? "overflow-x-auto px-4" : "overflow-hidden"}`}>
         {!reduce && <><span aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-paper-2 to-transparent" /><span aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-paper-2 to-transparent" /></>}
-        <ul className={`team-track flex w-max gap-5 px-3 select-none ${reduce ? "" : "cursor-grab touch-pan-y [&.is-dragging]:cursor-grabbing"}`} aria-label="Хамт олон">
+        <ul className={`team-track flex w-max gap-5 px-3 select-none ${reduce ? "" : "cursor-grab touch-pan-y [&.is-dragging]:cursor-grabbing"}`} aria-label={t.teamAria}>
           {copies.map((list, c) => list.map((l) => <Card key={`${c}-${l.id}`} leader={l} />))}
         </ul>
       </div>

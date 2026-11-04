@@ -7,6 +7,7 @@ import { useFetch } from "@/lib/useFetch";
 import type { SubjectInput } from "@/lib/types";
 import { Button, Empty, Field, Input, Modal, Spinner, Table, Td, Th } from "@/components/ui";
 import { confirmRemove, FormError, useModalForm } from "./forms";
+import { DeleteLabel, EditLabel } from "@/components/admin/ActionLabel";
 
 export function SubjectsTab() {
   const q = useFetch(() => api.timetable.subjects.list(), []);
@@ -23,9 +24,9 @@ export function SubjectsTab() {
               <Td className="font-semibold">{s.name}</Td>
               <Td>{s.short_name}</Td>
               <Td><span className="inline-block h-5 w-5 rounded align-middle" style={{ background: s.color }} aria-label={s.color} /> <span className="text-xs text-slate-500">{s.color}</span></Td>
-              <Td className="text-right space-x-2">
-                <Button variant="ghost" onClick={() => form.open({ name: s.name, short_name: s.short_name, color: s.color }, s.id)}>Засах</Button>
-                <Button variant="danger" onClick={() => confirmRemove(`"${s.name}" хичээлийг устгах уу?`, () => api.timetable.subjects.remove(s.id), q.reload)}>Устгах</Button>
+              <Td className="whitespace-nowrap text-right space-x-2">
+                <Button variant="ghost" onClick={() => form.open({ name: s.name, short_name: s.short_name, color: s.color }, s.id)}><EditLabel /></Button>
+                <Button variant="danger" onClick={() => confirmRemove(`"${s.name}" хичээлийг устгах уу?`, () => api.timetable.subjects.remove(s.id), q.reload)}><DeleteLabel /></Button>
               </Td>
             </tr>
           ))}

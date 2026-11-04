@@ -65,6 +65,6 @@ class UserPatch(BaseModel):
         return _password_max_bytes(v)
 
 
-class RoleOut(BaseModel):
+class SectionOut(BaseModel):
     code: str
     name: str

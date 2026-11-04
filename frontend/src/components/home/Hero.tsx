@@ -9,7 +9,8 @@
          getBoundingClientRect-ээр тооцно (ScrollSmoother-ийн transform-той ч зөв). Scroll icon хамт бүдгэрнэ.
        · Курсор (зөвхөн fine pointer): гарчиг/тайлбар/товч гүнээрээ ялгаатай (±14/±9/±6px) курсор руу зөөлөн хазайна —
          gsap.quickTo, pointermove бүрт tween үүсгэхгүй. Хэсгээс гарахад төв рүү буцна.
-   - Товч: зөвхөн оны хавтан (header-тэй ижил YearTiles, текстгүй), /olympiad руу. Оныг page.tsx server дээр татаж дамжуулна.
+   - Товч: зөвхөн оны хавтан (header-тэй ижил YearTiles, текстгүй), /olympiad руу (зөвхөн монгол хувилбарт). Оныг page.tsx server дээр татаж дамжуулна.
+   - Текст толь бичгээс (useDict().home.hero); англи хувилбарт ишлэлийн доор эх монгол ишлэл жижгээр.
    - Хуудас ачаалахад гарчгийн доорх шар шугам DrawSVG-ээр нэг удаа зурагдана; scroll icon-ы цэг гулсаж бөмбөлзөнө
      (#programs руу гүйлгэнэ — SmoothScroll анкорыг барина).
    - prefers-reduced-motion: parallax, шугам, icon бүгд хөдөлгөөнгүй; canvas ч хөдөлгөөнгүй.
@@ -21,6 +22,7 @@ import { useRef } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { DrawSVGPlugin } from "gsap/DrawSVGPlugin";
+import { useDict, useLang } from "@/components/site/LangProvider";
 import { MathematicalCanvas } from "@/components/site/MathematicalCanvas";
 import { OLYMPIAD_HREF } from "@/lib/home-data";
 import { YearTiles } from "./YearTiles";
@@ -33,6 +35,8 @@ const DEPTH = { h1: 14, p: 9, cta: 6 };   // курсорын parallax-ийн д
 export function Hero({ olympiadYear }: { olympiadYear: number }) {
   const root = useRef<HTMLElement>(null);
   const text = useRef<HTMLDivElement>(null);
+  const lang = useLang();
+  const t = useDict().home.hero;
 
   useGSAP(
     () => {
@@ -103,21 +107,22 @@ export function Hero({ olympiadYear }: { olympiadYear: number }) {
 
       <div ref={text} className="relative z-10 mx-auto flex w-full max-w-[1440px] flex-1 flex-col items-center justify-center gap-5 px-4 py-16 text-center will-change-transform md:px-10 lg:gap-6 lg:px-24">
         <h1 className="flex flex-col items-center text-center font-display leading-none">
-          <span className="block text-[56px] font-extrabold uppercase tracking-tight lg:text-[96px]">Шинэ Үе</span>
-          <span className="mt-3 block text-[18px] font-semibold uppercase tracking-[0.35em] text-white/90 lg:mt-4 lg:text-[26px]">сургууль</span>
+          <span className="block text-[56px] font-extrabold uppercase tracking-tight lg:text-[96px]">{t.title}</span>
+          <span className="mt-3 block text-[18px] font-semibold uppercase tracking-[0.35em] text-white/90 lg:mt-4 lg:text-[26px]">{t.subtitle}</span>
         </h1>
         <svg className="-mt-2 h-[14px] w-[220px] lg:h-[18px] lg:w-[360px]" viewBox="0 0 360 18" aria-hidden="true">
           <path className="hero-underline" d="M3,12 Q70,2 150,9 T290,7 T357,10" fill="none" stroke="#ffc20e" strokeWidth="4" strokeLinecap="round" />
         </svg>
         {/* Ү.Маам багшийн ишлэл: гар бичмэл фонт (font-hand = Caveat), гол хэллэг шар */}
         <p className="max-w-[24em] font-hand text-[26px] font-medium leading-snug lg:text-[36px]">
-          Чадварлаг хамт олон бүрдүүлэн ажилласнаар сурагчдаа{" "}
-          <span className="whitespace-nowrap font-semibold text-gold">жигд сайн сургах</span>{" "}
-          нөхцөл бүрдэнэ.
-          <span className="mt-1 block text-[22px] text-gold/90 lg:text-[28px]">— Ү. Маам</span>
+          {t.quoteBefore}{" "}
+          <span className="whitespace-nowrap font-semibold text-gold">{t.quoteHighlight}</span>
+          {t.quoteAfter.startsWith(".") ? t.quoteAfter : ` ${t.quoteAfter}`}
+          <span className="mt-1 block text-[22px] text-gold/90 lg:text-[28px]">{t.quoteAuthor}</span>
+          {t.quoteOriginal && <span lang="mn" className="mx-auto mt-2 block max-w-[34em] font-sans text-sm text-white/60 lg:text-base">{t.quoteOriginal}</span>}
         </p>
         {/* Товч: зөвхөн оны Bauhaus хавтан (header-тэй ижил YearTiles), цагаан pill; aria-label "Олимпиад 2026" */}
-        <div className="hero-cta mt-2">
+        {lang === "mn" && <div className="hero-cta mt-2">
           <Link
             href={OLYMPIAD_HREF}
             aria-label={`Олимпиад ${olympiadYear}`}
@@ -125,19 +130,19 @@ export function Hero({ olympiadYear }: { olympiadYear: number }) {
           >
             <YearTiles year={olympiadYear} idPrefix="hero" className="h-8 w-[96px] lg:h-9 lg:w-[108px]" />
           </Link>
-        </div>
+        </div>}
       </div>
 
       {/* Scroll icon: хулганы хүрээ + гулсах цэг, доор нь жижиг бичиг */}
       <a
         href="#programs"
-        aria-label="Доош гүйлгэх"
+        aria-label={t.scrollLabel}
         className="hero-scroll absolute bottom-6 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-2 text-white/70 hover:text-white lg:bottom-8"
       >
         <span className="flex h-10 w-6 items-start justify-center rounded-full border-2 border-current pt-1.5">
           <span className="hero-scroll-dot block h-1.5 w-1.5 rounded-full bg-gold" />
         </span>
-        <span className="text-[11px] font-semibold uppercase tracking-[0.2em]">Гүйлгэх</span>
+        <span className="text-[11px] font-semibold uppercase tracking-[0.2em]">{t.scroll}</span>
       </a>
     </section>
   );

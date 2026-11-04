@@ -13,6 +13,7 @@ class Category(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(80))
+    name_en: Mapped[str] = mapped_column(String(80), default="", server_default="")
     slug: Mapped[str] = mapped_column(String(80), unique=True)
     order: Mapped[int] = mapped_column(SmallInteger, default=0)
 
@@ -22,9 +23,12 @@ class Post(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     title: Mapped[str] = mapped_column(String(200))
+    title_en: Mapped[str] = mapped_column(String(200), default="", server_default="")
     slug: Mapped[str] = mapped_column(String(220), unique=True, index=True)
     excerpt: Mapped[str] = mapped_column(String(280), default="")
+    excerpt_en: Mapped[str] = mapped_column(String(280), default="", server_default="")
     body_html: Mapped[str] = mapped_column(Text, default="")
+    body_html_en: Mapped[str] = mapped_column(Text, default="", server_default="")
     cover_image: Mapped[str | None] = mapped_column(String(255), nullable=True)  # "news/uuid.jpg"
     category_id: Mapped[int | None] = mapped_column(ForeignKey("news_categories.id", ondelete="SET NULL"), nullable=True)
     published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True, index=True)
@@ -49,6 +53,7 @@ class PostImage(Base):
     post_id: Mapped[int] = mapped_column(ForeignKey("news_posts.id", ondelete="CASCADE"), index=True)
     image: Mapped[str] = mapped_column(String(255))
     caption: Mapped[str] = mapped_column(String(200), default="")
+    caption_en: Mapped[str] = mapped_column(String(200), default="", server_default="")
     order: Mapped[int] = mapped_column(SmallInteger, default=0)
 
 

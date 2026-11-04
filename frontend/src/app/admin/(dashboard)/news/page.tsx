@@ -8,6 +8,7 @@ import { api, ApiError } from "@/lib/api";
 import { useFetch } from "@/lib/useFetch";
 import type { PostAdmin } from "@/lib/types";
 import { Badge, Button, Empty, Select, Spinner, Table, Td, Th } from "@/components/ui";
+import { DeleteLabel } from "@/components/admin/ActionLabel";
 
 const fmt = (iso: string | null) => (iso ? new Date(iso).toLocaleString("mn-MN", { dateStyle: "short", timeStyle: "short" }) : "—");
 
@@ -65,13 +66,20 @@ export default function NewsListPage() {
           {q.data.items.map((p) => (
             <tr key={p.id} className="border-t border-slate-100">
               <Td className="whitespace-nowrap text-slate-600">{fmt(p.published_at)}</Td>
-              <Td><Link href={`/admin/news/${p.id}`} className="font-semibold text-navy hover:underline">{p.title}</Link></Td>
+              <Td>
+                <Link href={`/admin/news/${p.id}`} className="font-semibold text-navy hover:underline">{p.title || p.title_en}</Link>
+                {/* Хэлний тэмдэг: аль хэлээр бөглөгдсөн */}
+                <span className="ml-2 inline-flex gap-1 align-middle">
+                  {p.title && <Badge tone="slate">МН</Badge>}
+                  {p.title_en && <Badge tone="gold">EN</Badge>}
+                </span>
+              </Td>
               <Td>{p.category?.name ?? "—"}</Td>
               <Td>{statusOf(p)}</Td>
               <Td>{p.fb_post_id ? <Badge tone="green">✓</Badge> : p.fb_error ? <span title={p.fb_error}><Badge tone="gold">⚠ алдаа</Badge></span> : "—"}</Td>
-              <Td className="space-x-2 text-right">
-                {p.is_published ? <Button variant="ghost" onClick={() => unpublish(p)}>Буцаах</Button> : <Button variant="secondary" onClick={() => publish(p)}>Нийтлэх</Button>}
-                <Button variant="danger" onClick={() => remove(p)}>Устгах</Button>
+              <Td className="whitespace-nowrap space-x-2 text-right">
+                {p.is_published ? <Button mutates variant="ghost" onClick={() => unpublish(p)}>Буцаах</Button> : <Button mutates variant="secondary" onClick={() => publish(p)}>Нийтлэх</Button>}
+                <Button variant="danger" onClick={() => remove(p)}><DeleteLabel /></Button>
               </Td>
             </tr>
           ))}
