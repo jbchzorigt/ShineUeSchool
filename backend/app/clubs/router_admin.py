@@ -5,7 +5,7 @@
   PATCH/DELETE /clubs/{id}/
   POST /clubs/{id}/images/   DELETE /images/{id}/   PUT /clubs/{id}/images/order/
   GET  /clubs/{id}/registrations/   POST /registrations/{id}/remove/   PATCH /registrations/{id}/
-  GET  /rounds/{id}/registrations.xlsx
+  GET  /rounds/{id}/registrations.xlsx (засах эрх: бүх хувийн мэдээллийн экспорт)
 """
 
 import asyncio
@@ -29,6 +29,7 @@ from .service import club_admin_out, taken_by_grade
 router = APIRouter(prefix="/api/clubs/admin", tags=["clubs-admin"])
 DB = Annotated[AsyncSession, Depends(get_db)]
 Manager = Annotated[User, Depends(require_section("clubs"))]  # GET — харах, бусад — засах эрх
+Editor = Annotated[User, Depends(require_section("clubs", "edit"))]
 
 
 async def _get_or_404(db: AsyncSession, model, id: int):
@@ -266,7 +267,7 @@ async def registration_patch(id: int, body: RegistrationPatch, db: DB, _: Manage
 
 
 @router.get("/rounds/{id}/registrations.xlsx")
-async def registrations_xlsx(id: int, db: DB, _: Manager):
+async def registrations_xlsx(id: int, db: DB, _: Editor):
     await _get_or_404(db, ClubRound, id)
     clubs = (await db.execute(select(Club).where(Club.round_id == id).order_by(Club.order, Club.id))).scalars().all()
     regs = (await db.execute(select(ClubRegistration).where(ClubRegistration.round_id == id))).scalars().all()

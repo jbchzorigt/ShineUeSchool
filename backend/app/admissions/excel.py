@@ -11,6 +11,7 @@ from decimal import Decimal, InvalidOperation
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Font, PatternFill
 
+from ..common.xlsx import keep_as_text
 from .models import APP_WITHDRAWN, RESULT_LABELS, Applicant
 
 HEADERS = ("Код", "Анги", "Овог", "Нэр", "Төрсөн огноо", "Хүйс", "Одоогийн сургууль",
@@ -19,18 +20,6 @@ WIDTHS = (13, 6, 16, 16, 12, 7, 24, 18, 18, 14, 28, 17, 11, 8, 11)
 GENDER = {"male": "Эр", "female": "Эм"}
 # Импортод: монгол шошго эсвэл англи код
 RESULT_INPUT = {**{v.lower(): k for k, v in RESULT_LABELS.items()}, **{k: k for k in RESULT_LABELS}}
-# Эдгээр тэмдэгтээр эхэлсэн текстийг Excel томъёо гэж ойлгодог
-FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
-
-
-def _keep_as_text(ws) -> None:
-    """Нийтийн маягтаас ирсэн утга томъёо болж ажиллахаас хамгаална: текстээр хадгалж (openpyxl "=..."-г томъёо болгодог),
-    quotePrefix-ээр Excel дээр нүдийг засахад ч текст хэвээр үлдээнэ."""
-    for row in ws.iter_rows(min_row=2):
-        for c in row:
-            if isinstance(c.value, str) and c.value.startswith(FORMULA_PREFIXES):
-                c.data_type = "s"
-                c.quotePrefix = True
 
 
 def build_applicants_xlsx(applicants: list[Applicant]) -> bytes:
@@ -49,7 +38,7 @@ def build_applicants_xlsx(applicants: list[Applicant]) -> bytes:
                    a.phone, a.email, a.created_at.strftime("%Y-%m-%d %H:%M") if a.created_at else "",
                    "Татгалзсан" if a.status == APP_WITHDRAWN else "Бүртгэлтэй",
                    float(a.score) if a.score is not None else None, RESULT_LABELS.get(a.result or "", "")))
-    _keep_as_text(ws)
+    keep_as_text(ws)
     for i, w in enumerate(WIDTHS):
         ws.column_dimensions[chr(ord("A") + i)].width = w
     ws.freeze_panes = "B2"

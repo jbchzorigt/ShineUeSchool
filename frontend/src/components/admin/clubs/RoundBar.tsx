@@ -50,7 +50,7 @@ export function RoundBar({ rounds, current, onSelect, onChanged }: {
                 <Button mutates variant="secondary" onClick={() => confirm("Энэ ээлжийг идэвхжүүлэх үү? Бусад ээлж идэвхгүй болно.") &&
                   run(() => api.clubsAdmin.rounds.update(current.id, { is_active: true }), "Идэвхжүүлж чадсангүй.")}>Идэвхжүүлэх</Button>
               )}
-              <Button variant="ghost" onClick={download}>Excel татах</Button>
+              <Button mutates variant="ghost" onClick={download}>Excel татах</Button>
               <Button variant="danger" onClick={() => confirm(`«${current.name}» ээлжийг устгах уу? Дугуйлангууд нь устана.`) &&
                 run(() => api.clubsAdmin.rounds.remove(current.id), "Устгаж чадсангүй.")}><DeleteLabel /></Button>
             </>

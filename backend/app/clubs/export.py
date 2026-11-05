@@ -6,6 +6,7 @@ import re
 from openpyxl import Workbook
 from openpyxl.styles import Font
 
+from ..common.xlsx import keep_as_text
 from .models import REG_CONFIRMED, ClubRegistration
 
 HEADERS = ("Анги", "Сурагчийн овог", "Сурагчийн нэр", "Бүртгүүлэгчийн овог", "Бүртгүүлэгчийн нэр",
@@ -41,6 +42,7 @@ def build_registrations_xlsx(clubs: list[tuple[str, bool, list[ClubRegistration]
             ws.append((r.grade, r.student_last_name, r.student_first_name, r.guardian_last_name, r.guardian_first_name,
                        r.phone, r.email, "Бүртгэгдсэн" if r.status == REG_CONFIRMED else "Хасагдсан", paid,
                        r.created_at.strftime("%Y-%m-%d %H:%M") if r.created_at else ""))
+        keep_as_text(ws)
         for col, width in zip("ABCDEFGHIJ", (6, 16, 16, 18, 18, 14, 28, 12, 10, 17)):
             ws.column_dimensions[col].width = width
     buf = io.BytesIO()

