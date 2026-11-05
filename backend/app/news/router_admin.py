@@ -10,7 +10,7 @@ from datetime import UTC, datetime
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile, status
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -22,7 +22,7 @@ from ..config import settings
 from ..db import get_db
 from ..social.facebook import FacebookClient, FacebookError, get_facebook
 from ..social.models import Visitor
-from .models import Category, Comment, Post, PostImage
+from .models import Category, Comment, FbIgnoredPost, Post, PostImage
 from .router_public import counts_for, media_url, post_detail
 from .sanitize import clean_html, clean_rich
 from .schemas import (
@@ -42,6 +42,11 @@ async def get_post_or_404(db: AsyncSession, id: int) -> Post:
     if p is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Олдсонгүй.")
     return p
+
+
+async def _detach_from_fb_sync(db: AsyncSession, post_id: int) -> None:
+    """Админ гараар өөрчилсөн мэдээг Facebook sync дарж бичихгүй (news/fb_sync.py)."""
+    await db.execute(update(Post).where(Post.id == post_id).values(fb_sync_detached=True))
 
 
 async def post_admin(request: Request, db: AsyncSession, p: Post) -> PostAdmin:
@@ -114,6 +119,7 @@ async def admin_post_get(id: int, request: Request, db: DB):
 @router.patch("/posts/{id}/", response_model=PostAdmin)
 async def admin_post_patch(id: int, body: PostPatch, request: Request, db: DB):
     p = await get_post_or_404(db, id)
+    await _detach_from_fb_sync(db, id)
     data = body.model_dump(exclude_unset=True)
     if data.get("body_html") is not None:
         data["body_html"] = clean_html(data["body_html"])
@@ -141,6 +147,8 @@ async def admin_post_patch(id: int, body: PostPatch, request: Request, db: DB):
 async def admin_post_delete(id: int, db: DB):
     p = await get_post_or_404(db, id)
     files = [p.cover_image, *[i.image for i in p.images]]
+    if p.fb_post_id:
+        await db.merge(FbIgnoredPost(fb_post_id=p.fb_post_id))
     await db.delete(p)
     await db.commit()
     for f in files:
@@ -152,6 +160,7 @@ async def admin_post_delete(id: int, db: DB):
 @router.post("/posts/{id}/cover/", response_model=PostAdmin)
 async def admin_cover_set(id: int, request: Request, db: DB, image: Annotated[UploadFile, File()]):
     p = await get_post_or_404(db, id)
+    await _detach_from_fb_sync(db, id)
     old = p.cover_image
     p.cover_image = await save_upload(image, "news")
     await db.commit()
@@ -164,6 +173,7 @@ async def admin_cover_set(id: int, request: Request, db: DB, image: Annotated[Up
 @router.delete("/posts/{id}/cover/", response_model=PostAdmin)
 async def admin_cover_delete(id: int, request: Request, db: DB):
     p = await get_post_or_404(db, id)
+    await _detach_from_fb_sync(db, id)
     old, p.cover_image = p.cover_image, None
     await db.commit()
     if old:
@@ -177,6 +187,7 @@ async def admin_image_add(id: int, request: Request, db: DB, image: Annotated[Up
                           caption: Annotated[str, Form()] = "", caption_en: Annotated[str, Form()] = "",
                           order: Annotated[int, Form()] = 0):
     p = await get_post_or_404(db, id)
+    await _detach_from_fb_sync(db, id)
     img = PostImage(post_id=p.id, image=await save_upload(image, "news/gallery"), caption=caption[:200], caption_en=caption_en[:200],
                     order=order)
     db.add(img)
@@ -193,6 +204,7 @@ async def admin_image_patch(id: int, body: ImagePatch, request: Request, db: DB)
     img = await db.get(PostImage, id)
     if img is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Олдсонгүй.")
+    await _detach_from_fb_sync(db, img.post_id)
     for k, v in body.model_dump(exclude_unset=True).items():
         if v is not None:
             setattr(img, k, v)
@@ -206,6 +218,7 @@ async def admin_image_delete(id: int, db: DB):
     if img is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Олдсонгүй.")
     rel = img.image
+    await _detach_from_fb_sync(db, img.post_id)
     await db.delete(img)
     await db.commit()
     delete_file(rel)
@@ -221,6 +234,7 @@ async def admin_upload_image(request: Request, image: Annotated[UploadFile, File
 @router.post("/posts/{id}/publish/", response_model=PublishOut)
 async def admin_publish(id: int, body: PublishIn, request: Request, db: DB):
     p = await get_post_or_404(db, id)
+    await _detach_from_fb_sync(db, id)
     p.is_published = True
     if p.published_at is None:
         p.published_at = datetime.now(UTC)
@@ -253,6 +267,7 @@ async def admin_publish(id: int, body: PublishIn, request: Request, db: DB):
 @router.post("/posts/{id}/unpublish/", response_model=PostAdmin)
 async def admin_unpublish(id: int, request: Request, db: DB):
     p = await get_post_or_404(db, id)
+    await _detach_from_fb_sync(db, id)
     p.is_published = False
     await db.commit()
     await db.refresh(p)

@@ -168,7 +168,7 @@ export default function AdmissionsAdminPage() {
             >
               <div className="flex flex-col gap-3 border-t border-slate-100 pt-3">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Button variant="ghost" className="border border-slate-300" disabled={busy} onClick={download}>⇩ Excel татах</Button>
+                  <Button mutates variant="ghost" className="border border-slate-300" disabled={busy} onClick={download}>⇩ Excel татах</Button>
                   <Button variant="ghost" className="border border-slate-300" disabled={busy} onClick={() => fileRef.current?.click()}>⇧ Дүн оруулах (Excel)</Button>
                   <input ref={fileRef} type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden onChange={upload} />
                   {current.results.enabled && current.is_active && (

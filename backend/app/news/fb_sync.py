@@ -8,6 +8,8 @@ Facebook Page-ийн нийтлэлүүдийг мэдээний булан (new
 - Таних: fb_post_id. Сайтаас Facebook руу нийтэлсэн мэдээ (fb_post_id-тэй) аль хэдийн байгаа тул давхардахгүй,
   түүнд гар хүрэхгүй. Энэ модулийн үүсгэсэн мэдээний slug "-fb<id>"-ээр төгсөнө — зөвхөн тэдгээрийг засна/нууна.
 - Facebook дээр засвал (текст, зураг) дараагийн sync-д шинэчлэгдэнэ; устгавал (сүүлийн татсан хүрээнд) нийтлэгдээгүй болно.
+- Админы шийдвэр давуу: админ гараар өөрчилсөн мэдээнд (Post.fb_sync_detached) sync дахин хүрэхгүй, админы устгасан
+  постыг (FbIgnoredPost) дахин үүсгэхгүй.
 - Зураг: Facebook CDN-ээс MEDIA_DIR/news/fb/ руу татна (CDN-ийн гарын үсэгтэй URL хугацаа дуусдаг тул).
 - Page токен: FB_PAGE_ID, FB_PAGE_ACCESS_TOKEN (pages_read_engagement). App ID/secret шаардлагагүй.
 """
@@ -29,7 +31,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..config import settings
 from ..db import SessionLocal
-from .models import Post, PostImage
+from .models import FbIgnoredPost, Post, PostImage
 from .slug import slugify
 
 log = logging.getLogger(__name__)
@@ -149,9 +151,9 @@ def excerpt_of(rest: str) -> str:
 # ---------- Sync ----------
 
 async def upsert(db: AsyncSession, client: httpx.AsyncClient, p: dict, post: Post | None) -> str:
-    """'created' | 'updated' | 'unchanged' | 'skipped' (сайтаас Facebook руу нийтэлсэн мэдээ)."""
+    """'created' | 'updated' | 'unchanged' | 'skipped' (сайтаас Facebook руу нийтэлсэн эсвэл админ гараар өөрчилсөн мэдээ)."""
     fb_id = p["id"]
-    if post is not None and not post.slug.endswith(fb_slug_suffix(fb_id)):
+    if post is not None and (post.fb_sync_detached or not post.slug.endswith(fb_slug_suffix(fb_id))):
         return "skipped"
     title, rest = split_message(p.get("message") or p.get("story") or "")
     permalink = p.get("permalink_url") or f"https://www.facebook.com/{fb_id}"
@@ -193,13 +195,15 @@ async def sync_once(max_pages: int = 1) -> dict[str, int] | None:
             fb_posts = await fetch_posts(client, max_pages)
             ids = [p["id"] for p in fb_posts]
             existing = {x.fb_post_id: x for x in (await db.execute(select(Post).where(Post.fb_post_id.in_(ids)))).scalars()} if ids else {}
+            ignored = set((await db.execute(select(FbIgnoredPost.fb_post_id).where(FbIgnoredPost.fb_post_id.in_(ids)))).scalars()) if ids else set()
             for p in fb_posts:
-                stats[await upsert(db, client, p, existing.get(p["id"]))] += 1
+                stats["skipped" if p["id"] in ignored else await upsert(db, client, p, existing.get(p["id"]))] += 1
 
         # Татсан хүрээнд (хамгийн хуучин татсан нийтлэлээс хойш) Facebook дээр байхгүй болсон sync-ийн мэдээг нууна.
         if fb_posts:
             oldest = min(datetime.fromisoformat(p["created_time"].replace("+0000", "+00:00")) for p in fb_posts)
-            q = select(Post).where(Post.fb_post_id.is_not(None), Post.is_published.is_(True), Post.published_at >= oldest)
+            q = select(Post).where(Post.fb_post_id.is_not(None), Post.fb_sync_detached.is_(False), Post.is_published.is_(True),
+                                   Post.published_at >= oldest)
             for post in (await db.execute(q)).scalars():
                 if post.fb_post_id not in ids and post.slug.endswith(fb_slug_suffix(post.fb_post_id)):
                     post.is_published = False

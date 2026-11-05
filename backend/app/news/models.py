@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, SmallInteger, String, Text, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, SmallInteger, String, Text, false, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ..db import Base
@@ -38,12 +38,23 @@ class Post(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     fb_post_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
     fb_error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Админ гараар өөрчилсөн (засах, зураг, нийтлэх, нуух): Facebook sync энэ мэдээнд дахин хүрэхгүй (news/fb_sync.py)
+    fb_sync_detached: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
 
     category: Mapped[Category | None] = relationship(lazy="selectin")
     images: Mapped[list["PostImage"]] = relationship(lazy="selectin", order_by="PostImage.order", cascade="all, delete-orphan")
 
     def is_public_now(self, now: datetime) -> bool:
         return bool(self.is_published and self.published_at is not None and self.published_at <= now)
+
+
+class FbIgnoredPost(Base):
+    """Админы устгасан мэдээний Facebook пост: sync дахин үүсгэхгүй."""
+
+    __tablename__ = "news_fb_ignored"
+
+    fb_post_id: Mapped[str] = mapped_column(String(100), primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 class PostImage(Base):

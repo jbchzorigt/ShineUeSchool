@@ -40,11 +40,12 @@ async def current_user(user: Annotated[User | None, Depends(optional_user)]) -> 
     return user
 
 
-def require_section(section: str):
-    """Админы хэсгийн эрх: GET/HEAD хүсэлтэд "харах", бусад (нэмэх, засах, устгах) хүсэлтэд "засах" эрх шаардана."""
+def require_section(section: str, level: str | None = None):
+    """Админы хэсгийн эрх: GET/HEAD хүсэлтэд "харах", бусад (нэмэх, засах, устгах) хүсэлтэд "засах" эрх шаардана.
+    level өгвөл методоос үл хамааран тэр түвшнийг шаардана (жишээ нь GET-ээр бүх хувийн мэдээллийг экспортлох)."""
     async def _dep(request: Request, user: Annotated[User, Depends(current_user)]) -> User:
-        level = "view" if request.method in ("GET", "HEAD") else "edit"
-        if user.can(section, level):
+        needed = level or ("view" if request.method in ("GET", "HEAD") else "edit")
+        if user.can(section, needed):
             return user
         if user.can(section, "view"):
             raise HTTPException(status.HTTP_403_FORBIDDEN, "Танд энэ хэсгийг зөвхөн харах эрх байна.")

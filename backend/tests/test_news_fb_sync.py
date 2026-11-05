@@ -8,6 +8,7 @@ from sqlalchemy import select
 from app.config import settings
 from app.news import fb_sync
 from app.news.models import Post
+from tests.helpers import staff_headers
 
 PAGE = "1393080320557079"
 
@@ -95,3 +96,92 @@ async def test_post_deleted_on_facebook_is_unpublished(graph, db):
     assert (await fb_sync.sync_once())["hidden"] == 1
     gone = (await db.execute(select(Post).where(Post.fb_post_id == f"{PAGE}_11"))).scalar_one()
     assert gone.is_published is False
+
+
+# ---- админы шийдвэрийг sync буцаахгүй ----
+
+async def _synced(graph, db, n=20, message="Анх"):
+    graph["posts"] = [fb_post(n, message)]
+    await fb_sync.sync_once()
+    return (await db.execute(select(Post).where(Post.fb_post_id == f"{PAGE}_{n}"))).scalar_one()
+
+
+async def _reload(db, pid):
+    db.expire_all()
+    return await db.get(Post, pid)
+
+
+async def test_admin_unpublish_survives_sync_even_if_edited_on_facebook(graph, db, client, make_user):
+    post = await _synced(graph, db)
+    h = await staff_headers(client, make_user, "ed", roles=("news.edit",))
+    assert (await client.post(f"/api/news/admin/posts/{post.id}/unpublish/", headers=h)).status_code == 200
+    graph["posts"] = [fb_post(20, "Facebook дээр зассан")]
+    assert (await fb_sync.sync_once())["skipped"] == 1
+    post = await _reload(db, post.id)
+    assert post.is_published is False and post.title == "Анх"
+
+
+async def test_admin_edit_survives_sync(graph, db, client, make_user):
+    post = await _synced(graph, db)
+    h = await staff_headers(client, make_user, "ed", roles=("news.edit",))
+    r = await client.patch(f"/api/news/admin/posts/{post.id}/", headers=h, json={"title": "Админ зассан", "title_en": "Edited"})
+    assert r.status_code == 200, r.text
+    graph["posts"] = [fb_post(20, "Facebook дээр зассан")]
+    assert (await fb_sync.sync_once())["skipped"] == 1
+    post = await _reload(db, post.id)
+    assert (post.title, post.title_en, post.is_published) == ("Админ зассан", "Edited", True)
+
+
+async def test_admin_image_change_survives_sync(graph, db, client, make_user):
+    graph["posts"] = [fb_post(21, "Зурагтай", images=("https://cdn.example/a.jpg", "https://cdn.example/b.jpg"))]
+    await fb_sync.sync_once()
+    post = (await db.execute(select(Post).where(Post.fb_post_id == f"{PAGE}_21"))).scalar_one()
+    h = await staff_headers(client, make_user, "ed", roles=("news.edit",))
+    image_id = post.images[0].id
+    assert (await client.delete(f"/api/news/admin/images/{image_id}/", headers=h)).status_code == 204
+    assert (await fb_sync.sync_once())["skipped"] == 1
+    assert (await _reload(db, post.id)).images == []
+
+
+async def test_admin_deleted_post_is_not_recreated(graph, db, client, make_user):
+    post = await _synced(graph, db)
+    h = await staff_headers(client, make_user, "ed", roles=("news.edit",))
+    assert (await client.delete(f"/api/news/admin/posts/{post.id}/", headers=h)).status_code == 204
+    stats = await fb_sync.sync_once()
+    assert (stats["created"], stats["skipped"]) == (0, 1)
+    assert (await db.execute(select(Post).where(Post.fb_post_id == f"{PAGE}_20"))).scalar_one_or_none() is None
+
+
+async def test_deleted_cross_posted_site_article_is_not_imported(graph, db, client, make_user):
+    site = Post(title="Сайтын мэдээ", slug="saitin-medee", is_published=True, fb_post_id=f"{PAGE}_22")
+    db.add(site)
+    await db.flush()
+    await db.refresh(site)
+    h = await staff_headers(client, make_user, "ed", roles=("news.edit",))
+    assert (await client.delete(f"/api/news/admin/posts/{site.id}/", headers=h)).status_code == 204
+    graph["posts"] = [fb_post(22, "Сайтын мэдээ")]
+    assert (await fb_sync.sync_once())["created"] == 0
+
+
+async def test_admin_republished_post_is_not_hidden_by_sync(graph, db, client, make_user):
+    graph["posts"] = [fb_post(23, "Үлдэнэ", "2026-11-02T10:00:00+0000"), fb_post(24, "Устгагдана", "2026-11-02T11:00:00+0000")]
+    await fb_sync.sync_once()
+    graph["posts"] = [fb_post(23, "Үлдэнэ", "2026-11-02T10:00:00+0000")]
+    assert (await fb_sync.sync_once())["hidden"] == 1
+    gone = (await db.execute(select(Post).where(Post.fb_post_id == f"{PAGE}_24"))).scalar_one()
+    h = await staff_headers(client, make_user, "ed", roles=("news.edit",))
+    assert (await client.post(f"/api/news/admin/posts/{gone.id}/publish/", headers=h, json={"post_to_facebook": False})).status_code == 200
+    assert (await fb_sync.sync_once())["hidden"] == 0
+    assert (await _reload(db, gone.id)).is_published is True
+
+
+async def test_post_hidden_by_sync_returns_when_back_on_facebook(graph, db):
+    graph["posts"] = [fb_post(25, "Үлдэнэ", "2026-11-02T10:00:00+0000"), fb_post(26, "Буцаж ирнэ", "2026-11-02T11:00:00+0000")]
+    both = list(graph["posts"])
+    await fb_sync.sync_once()
+    graph["posts"] = both[:1]
+    assert (await fb_sync.sync_once())["hidden"] == 1
+    graph["posts"] = both
+    await fb_sync.sync_once()
+    post = (await db.execute(select(Post).where(Post.fb_post_id == f"{PAGE}_26"))).scalar_one()
+    assert post.is_published is True

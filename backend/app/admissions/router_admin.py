@@ -4,7 +4,7 @@
      PATCH: registration_open/registration_deadline, results_published/results_deadline — асаахад ирээдүйн хугацаа заавал;
      хугацаа өнгөрмөгц service.expire_sections() автоматаар унтраана.
   GET  /rounds/{id}/applicants/?grade=&q=         PATCH /applicants/{id}/
-  GET  /rounds/{id}/applicants.xlsx               POST /rounds/{id}/results/  (Excel: Код, Оноо, Дүн)
+  GET  /rounds/{id}/applicants.xlsx (засах эрх: бүх хувийн мэдээллийн экспорт)   POST /rounds/{id}/results/  (Excel: Код, Оноо, Дүн)
 """
 
 import asyncio
@@ -27,6 +27,7 @@ from .service import expire_sections, normalize_code, round_admin_out
 router = APIRouter(prefix="/api/admissions/admin", tags=["admissions-admin"])
 DB = Annotated[AsyncSession, Depends(get_db)]
 Manager = Annotated[User, Depends(require_section("admissions"))]
+Editor = Annotated[User, Depends(require_section("admissions", "edit"))]
 MAX_UPLOAD = 5 * 1024 * 1024
 
 
@@ -145,7 +146,7 @@ async def applicant_patch(id: int, body: ApplicantPatch, db: DB, _: Manager):
 
 
 @router.get("/rounds/{id}/applicants.xlsx")
-async def applicants_xlsx(id: int, db: DB, _: Manager):
+async def applicants_xlsx(id: int, db: DB, _: Editor):
     await _get_or_404(db, AdmissionRound, id)
     apps = (await db.execute(select(Applicant).where(Applicant.round_id == id))).scalars().all()
     data = await asyncio.to_thread(build_applicants_xlsx, list(apps))
