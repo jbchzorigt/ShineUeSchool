@@ -16,6 +16,7 @@ class Category(Base):
     name_en: Mapped[str] = mapped_column(String(80), default="", server_default="")
     slug: Mapped[str] = mapped_column(String(80), unique=True)
     order: Mapped[int] = mapped_column(SmallInteger, default=0)
+    color: Mapped[str] = mapped_column(String(7), default="#1e3a8f", server_default="#1e3a8f")  # тагийн өнгө (#rrggbb)
 
 
 class Post(Base):
@@ -40,6 +41,7 @@ class Post(Base):
     fb_error: Mapped[str | None] = mapped_column(Text, nullable=True)
     # Админ гараар өөрчилсөн (засах, зураг, нийтлэх, нуух): Facebook sync энэ мэдээнд дахин хүрэхгүй (news/fb_sync.py)
     fb_sync_detached: Mapped[bool] = mapped_column(Boolean, default=False, server_default=false())
+    views_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
 
     category: Mapped[Category | None] = relationship(lazy="selectin")
     images: Mapped[list["PostImage"]] = relationship(lazy="selectin", order_by="PostImage.order", cascade="all, delete-orphan")
@@ -73,7 +75,10 @@ class Comment(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     post_id: Mapped[int] = mapped_column(ForeignKey("news_posts.id", ondelete="CASCADE"), index=True)
-    visitor_id: Mapped[int] = mapped_column(ForeignKey("visitors.id", ondelete="CASCADE"), index=True)
+    # Нэрээ бичээд нэвтрэлтгүй бичдэг: visitor_id нь зөвхөн Facebook-ээр бичсэн хуучин сэтгэгдэлд байна
+    visitor_id: Mapped[int | None] = mapped_column(ForeignKey("visitors.id", ondelete="CASCADE"), nullable=True, index=True)
+    author_name: Mapped[str] = mapped_column(String(80), default="", server_default="")
+    ip_hash: Mapped[str] = mapped_column(String(64), default="", server_default="", index=True)  # давтамж хязгаарлахад (HMAC, IP өөрөө биш)
     body: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     is_hidden: Mapped[bool] = mapped_column(Boolean, default=False)

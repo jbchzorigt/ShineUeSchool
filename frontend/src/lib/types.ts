@@ -140,12 +140,12 @@ export interface UserInput {
 /* ---- Мэдээ ---- */
 export interface Paged<T> { items: T[]; total: number; page: number; page_size: number }
 /* Нийтийн хариунд үндсэн талбарууд (`title`, `name` …) `?lang`-аар сонгогдсон хэлээр; `_en` талбарууд — админ засварлагчид. */
-export interface NewsCategory { id: number; name: string; name_en: string; slug: string; order: number; post_count: number }
-export interface CategoryRef { id: number; name: string; name_en: string; slug: string }
+export interface NewsCategory { id: number; name: string; name_en: string; slug: string; order: number; color: string; post_count: number }
+export interface CategoryRef { id: number; name: string; name_en: string; slug: string; color: string }
 export interface NewsImage { id: number; image: string; caption: string; caption_en: string; order: number }
 export interface PostCard {
   id: number; title: string; title_en: string; slug: string; excerpt: string; excerpt_en: string; cover_image: string | null;
-  category: CategoryRef | null; published_at: string | null; likes_count: number; comments_count: number;
+  category: CategoryRef | null; published_at: string | null; likes_count: number; comments_count: number; views_count: number;
 }
 export interface PostDetail extends PostCard {
   body_html: string; body_html_en: string; images: NewsImage[]; liked_by_me: boolean; fb_post_id: string | null;
@@ -160,7 +160,7 @@ export interface PostInput {
   category_id: number | null; published_at: string | null;
 }
 export interface VisitorRef { id: number; name: string; avatar_url: string }
-export interface CommentItem { id: number; body: string; created_at: string; visitor: VisitorRef; is_mine: boolean }
+export interface CommentItem { id: number; body: string; created_at: string; author_name: string; avatar_url: string; visitor: VisitorRef | null; is_mine: boolean }
 export interface CommentAdmin extends CommentItem { is_hidden: boolean; post: { id: number; title: string; slug: string } }
 export interface VisitorAdmin extends VisitorRef { fb_id: string; created_at: string; is_blocked: boolean; comments_count: number }
 export interface FbStatus { enabled: boolean; app_id: string; page_url: string }

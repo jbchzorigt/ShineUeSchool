@@ -7,6 +7,7 @@ import { SiteFooter } from "@/components/home/SiteFooter";
 import { Reveal } from "@/components/site/Reveal";
 import { Pagination } from "@/components/news/Pagination";
 import { PostGrid } from "@/components/news/PostGrid";
+import { readableOn, tagColor } from "@/lib/color";
 import { fetchCategories, fetchPosts } from "@/lib/news-api";
 import { getDict, isLang, localePath, type Lang } from "@/lib/i18n";
 import { alternates } from "@/lib/i18n/metadata";
@@ -63,11 +64,17 @@ export default async function NewsPage({
               <Link href={pageHref(lang, 1)} className={`${chipBase} ${!category ? chipActive : chipInactive}`}>
                 {t.allCategories}
               </Link>
-              {categories.map((c) => (
-                <Link key={c.id} href={pageHref(lang, 1, c.slug)} className={`${chipBase} ${category === c.slug ? chipActive : chipInactive}`}>
-                  {c.name}
-                </Link>
-              ))}
+              {categories.map((c) => {
+                const active = category === c.slug;
+                return (
+                  <Link key={c.id} href={pageHref(lang, 1, c.slug)} aria-current={active ? "true" : undefined}
+                        style={active ? { backgroundColor: tagColor(c.color), borderColor: tagColor(c.color), color: readableOn(c.color) } : undefined}
+                        className={`${chipBase} inline-flex items-center gap-2 ${active ? "" : chipInactive}`}>
+                    {!active && <span aria-hidden="true" style={{ backgroundColor: tagColor(c.color) }} className="size-2.5 rounded-full" />}
+                    {c.name}
+                  </Link>
+                );
+              })}
             </nav>
           )}
 

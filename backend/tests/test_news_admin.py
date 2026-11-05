@@ -170,3 +170,19 @@ async def test_media_base_url_used_for_public_cover_url(client, make_user, tmp_p
     await client.post(f"/api/news/admin/posts/{pid}/publish/", json={"post_to_facebook": False}, headers=h)
     r = await client.get("/api/news/posts/")
     assert r.json()["items"][0]["cover_image"].startswith("https://api.example.mn/media/news/")
+
+
+async def test_category_color_create_patch_validate(client, make_user):
+    h = await news_headers(client, make_user)
+    r = await client.post("/api/news/admin/categories/", json={"name": "Өнгөгүй"}, headers=h)
+    assert r.status_code == 201 and r.json()["color"] == "#1e3a8f"
+    r = await client.post("/api/news/admin/categories/", json={"name": "Улаан", "color": "#c0392b"}, headers=h)
+    assert r.status_code == 201 and r.json()["color"] == "#c0392b"
+    cid = r.json()["id"]
+    r = await client.patch(f"/api/news/admin/categories/{cid}/", json={"color": "#00aa55"}, headers=h)
+    assert r.status_code == 200 and r.json()["color"] == "#00aa55"
+    for bad in ("red", "#12345", "#gggggg", "", "#1e3a8f;background:url(x)"):
+        r = await client.patch(f"/api/news/admin/categories/{cid}/", json={"color": bad}, headers=h)
+        assert r.status_code in (400, 422), bad
+    rows = (await client.get("/api/news/admin/categories/", headers=h)).json()
+    assert next(c for c in rows if c["id"] == cid)["color"] == "#00aa55"

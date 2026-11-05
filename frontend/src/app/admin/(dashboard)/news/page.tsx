@@ -4,6 +4,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { CategoryTag } from "@/components/news/CategoryTag";
 import { api, ApiError } from "@/lib/api";
 import { useFetch } from "@/lib/useFetch";
 import type { PostAdmin } from "@/lib/types";
@@ -62,7 +63,7 @@ export default function NewsListPage() {
       </div>
       {q.error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{q.error}</p>}
       {q.loading ? <Spinner /> : !q.data?.items.length ? <Empty>Мэдээ байхгүй.</Empty> : (
-        <Table head={<><Th>Огноо</Th><Th>Гарчиг</Th><Th>Ангилал</Th><Th>Төлөв</Th><Th>Facebook</Th><Th className="text-right">Үйлдэл</Th></>}>
+        <Table head={<><Th>Огноо</Th><Th>Гарчиг</Th><Th>Ангилал</Th><Th>Үзэлт</Th><Th>Төлөв</Th><Th>Facebook</Th><Th className="text-right">Үйлдэл</Th></>}>
           {q.data.items.map((p) => (
             <tr key={p.id} className="border-t border-slate-100">
               <Td className="whitespace-nowrap text-slate-600">{fmt(p.published_at)}</Td>
@@ -74,7 +75,8 @@ export default function NewsListPage() {
                   {p.title_en && <Badge tone="gold">EN</Badge>}
                 </span>
               </Td>
-              <Td>{p.category?.name ?? "—"}</Td>
+              <Td>{p.category ? <CategoryTag name={p.category.name} color={p.category.color} /> : "—"}</Td>
+              <Td className="tabular-nums">{(p.views_count ?? 0).toLocaleString("en-US")}</Td>
               <Td>{statusOf(p)}</Td>
               <Td>{p.fb_post_id ? <Badge tone="green">✓</Badge> : p.fb_error ? <span title={p.fb_error}><Badge tone="gold">⚠ алдаа</Badge></span> : "—"}</Td>
               <Td className="whitespace-nowrap space-x-2 text-right">

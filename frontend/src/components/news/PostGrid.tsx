@@ -2,9 +2,10 @@
    Нүүр хуудсын NewsSection ба /news жагсаалтын хуудас хоёулаа ашиглана. */
 
 import Link from "next/link";
-import { NewsImage, LikeCount } from "@/components/home/NewsBits";
+import { NewsImage, LikeCount, ViewCount } from "@/components/home/NewsBits";
 import { localePath, type Lang } from "@/lib/i18n";
 import type { PostCard as PostCardData } from "@/lib/types";
+import { CategoryTag } from "./CategoryTag";
 import { formatDate } from "./format";
 
 export function PostGrid({ posts, lang = "mn" }: { posts: PostCardData[]; lang?: Lang }) {
@@ -42,7 +43,7 @@ function LeadCard({ post, lang }: CardProps) {
         {post.title}
       </span>
       {post.excerpt && <span className="hidden max-w-[38em] text-[17px] leading-relaxed text-muted lg:block">{post.excerpt}</span>}
-      <LikeCount lang={lang} n={post.likes_count} />
+      <Stats post={post} lang={lang} />
     </Link>
   );
 }
@@ -56,7 +57,7 @@ function SideCard({ post, lang }: CardProps) {
         <span className="font-display text-[19px] font-extrabold leading-tight group-hover:text-navy group-hover:underline group-hover:underline-offset-[5px] lg:text-[23px]">
           {post.title}
         </span>
-        <LikeCount lang={lang} n={post.likes_count} />
+        <Stats post={post} lang={lang} />
       </span>
     </Link>
   );
@@ -71,20 +72,29 @@ export function SmallCard({ post, lang = "mn" }: { post: PostCardData; lang?: La
       <span className="font-display text-[17px] font-extrabold leading-tight group-hover:text-navy group-hover:underline group-hover:underline-offset-[5px] lg:text-[21px]">
         {post.title}
       </span>
-      <LikeCount lang={lang} n={post.likes_count} />
+      <Stats post={post} lang={lang} />
     </Link>
   );
 }
 
 function Meta({ post, lang }: CardProps) {
   return (
-    <span className="flex items-center gap-3 text-[13px] text-muted lg:text-sm">
+    <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-muted lg:text-sm">
       {post.published_at && (
         <time dateTime={post.published_at} className="tabular-nums">
           {formatDate(post.published_at, lang)}
         </time>
       )}
-      {post.category && <span>{post.category.name}</span>}
+      {post.category && <CategoryTag name={post.category.name} color={post.category.color} />}
+    </span>
+  );
+}
+
+function Stats({ post, lang }: CardProps) {
+  return (
+    <span className="flex items-center gap-4">
+      <LikeCount lang={lang} n={post.likes_count} />
+      <ViewCount lang={lang} n={post.views_count} />
     </span>
   );
 }

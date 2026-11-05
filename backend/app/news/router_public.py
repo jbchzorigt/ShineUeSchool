@@ -5,15 +5,18 @@
   GET /api/news/posts/{slug}/              → PostDetail
   GET /api/news/posts/{slug}/related/?limit= → [PostCard] агуулгаар ойр мэдээ (related.py), дутууг шинэ мэдээгээр нөхнө
   GET /api/news/posts/{slug}/comments/     → [CommentOut]
+  POST /api/news/posts/{slug}/view/        → {views_count} үзэлт +1 (хуудас cache-тай тул хөтөч дуудна, components/news/PostViews.tsx)
 Хэл: `?lang=mn|en` (анхдагч mn) — жагсаалт/дэлгэрэнгүй/related/ангиллын тоо тухайн хэлний гарчигтай мэдээг л авна,
 текст талбарууд сонгосон хэлээр (`localized`; мэдээний их бие англи хоосон бол хоосон — fallback-гүй).
 """
 
-from datetime import UTC, datetime
+import hashlib
+import hmac
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from sqlalchemy import and_, func, select
+from sqlalchemy import and_, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -26,7 +29,7 @@ from ..social.facebook import get_facebook
 from ..social.models import Visitor
 from .models import Category, Comment, Like, Post
 from .related import doc_tokens, rank
-from .schemas import CategoryOut, CommentIn, CommentOut, ImageOut, LikeOut, PostCard, PostDetail, PostPage, VisitorOut
+from .schemas import CategoryOut, CommentIn, CommentOut, ImageOut, LikeOut, PostCard, PostDetail, PostPage, ViewOut, VisitorOut
 
 router = APIRouter(prefix="/api/news", tags=["news"])
 DB = Annotated[AsyncSession, Depends(get_db)]
@@ -80,8 +83,8 @@ def post_card(request: Request, p: Post, likes: int, comments: int, lang: Lang =
     return PostCard(
         id=p.id, title=localized(p.title, p.title_en, lang), title_en=p.title_en, slug=p.slug,
         excerpt=localized(p.excerpt, p.excerpt_en, lang), excerpt_en=p.excerpt_en, cover_image=media_url(request, p.cover_image),
-        category={"id": c.id, "name": localized(c.name, c.name_en, lang), "name_en": c.name_en, "slug": c.slug} if c else None,
-        published_at=p.published_at, likes_count=likes, comments_count=comments,
+        category={"id": c.id, "name": localized(c.name, c.name_en, lang), "name_en": c.name_en, "slug": c.slug, "color": c.color} if c else None,
+        published_at=p.published_at, likes_count=likes, comments_count=comments, views_count=p.views_count,
     )
 
 
@@ -111,7 +114,7 @@ async def categories(db: DB, lang: Lang = "mn"):
     counts = dict((await db.execute(
         select(Post.category_id, func.count()).where(public_filter(), lang_filter(lang)).group_by(Post.category_id))).all())
     cats = (await db.execute(select(Category).order_by(Category.order, Category.name))).scalars().all()
-    return [CategoryOut(id=c.id, name=localized(c.name, c.name_en, lang), name_en=c.name_en, slug=c.slug, order=c.order,
+    return [CategoryOut(id=c.id, name=localized(c.name, c.name_en, lang), name_en=c.name_en, slug=c.slug, order=c.order, color=c.color,
                         post_count=counts.get(c.id, 0)) for c in cats]
 
 
@@ -136,6 +139,17 @@ async def post_get(slug: str, request: Request, db: DB, v: Annotated[Visitor | N
     counts = await counts_for(db, [p.id])
     liked = v is not None and (await db.get(Like, (p.id, v.id))) is not None
     return post_detail(request, p, *counts[p.id], liked=liked, lang=lang)
+
+
+@router.post("/posts/{slug}/view/", response_model=ViewOut)
+async def view_add(slug: str, db: DB):
+    """Нэмэгдүүлэлтийг SQL дээр хийж зэрэг хүсэлтэд тоо алдагдахгүй; updated_at-д үзэлт нөлөөлөхгүй (onupdate-ийг хэвээр дарна)."""
+    p = await get_public_post(db, slug)
+    n = (await db.execute(
+        update(Post).where(Post.id == p.id).values(views_count=Post.views_count + 1, updated_at=Post.updated_at)
+        .returning(Post.views_count))).scalar_one()
+    await db.commit()
+    return ViewOut(views_count=n)
 
 
 RELATED_MAX = 10
@@ -164,33 +178,65 @@ async def post_related(slug: str, request: Request, db: DB, limit: int = 3, lang
     return [post_card(request, by_id[pid], *counts[pid], lang=lang) for pid in chosen]
 
 
+def comment_out(c: Comment, author: Visitor | None, is_mine: bool = False) -> CommentOut:
+    """Нэрээ бичсэн сэтгэгдэл (author_name) эсвэл Facebook-ээр бичсэн хуучин сэтгэгдэл (visitor)."""
+    return CommentOut(id=c.id, body=c.body, created_at=c.created_at, is_mine=is_mine,
+                      author_name=author.name if author else c.author_name, avatar_url=author.avatar_url if author else "",
+                      visitor=VisitorOut(id=author.id, name=author.name, avatar_url=author.avatar_url) if author else None)
+
+
 @router.get("/posts/{slug}/comments/", response_model=list[CommentOut])
 async def comments_list(slug: str, db: DB, v: Annotated[Visitor | None, Depends(optional_visitor)]):
     p = await get_public_post(db, slug)
     rows = (await db.execute(
-        select(Comment, Visitor).join(Visitor, Visitor.id == Comment.visitor_id)
+        select(Comment, Visitor).outerjoin(Visitor, Visitor.id == Comment.visitor_id)
         .where(Comment.post_id == p.id, Comment.is_hidden.is_(False)).order_by(Comment.created_at.desc(), Comment.id.desc())
     )).all()
-    return [CommentOut(id=c.id, body=c.body, created_at=c.created_at, is_mine=(v is not None and c.visitor_id == v.id),
-                       visitor=VisitorOut(id=v2.id, name=v2.name, avatar_url=v2.avatar_url)) for c, v2 in rows]
+    return [comment_out(c, author, is_mine=(v is not None and c.visitor_id == v.id)) for c, author in rows]
 
 
 Guest = Annotated[Visitor, Depends(current_visitor)]
 FbOn = Annotated[object, Depends(get_facebook)]
 
 
+COMMENT_MIN_CHARS = 100
+COMMENT_WINDOW = timedelta(minutes=10)
+COMMENT_LIMIT_PER_IP = 5    # нэг хаягаас цонхонд
+COMMENT_LIMIT_TOTAL = 60    # бүх сайтаар цонхонд: IP хуурсан spam-ын эсрэг нөөц хамгаалалт
+
+
+def _ip_hash(request: Request) -> str:
+    ip = request.client.host if request.client else "?"
+    return hmac.new(settings.secret_key.encode(), ip.encode(), hashlib.sha256).hexdigest()
+
+
+async def _throttle_comments(db: AsyncSession, ip_hash: str) -> None:
+    """Өгөгдлийн сангаас тоолно: олон worker, restart-д ч зөв (2 worker-тэй ажилладаг)."""
+    since = datetime.now(UTC) - COMMENT_WINDOW
+    total, mine = (await db.execute(
+        select(func.count(), func.count().filter(Comment.ip_hash == ip_hash)).where(Comment.created_at >= since))).one()
+    if mine >= COMMENT_LIMIT_PER_IP or total >= COMMENT_LIMIT_TOTAL:
+        raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, "Хэт олон сэтгэгдэл. Түр хүлээгээд дахин оролдоно уу.")
+
+
 @router.post("/posts/{slug}/comments/", response_model=CommentOut, status_code=201)
-async def comment_create(slug: str, body: CommentIn, db: DB, _: FbOn, v: Guest):
+async def comment_create(slug: str, body: CommentIn, request: Request, db: DB, _: Annotated[Visitor | None, Depends(optional_visitor)]):
+    """Нэрээ бичээд нэвтрэлтгүй. Шууд нийтлэгдэнэ, админ нууж/устгаж болно. optional_visitor: блоклогдсон зочны токенд 403."""
     p = await get_public_post(db, slug)
-    text = body.body.strip()
-    if not text:
-        raise FieldError("body", "Сэтгэгдэл хоосон байж болохгүй.")
-    c = Comment(post_id=p.id, visitor_id=v.id, body=text)
+    if body.website:
+        raise FieldError("website", "Илгээж чадсангүй.")
+    name, text = body.name.strip(), body.body.strip()
+    if not name:
+        raise FieldError("name", "Нэрээ бичнэ үү.")
+    if len(text) < COMMENT_MIN_CHARS:
+        raise FieldError("body", f"Сэтгэгдэл {COMMENT_MIN_CHARS}-с доошгүй тэмдэгттэй байна.")
+    ip_hash = _ip_hash(request)
+    await _throttle_comments(db, ip_hash)
+    c = Comment(post_id=p.id, author_name=name, ip_hash=ip_hash, body=text)
     db.add(c)
     await db.commit()
     await db.refresh(c)
-    return CommentOut(id=c.id, body=c.body, created_at=c.created_at, is_mine=True,
-                      visitor=VisitorOut(id=v.id, name=v.name, avatar_url=v.avatar_url))
+    return comment_out(c, None)
 
 
 @router.delete("/comments/{id}/", status_code=204)

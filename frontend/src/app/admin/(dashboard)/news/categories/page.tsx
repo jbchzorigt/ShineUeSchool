@@ -1,17 +1,19 @@
 "use client";
 
-/* Мэдээний ангилал удирдах: жагсаалт, нэмэх, засах, устгах. */
+/* Мэдээний ангилал (өнгөтэй таг) удирдах: жагсаалт, нэмэх, засах, устгах. */
 
 import { useState, type FormEvent } from "react";
 import { api, ApiError } from "@/lib/api";
+import { readableOn, TAG_PALETTE } from "@/lib/color";
 import { useFetch } from "@/lib/useFetch";
 import type { NewsCategory } from "@/lib/types";
 import { Badge, Button, Empty, Field, Input, Modal, Spinner, Table, Td, Th } from "@/components/ui";
 import { DeleteLabel, EditLabel } from "@/components/admin/ActionLabel";
+import { CategoryTag } from "@/components/news/CategoryTag";
 
-interface CategoryForm { name: string; name_en: string; slug: string; order: number }
+interface CategoryForm { name: string; name_en: string; slug: string; order: number; color: string }
 
-const empty = (): CategoryForm => ({ name: "", name_en: "", slug: "", order: 0 });
+const empty = (): CategoryForm => ({ name: "", name_en: "", slug: "", order: 0, color: TAG_PALETTE[0].hex });
 
 export default function NewsCategoriesPage() {
   const catsQ = useFetch(() => api.news.categories.list(), []);
@@ -23,7 +25,7 @@ export default function NewsCategoriesPage() {
 
   function openEdit(c: NewsCategory) {
     setErrors({});
-    setEditing({ id: c.id, data: { name: c.name, name_en: c.name_en ?? "", slug: c.slug, order: c.order } });
+    setEditing({ id: c.id, data: { name: c.name, name_en: c.name_en ?? "", slug: c.slug, order: c.order, color: c.color } });
   }
 
   async function save(e: FormEvent) {
@@ -31,7 +33,7 @@ export default function NewsCategoriesPage() {
     if (!editing) return;
     setBusy(true); setErrors({});
     try {
-      const d = { name: editing.data.name, name_en: editing.data.name_en.trim(), slug: editing.data.slug || undefined, order: editing.data.order };
+      const d = { name: editing.data.name, name_en: editing.data.name_en.trim(), slug: editing.data.slug || undefined, order: editing.data.order, color: editing.data.color };
       if (editing.id) await api.news.categories.update(editing.id, d);
       else await api.news.categories.create(d);
       setEditing(null);
@@ -62,7 +64,7 @@ export default function NewsCategoriesPage() {
         <Table head={<><Th>Нэр</Th><Th>English</Th><Th>Slug</Th><Th>Дараалал</Th><Th>Мэдээ</Th><Th className="text-right">Үйлдэл</Th></>}>
           {catsQ.data.map((c) => (
             <tr key={c.id} className="border-t border-slate-100">
-              <Td className="font-semibold">{c.name}</Td>
+              <Td><CategoryTag name={c.name} color={c.color} /></Td>
               <Td className="text-slate-600">{c.name_en || "—"}</Td>
               <Td className="text-slate-600">{c.slug}</Td>
               <Td>{c.order}</Td>
@@ -88,6 +90,22 @@ export default function NewsCategoriesPage() {
             <Field label="Slug" error={errors.slug} hint="Хоосон орхивол нэрнээс автоматаар үүснэ">
               <Input value={editing.data.slug} onChange={(e) => set({ slug: e.target.value })} />
             </Field>
+            <fieldset>
+              <legend className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-600">Өнгө</legend>
+              <div className="flex flex-wrap items-center gap-2">
+                {TAG_PALETTE.map((c) => (
+                  <label key={c.hex} title={c.name} className="cursor-pointer">
+                    <input type="radio" name="category-color" value={c.hex} checked={editing.data.color === c.hex} onChange={() => set({ color: c.hex })} aria-label={c.name} className="peer sr-only" />
+                    <span style={{ backgroundColor: c.hex, color: readableOn(c.hex) }}
+                          className="grid size-9 place-items-center rounded-full text-sm font-bold ring-offset-2 peer-checked:ring-2 peer-checked:ring-navy peer-focus-visible:ring-2 peer-focus-visible:ring-navy">
+                      {editing.data.color === c.hex && <span aria-hidden="true">✓</span>}
+                    </span>
+                  </label>
+                ))}
+              </div>
+              <div className="mt-3"><CategoryTag name={editing.data.name || "Жишээ таг"} color={editing.data.color} /></div>
+              {errors.color && <span className="mt-1 block text-xs font-medium text-red-600">{errors.color}</span>}
+            </fieldset>
             <Field label="Дараалал" error={errors.order}>
               <Input type="number" value={editing.data.order} onChange={(e) => set({ order: Number(e.target.value) })} />
             </Field>

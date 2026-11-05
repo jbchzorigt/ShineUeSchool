@@ -8,10 +8,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SiteFooter } from "@/components/home/SiteFooter";
 import { Reveal } from "@/components/site/Reveal";
+import { CategoryTag } from "@/components/news/CategoryTag";
 import { Comments } from "@/components/news/Comments";
 import { formatDateTime } from "@/components/news/format";
 import { Gallery } from "@/components/news/Gallery";
 import { LikeButton } from "@/components/news/LikeButton";
+import { PostViews } from "@/components/news/PostViews";
 import { RelatedPosts } from "@/components/news/RelatedPosts";
 import { ShareButtons } from "@/components/news/ShareButtons";
 import { VisitorBar } from "@/components/news/VisitorBar";
@@ -72,13 +74,14 @@ export default async function NewsPostPage({ params }: { params: Params }) {
             </span>
           )}
 
-          <div className="flex items-center gap-3 text-sm text-muted">
-            {post.category && <span className="rounded-full bg-paper-3 px-3 py-1 font-medium text-navy">{post.category.name}</span>}
+          <div className="flex flex-wrap items-center gap-3 text-sm text-muted">
+            {post.category && <CategoryTag name={post.category.name} color={post.category.color} />}
             {post.published_at && (
               <time dateTime={post.published_at} className="tabular-nums">
                 {formatDateTime(post.published_at, lang)}
               </time>
             )}
+            <PostViews slug={post.slug} initial={post.views_count} />
           </div>
 
           <h1 className="font-display text-[30px] font-extrabold leading-tight text-ink lg:text-[42px]">{post.title}</h1>
@@ -92,12 +95,10 @@ export default async function NewsPostPage({ params }: { params: Params }) {
           <div className="flex flex-wrap items-center justify-between gap-4 border-t border-line pt-6">
             <LikeButton slug={post.slug} initialCount={post.likes_count} initialLiked={post.liked_by_me} />
             <ShareButtons url={`${SITE_URL}${localePath(lang, `/news/${slug}`)}`} title={post.title} />
+            <div className="w-full"><VisitorBar /></div>
           </div>
 
-          <div className="flex flex-col gap-4 border-t border-line pt-6">
-            <VisitorBar />
-            <Comments slug={post.slug} initialCount={post.comments_count} />
-          </div>
+          <Comments slug={post.slug} initialCount={post.comments_count} />
 
           <RelatedPosts posts={related} lang={lang} />
         </Reveal>

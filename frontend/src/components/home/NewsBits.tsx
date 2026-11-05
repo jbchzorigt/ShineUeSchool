@@ -1,4 +1,4 @@
-/* Мэдээний картын жижиг хэсгүүд: зураг (эсвэл орлуулагч), лайкын тоо. */
+/* Мэдээний картын жижиг хэсгүүд: зураг (эсвэл орлуулагч), лайкын ба үзэлтийн тоо. */
 
 import Image from "next/image";
 import { getDict, type Lang } from "@/lib/i18n";
@@ -26,6 +26,19 @@ export function LikeCount({ n, lang = "mn" }: { n: number; lang?: Lang }) {
       </svg>
       <span className="sr-only">{getDict(lang).news.liked}</span>
       {n}
+    </span>
+  );
+}
+
+export function ViewCount({ n = 0, lang = "mn" }: { n?: number; lang?: Lang }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 text-[13px] text-muted tabular-nums lg:text-sm">
+      <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#1e3a8f" strokeWidth="2" strokeLinejoin="round">
+        <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" />
+        <circle cx="12" cy="12" r="2.75" />
+      </svg>
+      <span className="sr-only">{getDict(lang).news.views}</span>
+      {n.toLocaleString("en-US")}
     </span>
   );
 }

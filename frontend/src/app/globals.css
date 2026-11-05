@@ -113,3 +113,28 @@ body {
 .tw-cursor { display: inline-block; margin-left: 0.06em; font-weight: 400; color: var(--color-gold); animation: tw-blink 1s steps(2, start) infinite; }
 @keyframes tw-blink { to { visibility: hidden; } }
 @media (prefers-reduced-motion: reduce) { .tw-cursor { animation: none; display: none; } }
+
+/* 404 (components/site/NotFoundView.tsx): тэгийг хоосон олонлог болгох шар зураас нэг удаа зурагдаж, дараа нь тайлбар гарна */
+.nf-slash {
+  fill: none; stroke: var(--color-gold); stroke-width: 0.07em; stroke-linecap: round; vector-effect: non-scaling-stroke;
+  stroke-dasharray: 1; stroke-dashoffset: 0;
+  animation: nf-draw 0.55s cubic-bezier(0.6, 0, 0.3, 1) 0.25s backwards;
+}
+.nf-note { animation: nf-appear 0.35s ease-out 0.75s backwards; }
+@keyframes nf-draw { from { stroke-dashoffset: 1; } }
+@keyframes nf-appear { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .nf-slash, .nf-note { animation: none; } }
+
+/* Сэтгэгдэл (components/news/Comments.tsx): дэвтрийн шугамтай бичих талбар; шинэ сэтгэгдэл нэг удаа тодорч харагдана */
+.comment-lines {
+  --line: 32px;
+  line-height: var(--line);
+  padding-block: 0;
+  min-height: calc(var(--line) * 4);
+  background-image: linear-gradient(transparent calc(var(--line) - 1px), var(--color-grid) calc(var(--line) - 1px));
+  background-size: 100% var(--line);
+  background-attachment: local;
+}
+.comment-new { animation: comment-new 2.4s ease-out; }
+@keyframes comment-new { from { background-color: color-mix(in srgb, var(--color-gold) 28%, transparent); } }
+@media (prefers-reduced-motion: reduce) { .comment-new { animation: none; } }

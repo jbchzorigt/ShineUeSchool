@@ -69,8 +69,8 @@ async def test_posts_list_public_only_and_ordered(client, db):
     assert [p["slug"] for p in body["items"]] == ["shine", "surguuliin", "huuchin"]
     card = body["items"][0]
     assert set(card) == {"id", "title", "title_en", "slug", "excerpt", "excerpt_en", "cover_image", "category", "published_at",
-                         "likes_count", "comments_count"}
-    assert card["category"] == {"id": card["category"]["id"], "name": "Олимпиад", "name_en": "", "slug": "olimpiad"}
+                         "likes_count", "comments_count", "views_count"}
+    assert card["category"] == {"id": card["category"]["id"], "name": "Олимпиад", "name_en": "", "slug": "olimpiad", "color": "#1e3a8f"}
     assert card["cover_image"] is None and card["likes_count"] == 0
 
 
@@ -100,8 +100,8 @@ async def test_categories_with_counts(client, db):
     await seed_posts(db)
     r = await client.get("/api/news/categories/")
     assert r.json() == [
-        {"id": r.json()[0]["id"], "name": "Олимпиад", "name_en": "", "slug": "olimpiad", "order": 1, "post_count": 2},
-        {"id": r.json()[1]["id"], "name": "Сургууль", "name_en": "", "slug": "surguuli", "order": 2, "post_count": 1},
+        {"id": r.json()[0]["id"], "name": "Олимпиад", "name_en": "", "slug": "olimpiad", "order": 1, "color": "#1e3a8f", "post_count": 2},
+        {"id": r.json()[1]["id"], "name": "Сургууль", "name_en": "", "slug": "surguuli", "order": 2, "color": "#1e3a8f", "post_count": 1},
     ]
 
 
@@ -109,3 +109,44 @@ async def test_comments_list_empty(client, db):
     await seed_posts(db)
     assert (await client.get("/api/news/posts/shine/comments/")).json() == []
     assert (await client.get("/api/news/posts/noorog/comments/")).status_code == 404
+
+
+# ---- үзэлт, тагийн өнгө ----
+
+async def test_view_counts_up_and_shows_everywhere(client, db):
+    p = Post(title="Мэдээ", slug="uzelt", is_published=True, published_at=datetime.now(UTC) - timedelta(hours=1))
+    db.add(p)
+    await db.commit()
+    assert (await client.get("/api/news/posts/uzelt/")).json()["views_count"] == 0
+    assert (await client.post("/api/news/posts/uzelt/view/")).json() == {"views_count": 1}
+    assert (await client.post("/api/news/posts/uzelt/view/")).json() == {"views_count": 2}
+    assert (await client.get("/api/news/posts/uzelt/")).json()["views_count"] == 2
+    assert (await client.get("/api/news/posts/")).json()["items"][0]["views_count"] == 2
+
+
+async def test_view_does_not_change_updated_at(client, db):
+    p = Post(title="Мэдээ", slug="uzelt", is_published=True, published_at=datetime.now(UTC) - timedelta(hours=1),
+             updated_at=datetime(2026, 1, 1, tzinfo=UTC))
+    db.add(p)
+    await db.commit()
+    pid = p.id
+    assert (await client.post("/api/news/posts/uzelt/view/")).status_code == 200
+    db.expire_all()
+    assert (await db.get(Post, pid)).updated_at == datetime(2026, 1, 1, tzinfo=UTC)
+
+
+async def test_view_of_draft_or_missing_post_is_404(client, db):
+    db.add(Post(title="Ноорог", slug="noorog", is_published=False))
+    await db.commit()
+    assert (await client.post("/api/news/posts/noorog/view/")).status_code == 404
+    assert (await client.post("/api/news/posts/baihgui/view/")).status_code == 404
+
+
+async def test_category_color_is_public(client, db):
+    c = Category(name="Олимпиад", slug="olimpiad", color="#c0392b")
+    db.add(c)
+    await db.flush()
+    db.add(Post(title="Мэдээ", slug="onge", is_published=True, published_at=datetime.now(UTC) - timedelta(hours=1), category_id=c.id))
+    await db.commit()
+    assert (await client.get("/api/news/categories/")).json()[0]["color"] == "#c0392b"
+    assert (await client.get("/api/news/posts/onge/")).json()["category"]["color"] == "#c0392b"

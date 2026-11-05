@@ -5,6 +5,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+HEX_COLOR = r"^#[0-9a-fA-F]{6}$"
+
 
 class CategoryOut(BaseModel):
     id: int
@@ -12,6 +14,7 @@ class CategoryOut(BaseModel):
     name_en: str = ""
     slug: str
     order: int
+    color: str
     post_count: int = 0
 
 
@@ -20,6 +23,7 @@ class CategoryRef(BaseModel):
     name: str
     name_en: str = ""
     slug: str
+    color: str
 
 
 class ImageOut(BaseModel):
@@ -43,6 +47,7 @@ class PostCard(BaseModel):
     published_at: datetime | None
     likes_count: int
     comments_count: int
+    views_count: int
 
 
 class PostDetail(PostCard):
@@ -71,17 +76,25 @@ class CommentOut(BaseModel):
     id: int
     body: str
     created_at: datetime
-    visitor: VisitorOut
+    author_name: str
+    avatar_url: str = ""
+    visitor: VisitorOut | None = None   # зөвхөн Facebook-ээр бичсэн хуучин сэтгэгдэлд
     is_mine: bool
 
 
 class CommentIn(BaseModel):
+    name: str = Field(max_length=80)
     body: str = Field(max_length=2000)
+    website: str = ""   # honeypot: хүний маягтад нуугдсан, бөглөгдсөн бол бот
 
 
 class LikeOut(BaseModel):
     liked: bool
     likes_count: int
+
+
+class ViewOut(BaseModel):
+    views_count: int
 
 
 class PostRef(BaseModel):
@@ -177,6 +190,7 @@ class CategoryIn(BaseModel):
     name_en: str = Field(default="", max_length=80)
     slug: str | None = Field(default=None, max_length=80)
     order: int = 0
+    color: str = Field(default="#1e3a8f", pattern=HEX_COLOR)
 
 
 class CategoryPatch(BaseModel):
@@ -184,6 +198,7 @@ class CategoryPatch(BaseModel):
     name_en: str | None = Field(default=None, max_length=80)
     slug: str | None = Field(default=None, max_length=80)
     order: int | None = None
+    color: str | None = Field(default=None, pattern=HEX_COLOR)
 
 
 class ImagePatch(BaseModel):

@@ -191,8 +191,8 @@ export const api = {
   news: {
     categories: {
       list: () => request<NewsCategory[]>("/api/news/admin/categories/"),
-      create: (d: { name: string; name_en?: string; slug?: string; order: number }) => request<NewsCategory>("/api/news/admin/categories/", { method: "POST", body: d }),
-      update: (id: number, d: Partial<{ name: string; name_en: string; slug: string; order: number }>) => request<NewsCategory>(`/api/news/admin/categories/${id}/`, { method: "PATCH", body: d }),
+      create: (d: { name: string; name_en?: string; slug?: string; order: number; color: string }) => request<NewsCategory>("/api/news/admin/categories/", { method: "POST", body: d }),
+      update: (id: number, d: Partial<{ name: string; name_en: string; slug: string; order: number; color: string }>) => request<NewsCategory>(`/api/news/admin/categories/${id}/`, { method: "PATCH", body: d }),
       remove: (id: number) => request<void>(`/api/news/admin/categories/${id}/`, { method: "DELETE" }),
     },
     posts: {

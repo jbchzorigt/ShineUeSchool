@@ -42,6 +42,7 @@ export default function NewsCommentsPage() {
   }
 
   async function blockVisitor(c: CommentAdmin) {
+    if (!c.visitor) return;
     if (!confirm(`"${c.visitor.name}" зочныг блоклох уу? Цаашид сэтгэгдэл бичих боломжгүй болно.`)) return;
     try {
       await api.news.visitors.block(c.visitor.id, true);
@@ -89,16 +90,16 @@ export default function NewsCommentsPage() {
               <Td>
                 <div className="flex items-center gap-2">
                   <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full bg-slate-100">
-                    {c.visitor.avatar_url && <Image src={c.visitor.avatar_url} alt="" fill unoptimized className="object-cover" />}
+                    {c.avatar_url && <Image src={c.avatar_url} alt="" fill unoptimized className="object-cover" />}
                   </div>
-                  <span>{c.visitor.name}</span>
+                  <span>{c.author_name}</span>
                 </div>
               </Td>
               <Td className="max-w-sm text-slate-700">{truncate(c.body)}</Td>
               <Td>{c.is_hidden ? <Badge tone="slate">Нуугдсан</Badge> : <Badge tone="green">Харагдана</Badge>}</Td>
               <Td className="space-x-2 text-right whitespace-nowrap">
                 <Button mutates variant="ghost" onClick={() => toggleHide(c)}>{c.is_hidden ? "Харуулах" : "Нуух"}</Button>
-                <Button mutates variant="ghost" onClick={() => blockVisitor(c)}>Зочныг блоклох</Button>
+                {c.visitor && <Button mutates variant="ghost" onClick={() => blockVisitor(c)}>Зочныг блоклох</Button>}
                 <Button variant="danger" onClick={() => remove(c)}><DeleteLabel /></Button>
               </Td>
             </tr>

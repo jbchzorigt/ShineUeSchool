@@ -279,12 +279,12 @@ async def admin_unpublish(id: int, request: Request, db: DB):
 async def admin_categories(db: DB):
     counts = dict((await db.execute(select(Post.category_id, func.count()).group_by(Post.category_id))).all())
     cats = (await db.execute(select(Category).order_by(Category.order, Category.name))).scalars().all()
-    return [CategoryOut(id=c.id, name=c.name, name_en=c.name_en, slug=c.slug, order=c.order, post_count=counts.get(c.id, 0)) for c in cats]
+    return [CategoryOut(id=c.id, name=c.name, name_en=c.name_en, slug=c.slug, order=c.order, color=c.color, post_count=counts.get(c.id, 0)) for c in cats]
 
 
 @router.post("/categories/", response_model=CategoryOut, status_code=201)
 async def admin_category_create(body: CategoryIn, db: DB):
-    c = Category(name=body.name, name_en=body.name_en.strip(), slug=slugify(body.slug or body.name), order=body.order)
+    c = Category(name=body.name, name_en=body.name_en.strip(), slug=slugify(body.slug or body.name), order=body.order, color=body.color)
     db.add(c)
     try:
         await db.flush()
@@ -292,7 +292,7 @@ async def admin_category_create(body: CategoryIn, db: DB):
         await db.rollback()
         raise FieldError("slug", "Ийм slug-тай ангилал байна.") from None
     await db.commit()
-    return CategoryOut(id=c.id, name=c.name, name_en=c.name_en, slug=c.slug, order=c.order)
+    return CategoryOut(id=c.id, name=c.name, name_en=c.name_en, slug=c.slug, order=c.order, color=c.color)
 
 
 @router.patch("/categories/{id}/", response_model=CategoryOut)
@@ -312,7 +312,7 @@ async def admin_category_patch(id: int, body: CategoryPatch, db: DB):
         await db.rollback()
         raise FieldError("slug", "Ийм slug-тай ангилал байна.") from None
     await db.commit()
-    return CategoryOut(id=c.id, name=c.name, name_en=c.name_en, slug=c.slug, order=c.order)
+    return CategoryOut(id=c.id, name=c.name, name_en=c.name_en, slug=c.slug, order=c.order, color=c.color)
 
 
 @router.delete("/categories/{id}/", status_code=204)
@@ -332,9 +332,10 @@ def _page(page: int, page_size: int) -> tuple[int, int, int]:
     return page, page_size, (page - 1) * page_size
 
 
-def _comment_admin(c: Comment, v: Visitor, p: Post) -> CommentAdmin:
+def _comment_admin(c: Comment, v: Visitor | None, p: Post) -> CommentAdmin:
     return CommentAdmin(id=c.id, body=c.body, created_at=c.created_at, is_mine=False, is_hidden=c.is_hidden,
-                        visitor=VisitorOut(id=v.id, name=v.name, avatar_url=v.avatar_url),
+                        author_name=v.name if v else c.author_name, avatar_url=v.avatar_url if v else "",
+                        visitor=VisitorOut(id=v.id, name=v.name, avatar_url=v.avatar_url) if v else None,
                         post=PostRef(id=p.id, title=p.title or p.title_en, slug=p.slug))
 
 
@@ -348,7 +349,7 @@ async def admin_comments(db: DB, post: int | None = None, hidden: bool | None = 
         where.append(Comment.is_hidden.is_(hidden))
     total = (await db.execute(select(func.count(Comment.id)).where(*where))).scalar_one()
     rows = (await db.execute(
-        select(Comment, Visitor, Post).join(Visitor, Visitor.id == Comment.visitor_id).join(Post, Post.id == Comment.post_id)
+        select(Comment, Visitor, Post).outerjoin(Visitor, Visitor.id == Comment.visitor_id).join(Post, Post.id == Comment.post_id)
         .where(*where).order_by(Comment.created_at.desc(), Comment.id.desc()).offset(offset).limit(page_size))).all()
     items = [_comment_admin(c, v, p) for c, v, p in rows]
     return CommentAdminPage(items=items, total=total, page=page, page_size=page_size)
@@ -361,7 +362,8 @@ async def admin_comment_hide(id: int, body: CommentHideIn, db: DB):
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Олдсонгүй.")
     c.is_hidden = body.is_hidden
     await db.commit()
-    v, p = await db.get(Visitor, c.visitor_id), await db.get(Post, c.post_id)
+    v = await db.get(Visitor, c.visitor_id) if c.visitor_id else None
+    p = await db.get(Post, c.post_id)
     return _comment_admin(c, v, p)
 
 
