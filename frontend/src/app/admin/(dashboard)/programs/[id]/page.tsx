@@ -1,10 +1,11 @@
 "use client";
 
-/* /admin/programs/[id] — хөтөлбөрийн бүтээл, тэтгэлэг, онооны график (tab ?tab=works|scholarships|radar; radar зөвхөн Үндэсний цөм). */
+/* /admin/programs/[id] — хөтөлбөрийн бүтээл, тэтгэлэг, онооны график, төгсөгчдийн үр дүн (tab ?tab=works|scholarships|radar|outcomes). */
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
+import { OutcomesPanel } from "@/components/admin/programs/OutcomesPanel";
 import { RadarPanel } from "@/components/admin/programs/RadarPanel";
 import { ScholarshipsPanel } from "@/components/admin/programs/ScholarshipsPanel";
 import { WorksPanel } from "@/components/admin/programs/WorksPanel";
@@ -13,10 +14,9 @@ import { api } from "@/lib/api";
 import { useFetch } from "@/lib/useFetch";
 import type { ProgramAdminDetail } from "@/lib/types";
 
-type Tab = "works" | "scholarships" | "radar";
-const TABS: Tab[] = ["works", "scholarships", "radar"];
-/** ЭЕШ-ийн онооны график зөвхөн Үндэсний цөм хөтөлбөрт (backend RADAR_SLUGS-тай ижил) */
-const RADAR_SLUGS = new Set(["national-core-curriculum"]);
+type Tab = "works" | "scholarships" | "radar" | "outcomes";
+const TABS: Tab[] = ["works", "scholarships", "radar", "outcomes"];
+const LABELS: [Tab, string][] = [["works", "Бүтээлийн булан"], ["scholarships", "Тэтгэлэг"], ["radar", "Онооны график"], ["outcomes", "Төгсөгчдийн үр дүн"]];
 // Tab bar-ыг зөвхөн `program` ачаалсны дараа render хийдэг (SSR ба клиентийн эхний render хоёулаа
 // доорх Spinner-ийг харуулна), тиймээс энд window.location уншсан ч hydration mismatch гарахгүй.
 // Хэрэв ирээдүйд tab-уудыг өгөгдөл ирэхээс өмнө render хийх бол useSearchParams() руу шилжих хэрэгтэй.
@@ -49,14 +49,15 @@ export default function ProgramDetailAdminPage() {
         </div>
       </div>
       <nav aria-label="Хэсгүүд" className="flex gap-1 border-b border-slate-200">
-        {([["works", "Бүтээлийн булан"], ["scholarships", "Тэтгэлэг"], ...(RADAR_SLUGS.has(program.slug) ? [["radar", "Онооны график (ЭЕШ)"]] : [])] as [Tab, string][]).map(([t, label]) => (
+        {LABELS.map(([t, label]) => (
           <button key={t} type="button" onClick={() => pick(t)} aria-current={tab === t ? "page" : undefined}
                   className={`-mb-px border-b-2 px-3 py-2 text-sm font-semibold ${tab === t ? "border-navy text-navy" : "border-transparent text-slate-600 hover:text-navy"}`}>{label}</button>
         ))}
       </nav>
       {tab === "works" && <WorksPanel programId={program.id} works={program.works} onChanged={q.reload} />}
       {tab === "scholarships" && <ScholarshipsPanel programId={program.id} items={program.scholarships} onChanged={q.reload} />}
-      {tab === "radar" && RADAR_SLUGS.has(program.slug) && <RadarPanel key={program.id} programId={program.id} radar={program.radar} onChanged={q.reload} />}
+      {tab === "radar" && <RadarPanel key={program.id} programId={program.id} radar={program.radar} onChanged={q.reload} />}
+      {tab === "outcomes" && <OutcomesPanel key={program.id} programId={program.id} outcomes={program.outcomes} onChanged={q.reload} />}
     </div>
   );
 }

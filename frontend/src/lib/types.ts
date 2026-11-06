@@ -290,12 +290,15 @@ export interface ProgramCard {
 }
 export interface ProgramWork { id: number; image: string; title: string; title_en: string; student: string; caption: string; caption_en: string }
 export interface Scholarship { id: number; student_name: string; photo: string | null; university: string; year: number; amount_usd: number }
-export interface ProgramRadarSeries { name: string; values: number[] }
-/** Радар график (ЭЕШ-ийн оноо г.м.): хичээлүүд × цуврал; backend radar JSONB */
+/** Нэг цуврал (ихэвчлэн он): хичээл бүрийн оноо (өгөгдөлгүй бол null), сонголтоор нийт дундаж */
+export interface ProgramRadarSeries { name: string; values: (number | null)[]; total?: number | null }
+/** Онооны график (ЭЕШ, IGCSE, IB г.м.): хичээлүүд × цуврал; backend radar JSONB */
 export interface ProgramRadar { title: string; subjects: string[]; series: ProgramRadarSeries[] }
-export interface ProgramDetail extends ProgramCard { body_html: string; body_html_en: string; radar: ProgramRadar | null; works: ProgramWork[]; scholarships: Scholarship[]; scholarship_total_usd: number; scholarship_count: number }
+/** Төгсөлтийн үр дүн жилээр: төгссөн, гадаадын их, дээд сургуульд элссэн */
+export interface ProgramOutcome { year: number; graduates: number; abroad: number }
+export interface ProgramDetail extends ProgramCard { body_html: string; body_html_en: string; radar: ProgramRadar | null; outcomes: ProgramOutcome[]; works: ProgramWork[]; scholarships: Scholarship[]; scholarship_total_usd: number; scholarship_count: number }
 export interface ProgramAdmin extends ProgramCard { body_html: string; body_html_en: string; is_published: boolean; order: number; works_count: number; scholarships_count: number }
-export interface ProgramAdminDetail extends ProgramAdmin { radar: ProgramRadar | null; works: ProgramWork[]; scholarships: Scholarship[] }
+export interface ProgramAdminDetail extends ProgramAdmin { radar: ProgramRadar | null; outcomes: ProgramOutcome[]; works: ProgramWork[]; scholarships: Scholarship[] }
 export interface ProgramInput {
   name: string; name_en?: string; badge: string; summary: string; summary_en?: string; grade_from: number; grade_to: number;
   body_html: string; body_html_en?: string; is_published: boolean;

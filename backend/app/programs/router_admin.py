@@ -3,7 +3,8 @@
   GET/POST /programs/   GET/PATCH/DELETE /programs/{id}/   PUT /programs/order/   POST/DELETE /programs/{id}/cover/
   POST /programs/{id}/works/   PATCH/DELETE /works/{id}/   POST /works/{id}/image/   PUT /programs/{id}/works/order/
   POST /programs/{id}/scholarships/   PATCH/DELETE /scholarships/{id}/   POST/DELETE /scholarships/{id}/photo/   PUT /programs/{id}/scholarships/order/
-  PUT /programs/{id}/radar/  (онооны график: хичээл × цуврал — ЭЕШ; зөвхөн Үндэсний цөм хөтөлбөр, RADAR_SLUGS)
+  PUT /programs/{id}/radar/  (онооны график: хичээл × цуврал — ЭЕШ, IGCSE, IB г.м.)
+  PUT /programs/{id}/outcomes/  (төгсөгчдийн үр дүн жилээр: төгссөн, гадаадад элссэн)
   POST /upload-image/  (rich text дундах зураг)
 """
 
@@ -20,9 +21,9 @@ from ..common.media import delete_file, save_upload
 from ..db import get_db
 from ..news.sanitize import clean_rich
 from .models import Program, ProgramWork, Scholarship
-from .schemas import (OrderIn, ProgramAdmin, ProgramAdminDetail, ProgramIn, ProgramPatch, RadarIn, ScholarshipIn, ScholarshipOut,
+from .schemas import (OrderIn, ProgramAdmin, ProgramAdminDetail, ProgramIn, ProgramPatch, OutcomesIn, RadarIn, ScholarshipIn, ScholarshipOut,
                       ScholarshipPatch, WorkOut, WorkPatch)
-from .service import (RADAR_SLUGS, admin_detail_out, admin_out, clean_radar, get_or_404, list_programs, media_url, scholarship_out,
+from .service import (admin_detail_out, admin_out, clean_outcomes, clean_radar, get_or_404, list_programs, media_url, scholarship_out,
                       unique_slug, work_out)
 
 router = APIRouter(prefix="/api/programs/admin", tags=["programs-admin"])
@@ -315,9 +316,16 @@ async def scholarships_order(id: int, body: OrderIn, request: Request, db: DB, _
 @router.put("/programs/{id}/radar/", response_model=ProgramAdminDetail)
 async def program_radar(id: int, body: RadarIn, request: Request, db: DB, _: Manager):
     p = await get_or_404(db, Program, id)
-    if p.slug not in RADAR_SLUGS:
-        raise FieldError("subjects", "Онооны график зөвхөн Үндэсний цөм хөтөлбөрт байна.")
     p.radar = clean_radar(body)
+    await db.commit()
+    await db.refresh(p)
+    return admin_detail_out(request, p)
+
+
+@router.put("/programs/{id}/outcomes/", response_model=ProgramAdminDetail)
+async def program_outcomes(id: int, body: OutcomesIn, request: Request, db: DB, _: Manager):
+    p = await get_or_404(db, Program, id)
+    p.outcomes = clean_outcomes(body)
     await db.commit()
     await db.refresh(p)
     return admin_detail_out(request, p)

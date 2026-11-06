@@ -198,10 +198,39 @@ async def test_program_radar(client, make_user, tmp_path, monkeypatch):
     assert r.status_code == 400 and "subjects" in r.json()
     r = await client.put(f"{A}/programs/{p['id']}/radar/", headers=h, json=dict(body, series=[{"name": "2025", "values": [1, 2, 1001]}]))
     assert r.status_code == 400 and "series" in r.json()
-    # зөвхөн Үндэсний цөм хөтөлбөрт
-    r = await client.put(f"{A}/programs/{other['id']}/radar/", headers=h, json=body)
-    assert r.status_code == 400 and "subjects" in r.json()
+    # бүх хөтөлбөрт (IGCSE, IB оноо); хоосон нүд (null) ба нийт дундаж (total)
+    gaps = {"title": "IB", "subjects": ["Physics", "Chemistry", "Computer Science"],
+            "series": [{"name": "2025", "values": [2.9, 3.14, None]}, {"name": "2026", "values": [3.8, 4.5, 3.8], "total": 4.46}]}
+    r = await client.put(f"{A}/programs/{other['id']}/radar/", headers=h, json=gaps)
+    assert r.status_code == 200, r.text
+    got = (await client.get(f"/api/programs/{other['slug']}/")).json()["radar"]["series"]
+    assert got[0]["values"] == [2.9, 3.1, None] and got[0]["total"] is None and got[1]["total"] == 4.5
+    # хичээл бүр дор хаяж нэг оноотой
+    r = await client.put(f"{A}/programs/{other['id']}/radar/", headers=h, json=dict(gaps, series=[{"name": "2026", "values": [1, 2, None]}]))
+    assert r.status_code == 400 and "Computer Science" in r.json()["series"][0]
+    r = await client.put(f"{A}/programs/{other['id']}/radar/", headers=h, json=dict(gaps, series=[{"name": "2026", "values": [1, 2, 3], "total": 1001}]))
+    assert r.status_code == 400 and "series" in r.json()
     # clear
     r = await client.put(f"{A}/programs/{p['id']}/radar/", headers=h, json={"title": "", "subjects": [], "series": []})
     assert r.status_code == 200 and r.json()["radar"] is None
     assert (await client.put(f"{A}/programs/{p['id']}/radar/", headers=await staff_headers(client, make_user), json=body)).status_code == 403
+
+
+async def test_program_outcomes(client, make_user):
+    h = await manager_headers(client, make_user)
+    p = await mk(client, h, name="National core curriculum", badge="Үндэсний", grade_from=1, grade_to=12)
+    assert (await client.get(f"/api/programs/{p['slug']}/")).json()["outcomes"] == []
+    rows = [{"year": 2026, "graduates": 29, "abroad": 16}, {"year": 2022, "graduates": 34, "abroad": 9}]
+    r = await client.put(f"{A}/programs/{p['id']}/outcomes/", headers=h, json={"rows": rows})
+    assert r.status_code == 200, r.text
+    assert [x["year"] for x in r.json()["outcomes"]] == [2022, 2026]   # он өсөхөөр
+    assert (await client.get(f"/api/programs/{p['slug']}/")).json()["outcomes"][1] == {"year": 2026, "graduates": 29, "abroad": 16}
+    # validation
+    for bad in ([{"year": 2026, "graduates": 10, "abroad": 11}], [{"year": 2026, "graduates": 0, "abroad": 0}],
+                [{"year": 1999, "graduates": 5, "abroad": 1}], [rows[0], rows[0]]):
+        r = await client.put(f"{A}/programs/{p['id']}/outcomes/", headers=h, json={"rows": bad})
+        assert r.status_code == 400 and "rows" in r.json(), bad
+    # clear, эрх
+    r = await client.put(f"{A}/programs/{p['id']}/outcomes/", headers=h, json={"rows": []})
+    assert r.status_code == 200 and r.json()["outcomes"] == []
+    assert (await client.put(f"{A}/programs/{p['id']}/outcomes/", headers=await staff_headers(client, make_user), json={"rows": rows})).status_code == 403

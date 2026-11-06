@@ -27,8 +27,10 @@ class Program(Base):
     grade_to: Mapped[int] = mapped_column(SmallInteger, default=12)
     body_html: Mapped[str] = mapped_column(Text, default="")
     body_html_en: Mapped[str] = mapped_column(Text, default="", server_default="")
-    # Радар график (ЭЕШ-ийн оноо г.м.): {"title", "subjects": [..], "series": [{"name", "values": [..]}]} — хоосон {} бол харуулахгүй
+    # Онооны график (ЭЕШ, IGCSE г.м.): {"title", "subjects": [..], "series": [{"name", "values": [..|null], "total"?}]} — хоосон {} бол харуулахгүй
     radar: Mapped[dict] = mapped_column(JSONB, default=dict)
+    # Төгсөгчдийн үр дүн жилээр: [{"year", "graduates", "abroad"}] (он өсөхөөр) — хоосон [] бол харуулахгүй
+    outcomes: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")
     order: Mapped[int] = mapped_column(SmallInteger, default=0)
     is_published: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

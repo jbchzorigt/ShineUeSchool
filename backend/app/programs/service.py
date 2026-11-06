@@ -10,7 +10,7 @@ from ..common.i18n import Lang, localized
 from ..config import settings
 from ..news.slug import slugify
 from .models import Program, ProgramWork, Scholarship
-from .schemas import RadarIn, ProgramAdmin, ProgramAdminDetail, ProgramCard, ProgramDetail, ScholarshipOut, WorkOut
+from .schemas import OutcomeRow, OutcomesIn, RadarIn, ProgramAdmin, ProgramAdminDetail, ProgramCard, ProgramDetail, ScholarshipOut, WorkOut
 
 
 def media_url(request: Request, rel: str) -> str:
@@ -70,7 +70,7 @@ def scholarship_out(request: Request, s: Scholarship) -> ScholarshipOut:
 
 def detail_out(request: Request, p: Program, lang: Lang = "mn") -> ProgramDetail:
     return ProgramDetail(**_card(request, p, lang), body_html=localized(p.body_html, p.body_html_en, lang), body_html_en=p.body_html_en,
-                         radar=radar_out(p), works=[work_out(request, w, lang) for w in p.works],
+                         radar=radar_out(p), outcomes=outcomes_out(p), works=[work_out(request, w, lang) for w in p.works],
                          scholarships=[scholarship_out(request, s) for s in p.scholarships],
                          scholarship_total_usd=sum(s.amount_usd for s in p.scholarships), scholarship_count=len(p.scholarships))
 
@@ -81,7 +81,7 @@ def admin_out(request: Request, p: Program) -> ProgramAdmin:
 
 
 def admin_detail_out(request: Request, p: Program) -> ProgramAdminDetail:
-    return ProgramAdminDetail(**admin_out(request, p).model_dump(), radar=radar_out(p),
+    return ProgramAdminDetail(**admin_out(request, p).model_dump(), radar=radar_out(p), outcomes=outcomes_out(p),
                               works=[work_out(request, w) for w in p.works], scholarships=[scholarship_out(request, s) for s in p.scholarships])
 
 
@@ -91,16 +91,20 @@ def radar_out(p: Program) -> RadarIn | None:
 
 
 RADAR_MAX_SUBJECTS, RADAR_MAX_SERIES, RADAR_MAX_VALUE = 12, 5, 1000
-RADAR_SLUGS = {"national-core-curriculum"}   # ЭЕШ-ийн онооны график зөвхөн Үндэсний цөм хөтөлбөрт (IBDP, Cambridge-д байхгүй)
+
+
+def _num(v: float | None) -> float | None:
+    return None if v is None else round(v, 1)
 
 
 def clean_radar(data: RadarIn) -> dict:
-    """Радар графикийн шалгалт: хичээл 3–12 (давхардалгүй), цуврал 1–5 (нэр давхардалгүй), утга бүр хичээлийн тоотой тэнцүү, 0–1000.
+    """Онооны графикийн шалгалт: хичээл 3–12 (давхардалгүй), цуврал 1–5 (нэр давхардалгүй), утга бүр хичээлийн тоотой тэнцүү, 0–1000.
+    Тухайн онд өгөгдөлгүй нүд null байж болно, гэхдээ хичээл бүр дор хаяж нэг оноотой. `total` (нийт дундаж) сонголттой.
     subjects, series хоёулаа хоосон → {} (график арилна)."""
     subjects = [" ".join(x.split()) for x in data.subjects]
     subjects = [x for x in subjects if x]
-    series = [(" ".join(sr.name.split()), sr.values) for sr in data.series]
-    if not subjects and not any(n or v for n, v in series):
+    series = [(" ".join(sr.name.split()), sr.values, sr.total) for sr in data.series]
+    if not subjects and not any(n or v for n, v, _ in series):
         return {}
     if not 3 <= len(subjects) <= RADAR_MAX_SUBJECTS:
         raise FieldError("subjects", f"Хичээл 3–{RADAR_MAX_SUBJECTS} байна.")
@@ -108,16 +112,47 @@ def clean_radar(data: RadarIn) -> dict:
         raise FieldError("subjects", "Хичээлийн нэр давхардаж байна.")
     if not 1 <= len(series) <= RADAR_MAX_SERIES:
         raise FieldError("series", f"Цуврал 1–{RADAR_MAX_SERIES} байна.")
-    names = [n for n, _ in series]
+    names = [n for n, _, _ in series]
     if any(not n for n in names):
         raise FieldError("series", "Цуврал бүрт нэр (жил) бичнэ үү.")
     if len({n.casefold() for n in names}) != len(names):
         raise FieldError("series", "Цувралын нэр давхардаж байна.")
     out = []
-    for name, values in series:
+    for name, values, total in series:
         if len(values) != len(subjects):
-            raise FieldError("series", "Цуврал бүрт хичээл бүрийн оноо байх ёстой.")
-        if any(v < 0 or v > RADAR_MAX_VALUE for v in values):
+            raise FieldError("series", "Цуврал бүрт хичээл бүрийн нүд байх ёстой.")
+        if any(v is not None and not 0 <= v <= RADAR_MAX_VALUE for v in [*values, total]):
             raise FieldError("series", f"Оноо 0–{RADAR_MAX_VALUE} байна.")
-        out.append({"name": name, "values": [round(v, 1) for v in values]})
+        row = {"name": name, "values": [_num(v) for v in values]}
+        if total is not None:
+            row["total"] = _num(total)
+        out.append(row)
+    for i, subject in enumerate(subjects):
+        if all(row["values"][i] is None for row in out):
+            raise FieldError("series", f"«{subject}» хичээлд дор хаяж нэг оноо оруулна уу.")
     return {"title": data.title.strip(), "subjects": subjects, "series": out}
+
+
+OUTCOMES_MAX_ROWS, OUTCOMES_MAX_GRADUATES = 30, 10000
+
+
+def outcomes_out(p: Program) -> list[OutcomeRow]:
+    return [OutcomeRow(**r) for r in (p.outcomes or [])]
+
+
+def clean_outcomes(data: OutcomesIn) -> list[dict]:
+    """Төгсөлтийн үр дүн: мөр ≤30, он 2000–2100 давхардалгүй, төгссөн 1–10000, гадаадад элссэн 0…төгссөн. Он өсөхөөр эрэмбэлнэ; хоосон → []."""
+    rows = data.rows
+    if len(rows) > OUTCOMES_MAX_ROWS:
+        raise FieldError("rows", f"Хамгийн ихдээ {OUTCOMES_MAX_ROWS} он.")
+    years = [r.year for r in rows]
+    if any(not 2000 <= y <= 2100 for y in years):
+        raise FieldError("rows", "Он 2000–2100 байна.")
+    if len(set(years)) != len(years):
+        raise FieldError("rows", "Он давхардаж байна.")
+    for r in rows:
+        if not 1 <= r.graduates <= OUTCOMES_MAX_GRADUATES:
+            raise FieldError("rows", f"{r.year}: төгссөн тоо 1–{OUTCOMES_MAX_GRADUATES} байна.")
+        if not 0 <= r.abroad <= r.graduates:
+            raise FieldError("rows", f"{r.year}: гадаадад элссэн тоо 0-ээс төгссөн тоо хүртэл байна.")
+    return [r.model_dump() for r in sorted(rows, key=lambda r: r.year)]

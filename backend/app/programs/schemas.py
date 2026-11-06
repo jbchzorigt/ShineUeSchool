@@ -37,21 +37,35 @@ class ScholarshipOut(BaseModel):
 
 
 class RadarSeries(BaseModel):
+    """Нэг цуврал (ихэвчлэн он): хичээл бүрийн оноо (тухайн онд өгөгдөлгүй бол null) + сонголтоор нийт дундаж."""
     name: str = Field(max_length=40)
-    values: list[float]
+    values: list[float | None]
+    total: float | None = None
 
 
 class RadarIn(BaseModel):
-    """Радар график: хичээлүүд (тэнхлэг) × цуврал (жил г.м.). subjects, series хоёулаа хоосон бол графикийг арилгана."""
+    """Онооны график: хичээлүүд × цуврал (жил г.м.). subjects, series хоёулаа хоосон бол графикийг арилгана."""
     title: str = Field(default="", max_length=120)
     subjects: list[str] = Field(default_factory=list)
     series: list[RadarSeries] = Field(default_factory=list)
+
+
+class OutcomeRow(BaseModel):
+    """Нэг оны төгсөлт: төгссөн тоо, гадаадын их, дээд сургуульд элссэн тоо."""
+    year: int
+    graduates: int
+    abroad: int
+
+
+class OutcomesIn(BaseModel):
+    rows: list[OutcomeRow] = Field(default_factory=list)
 
 
 class ProgramDetail(ProgramCard):
     body_html: str
     body_html_en: str = ""
     radar: RadarIn | None
+    outcomes: list[OutcomeRow]
     works: list[WorkOut]
     scholarships: list[ScholarshipOut]
     scholarship_total_usd: int
@@ -69,6 +83,7 @@ class ProgramAdmin(ProgramCard):
 
 class ProgramAdminDetail(ProgramAdmin):
     radar: RadarIn | None
+    outcomes: list[OutcomeRow]
     works: list[WorkOut]
     scholarships: list[ScholarshipOut]
 

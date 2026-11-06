@@ -14,7 +14,7 @@ import type {
   ProgramWork, PublishResult, Result, ResultInput, Room, RoomInput, Scholarship, ScholarshipInput, SectionInfo, Stage, StageInput, Stats,
   Subject, SubjectInput, Teacher, TeacherInput, TimetableImportResponse, TimetableStats, User, UserInput, VisitorAdmin, WorkInput,
   Years,
-  CountryCatalogueItem, GraduateDestination, GraduateDestinationInput, GraduateStats, ProgramRadar,
+  CountryCatalogueItem, GraduateDestination, GraduateDestinationInput, GraduateStats, ProgramOutcome, ProgramRadar,
   AdmissionApplicantAdmin, AdmissionApplication, AdmissionApplicationInput, AdmissionImportReport, AdmissionRoundAdmin,
   AdmissionRoundInput, AdmissionRoundPatch, AdmissionRoundPublic, AdmissionResult,
 } from "./types";
@@ -427,6 +427,7 @@ export const api = {
     uploadImage: (file: File) => { const fd = new FormData(); fd.append("image", file); return request<{ url: string }>("/api/programs/admin/upload-image/", { method: "POST", body: fd }); },
     /** Радар график (хичээл × цуврал) — бүхэлд нь солино; хоосон subjects/series → арилгана */
     setRadar: (id: number, radar: ProgramRadar) => afterSave(request<ProgramAdminDetail>(`/api/programs/admin/programs/${id}/radar/`, { method: "PUT", body: radar }), ["programs"]),
+    setOutcomes: (id: number, rows: ProgramOutcome[]) => afterSave(request<ProgramAdminDetail>(`/api/programs/admin/programs/${id}/outcomes/`, { method: "PUT", body: { rows } }), ["programs"]),
     works: {
       create: (programId: number, d: WorkInput, image: File) => {
         const fd = new FormData();

@@ -1,14 +1,15 @@
 "use client";
 
-/* Онооны график (admin, slope chart): гарчиг; хичээлүүд = мөр, цуврал (жил) = багана, нүд бүрт оноо. Мөр/багана нэмэх, устгах; Хадгалах →
-   PUT /programs/{id}/radar/ (бүхэлд нь солино); "Графикийг арилгах" → хоосон илгээнэ. Backend-ийн талбарын алдаа доор нь. */
+/* Онооны график (admin, dumbbell): гарчиг; хичээлүүд = мөр, цуврал (жил) = багана, нүд бүрт оноо (хоосон = тухайн онд өгөгдөлгүй),
+   доод мөрөнд сонголтоор «Нийт дундаж» (хуудсанд area график + KPI). Мөр/багана нэмэх, устгах; Хадгалах → PUT /programs/{id}/radar/
+   (бүхэлд нь солино); "Графикийг арилгах" → хоосон илгээнэ. Backend-ийн талбарын алдаа доор нь. */
 
 import { useState, type FormEvent } from "react";
 import { Button, Card, Field, Input } from "@/components/ui";
 import { api, ApiError } from "@/lib/api";
 import type { ProgramRadar } from "@/lib/types";
 
-const EMPTY: ProgramRadar = { title: "ЭЕШ-ийн дундаж оноо", subjects: ["Математик", "Монгол хэл", "Англи хэл"], series: [{ name: String(new Date().getFullYear()), values: [0, 0, 0] }] };
+const EMPTY: ProgramRadar = { title: "Дундаж оноо", subjects: ["Математик", "Монгол хэл", "Англи хэл"], series: [{ name: String(new Date().getFullYear()), values: [0, 0, 0] }] };
 const iconBtn = "inline-grid h-8 w-8 place-items-center rounded-lg text-base text-red-600 transition hover:bg-red-50 disabled:opacity-30";
 
 export function RadarPanel({ programId, radar, onChanged }: { programId: number; radar: ProgramRadar | null; onChanged: () => void }) {
@@ -19,10 +20,12 @@ export function RadarPanel({ programId, radar, onChanged }: { programId: number;
 
   const setSubject = (i: number, v: string) => setD({ ...d, subjects: d.subjects.map((s, j) => (j === i ? v : s)) });
   const setSeriesName = (i: number, v: string) => setD({ ...d, series: d.series.map((s, j) => (j === i ? { ...s, name: v } : s)) });
-  const setValue = (si: number, i: number, v: string) => setD({ ...d, series: d.series.map((s, j) => (j === si ? { ...s, values: s.values.map((x, k) => (k === i ? Number(v) : x)) } : s)) });
-  const addSubject = () => setD({ ...d, subjects: [...d.subjects, ""], series: d.series.map((s) => ({ ...s, values: [...s.values, 0] })) });
+  const cell = (v: string) => (v.trim() === "" ? null : Number(v));
+  const setValue = (si: number, i: number, v: string) => setD({ ...d, series: d.series.map((s, j) => (j === si ? { ...s, values: s.values.map((x, k) => (k === i ? cell(v) : x)) } : s)) });
+  const setTotal = (si: number, v: string) => setD({ ...d, series: d.series.map((s, j) => (j === si ? { ...s, total: cell(v) } : s)) });
+  const addSubject = () => setD({ ...d, subjects: [...d.subjects, ""], series: d.series.map((s) => ({ ...s, values: [...s.values, null] })) });
   const removeSubject = (i: number) => setD({ ...d, subjects: d.subjects.filter((_, j) => j !== i), series: d.series.map((s) => ({ ...s, values: s.values.filter((_, k) => k !== i) })) });
-  const addSeries = () => setD({ ...d, series: [...d.series, { name: "", values: d.subjects.map(() => 0) }] });
+  const addSeries = () => setD({ ...d, series: [...d.series, { name: "", values: d.subjects.map(() => null) }] });
   const removeSeries = (i: number) => setD({ ...d, series: d.series.filter((_, j) => j !== i) });
 
   async function submit(body: ProgramRadar) {
@@ -44,8 +47,8 @@ export function RadarPanel({ programId, radar, onChanged }: { programId: number;
     <Card>
       <form onSubmit={save} className="space-y-4">
         <div>
-          <h2 className="text-lg font-bold text-navy">Онооны график (slope chart)</h2>
-          <p className="text-sm text-slate-600">Хичээл бүрээр (мөр) цуврал тус бүрийн (багана, жишээ нь он) оноо. Хуудсанд ApexCharts slope chart-аар гарна (багана = цуврал, шугам = хичээл); хичээл 3–12, цуврал 1–5, оноо 0–1000.</p>
+          <h2 className="text-lg font-bold text-navy">Онооны график</h2>
+          <p className="text-sm text-slate-600">Хичээл бүрээр (мөр) цуврал тус бүрийн (багана, жишээ нь он) дундаж оноо — ЭЕШ, IGCSE, IB г.м. Хуудсанд ApexCharts dumbbell графикаар гарна (мөр = хичээл, цэг = он). Тухайн онд өгөгдөлгүй нүдийг хоосон үлдээнэ. «Нийт дундаж» мөрийг бөглөвөл жилээрх нийт дундажийн график ба үзүүлэлт нэмэгдэнэ. Хичээл 3–12, цуврал 1–5, оноо 0–1000.</p>
         </div>
         {errors._ && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{errors._}</p>}
         <Field label="Гарчиг" error={errors.title}><Input value={d.title} onChange={(e) => setD({ ...d, title: e.target.value })} placeholder="ЭЕШ-ийн дундаж оноо" maxLength={120} /></Field>
@@ -70,12 +73,21 @@ export function RadarPanel({ programId, radar, onChanged }: { programId: number;
                 <tr key={i} className="border-t border-slate-100">
                   <td className="py-1.5 pr-2"><Input value={sub} onChange={(e) => setSubject(i, e.target.value)} placeholder="Хичээл" className="min-w-40" maxLength={40} /></td>
                   {d.series.map((s, si) => (
-                    <td key={si} className="py-1.5 pr-2"><Input type="number" min={0} max={1000} step="0.1" value={s.values[i] ?? 0} onChange={(e) => setValue(si, i, e.target.value)} className="w-24" /></td>
+                    <td key={si} className="py-1.5 pr-2"><Input type="number" min={0} max={1000} step="0.1" value={s.values[i] ?? ""} onChange={(e) => setValue(si, i, e.target.value)} placeholder="–" aria-label={`${sub || "Хичээл"}, ${s.name || "цуврал"}`} className="w-24" /></td>
                   ))}
                   <td className="py-1.5"><button type="button" onClick={() => removeSubject(i)} disabled={d.subjects.length <= 3} className={iconBtn} aria-label="Хичээл устгах" title="Хичээл устгах">✕</button></td>
                 </tr>
               ))}
             </tbody>
+            <tfoot>
+              <tr className="border-t-2 border-slate-200">
+                <th scope="row" className="py-2 pr-2 text-left text-sm font-semibold text-slate-700">Нийт дундаж <span className="font-normal text-slate-500">(сонголттой)</span></th>
+                {d.series.map((s, si) => (
+                  <td key={si} className="py-1.5 pr-2"><Input type="number" min={0} max={1000} step="0.1" value={s.total ?? ""} onChange={(e) => setTotal(si, e.target.value)} placeholder="–" aria-label={`Нийт дундаж, ${s.name || "цуврал"}`} className="w-24" /></td>
+                ))}
+                <td />
+              </tr>
+            </tfoot>
           </table>
         </div>
         {(errors.subjects || errors.series) && <p className="text-xs font-medium text-red-600">{errors.subjects ?? errors.series}</p>}
