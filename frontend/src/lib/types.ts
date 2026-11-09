@@ -296,9 +296,13 @@ export interface ProgramRadarSeries { name: string; values: (number | null)[]; t
 export interface ProgramRadar { title: string; subjects: string[]; series: ProgramRadarSeries[] }
 /** Төгсөлтийн үр дүн жилээр: төгссөн, гадаадын их, дээд сургуульд элссэн */
 export interface ProgramOutcome { year: number; graduates: number; abroad: number }
-export interface ProgramDetail extends ProgramCard { body_html: string; body_html_en: string; radar: ProgramRadar | null; outcomes: ProgramOutcome[]; works: ProgramWork[]; scholarships: Scholarship[]; scholarship_total_usd: number; scholarship_count: number }
+/** Заадаг хичээл (нийтийн, `?lang`-аар): key — монгол нэр, name_en — англи нэр (онооны графиктай тааруулахад) */
+export interface ProgramSubject { key: string; group: string; name: string; name_en: string; tag: string; description: string }
+/** Заадаг хичээл (админ): монгол + англи талбарууд */
+export interface ProgramSubjectRow { group: string; group_en: string; name: string; name_en: string; tag: string; description: string; description_en: string }
+export interface ProgramDetail extends ProgramCard { body_html: string; body_html_en: string; radar: ProgramRadar | null; outcomes: ProgramOutcome[]; subjects: ProgramSubject[]; works: ProgramWork[]; scholarships: Scholarship[]; scholarship_total_usd: number; scholarship_count: number }
 export interface ProgramAdmin extends ProgramCard { body_html: string; body_html_en: string; is_published: boolean; order: number; works_count: number; scholarships_count: number }
-export interface ProgramAdminDetail extends ProgramAdmin { radar: ProgramRadar | null; outcomes: ProgramOutcome[]; works: ProgramWork[]; scholarships: Scholarship[] }
+export interface ProgramAdminDetail extends ProgramAdmin { radar: ProgramRadar | null; outcomes: ProgramOutcome[]; subjects: ProgramSubjectRow[]; works: ProgramWork[]; scholarships: Scholarship[] }
 export interface ProgramInput {
   name: string; name_en?: string; badge: string; summary: string; summary_en?: string; grade_from: number; grade_to: number;
   body_html: string; body_html_en?: string; is_published: boolean;

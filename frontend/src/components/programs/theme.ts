@@ -14,6 +14,9 @@ const THEMES: Record<string, ProgramTheme> = {};
 
 export const themeFor = (slug: string): ProgramTheme => THEMES[slug] ?? NAVY;
 
+/** Сурагчдын бүтээлийн булан нийтийн хуудсанд (хэсэг, tab, KPI) — одоогоор нуусан. Өгөгдөл ба админы таб хэвээр; буцааж харуулах бол true. */
+export const SHOW_WORKS = false;
+
 const hex = (c: string) => [1, 3, 5].map((i) => parseInt(c.slice(i, i + 2), 16));
 
 /** a → b хооронд n өнгө (n=1 → зөвхөн b) — dumbbell-ийн цуврал бүрт (он) нэг өнгө */
@@ -38,3 +41,5 @@ export function niceRange(values: number[], floor = 0, ceil = Infinity) {
 export const num = (v: number) => String(Math.round(v * 10) / 10);
 export const pct = (a: number, b: number) => (b ? Math.round((a / b) * 1000) / 10 : 0);
 export const signed = (v: number) => (v > 0 ? `+${num(v)}` : num(v));
+/** Хуримтлагдсан нийлбэр: [10, 14, 20] → [10, 24, 44] (гадаадад элссэн тоо, тэтгэлгийн дүнгийн графикт) */
+export const cumulative = (values: number[]) => values.reduce<number[]>((acc, v) => [...acc, (acc[acc.length - 1] ?? 0) + v], []);

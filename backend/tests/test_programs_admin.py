@@ -234,3 +234,29 @@ async def test_program_outcomes(client, make_user):
     r = await client.put(f"{A}/programs/{p['id']}/outcomes/", headers=h, json={"rows": []})
     assert r.status_code == 200 and r.json()["outcomes"] == []
     assert (await client.put(f"{A}/programs/{p['id']}/outcomes/", headers=await staff_headers(client, make_user), json={"rows": rows})).status_code == 403
+
+
+async def test_program_subjects(client, make_user):
+    h = await manager_headers(client, make_user)
+    p = await mk(client, h, name="IB Diploma", badge="IBDP")
+    assert (await client.get(f"/api/programs/{p['slug']}/")).json()["subjects"] == []
+    rows = [{"group": "Group 4 · Шинжлэх ухаан", "group_en": "Group 4 · Sciences", "name": "  Физик ", "name_en": "Physics", "tag": "HL · SL",
+             "description": "Механик,\n\n  долгион   ", "description_en": "Mechanics, waves"},
+            {"name": "Theory of Knowledge"}]
+    r = await client.put(f"{A}/programs/{p['id']}/subjects/", headers=h, json={"rows": rows})
+    assert r.status_code == 200, r.text
+    first = r.json()["subjects"][0]
+    assert first["name"] == "Физик" and first["description"] == "Механик,\n\nдолгион"   # хоосон зай цэгцэлсэн, админы эрэмбээр
+    mn = (await client.get(f"/api/programs/{p['slug']}/")).json()["subjects"]
+    assert mn[0] == {"key": "Физик", "group": "Group 4 · Шинжлэх ухаан", "name": "Физик", "name_en": "Physics", "tag": "HL · SL", "description": "Механик,\n\nдолгион"}
+    en = (await client.get(f"/api/programs/{p['slug']}/?lang=en")).json()["subjects"]
+    assert en[0]["name"] == "Physics" and en[0]["key"] == "Физик" and en[0]["description"] == "Mechanics, waves"
+    assert en[1]["name"] == "Theory of Knowledge" and en[1]["description"] == ""   # англи хоосон бол монгол руу буцна
+    # validation
+    for bad in ([{"name": "  "}], [{"name": "Физик"}, {"name": "физик"}], [{"name": f"S{i}"} for i in range(41)]):
+        r = await client.put(f"{A}/programs/{p['id']}/subjects/", headers=h, json={"rows": bad})
+        assert r.status_code == 400 and "rows" in r.json(), bad
+    # clear, эрх
+    r = await client.put(f"{A}/programs/{p['id']}/subjects/", headers=h, json={"rows": []})
+    assert r.status_code == 200 and r.json()["subjects"] == []
+    assert (await client.put(f"{A}/programs/{p['id']}/subjects/", headers=await staff_headers(client, make_user), json={"rows": rows})).status_code == 403

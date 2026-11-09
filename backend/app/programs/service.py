@@ -10,7 +10,8 @@ from ..common.i18n import Lang, localized
 from ..config import settings
 from ..news.slug import slugify
 from .models import Program, ProgramWork, Scholarship
-from .schemas import OutcomeRow, OutcomesIn, RadarIn, ProgramAdmin, ProgramAdminDetail, ProgramCard, ProgramDetail, ScholarshipOut, WorkOut
+from .schemas import (OutcomeRow, OutcomesIn, RadarIn, ProgramAdmin, ProgramAdminDetail, ProgramCard, ProgramDetail, ScholarshipOut, SubjectOut,
+                      SubjectRow, SubjectsIn, WorkOut)
 
 
 def media_url(request: Request, rel: str) -> str:
@@ -70,7 +71,7 @@ def scholarship_out(request: Request, s: Scholarship) -> ScholarshipOut:
 
 def detail_out(request: Request, p: Program, lang: Lang = "mn") -> ProgramDetail:
     return ProgramDetail(**_card(request, p, lang), body_html=localized(p.body_html, p.body_html_en, lang), body_html_en=p.body_html_en,
-                         radar=radar_out(p), outcomes=outcomes_out(p), works=[work_out(request, w, lang) for w in p.works],
+                         radar=radar_out(p), outcomes=outcomes_out(p), subjects=subjects_out(p, lang), works=[work_out(request, w, lang) for w in p.works],
                          scholarships=[scholarship_out(request, s) for s in p.scholarships],
                          scholarship_total_usd=sum(s.amount_usd for s in p.scholarships), scholarship_count=len(p.scholarships))
 
@@ -82,6 +83,7 @@ def admin_out(request: Request, p: Program) -> ProgramAdmin:
 
 def admin_detail_out(request: Request, p: Program) -> ProgramAdminDetail:
     return ProgramAdminDetail(**admin_out(request, p).model_dump(), radar=radar_out(p), outcomes=outcomes_out(p),
+                              subjects=[SubjectRow(**s) for s in (p.subjects or [])],
                               works=[work_out(request, w) for w in p.works], scholarships=[scholarship_out(request, s) for s in p.scholarships])
 
 
@@ -156,3 +158,34 @@ def clean_outcomes(data: OutcomesIn) -> list[dict]:
         if not 0 <= r.abroad <= r.graduates:
             raise FieldError("rows", f"{r.year}: гадаадад элссэн тоо 0-ээс төгссөн тоо хүртэл байна.")
     return [r.model_dump() for r in sorted(rows, key=lambda r: r.year)]
+
+
+SUBJECTS_MAX_ROWS = 40
+
+
+def subjects_out(p: Program, lang: Lang = "mn") -> list[SubjectOut]:
+    return [SubjectOut(key=s["name"], group=localized(s.get("group", ""), s.get("group_en", ""), lang), name=localized(s["name"], s.get("name_en", ""), lang),
+                       name_en=s.get("name_en", ""), tag=s.get("tag", ""), description=localized(s.get("description", ""), s.get("description_en", ""), lang))
+            for s in (p.subjects or [])]
+
+
+def clean_subjects(data: SubjectsIn) -> list[dict]:
+    """Хичээлүүд: ≤40 мөр, нэр заавал ба давхардалгүй (том жижиг үсэг ялгахгүй), хоосон зай цэгцэлнэ (тайлбарт мөр шилжилт хадгална).
+    Админы оруулсан эрэмбээр хадгална; хоосон → []."""
+    rows = data.rows
+    if len(rows) > SUBJECTS_MAX_ROWS:
+        raise FieldError("rows", f"Хамгийн ихдээ {SUBJECTS_MAX_ROWS} хичээл.")
+    line = lambda v: " ".join(v.split())                                           # noqa: E731
+    text = lambda v: "\n".join(line(x) for x in v.strip().splitlines()).strip()   # noqa: E731
+    out = []
+    for r in rows:
+        name = line(r.name)
+        if not name:
+            raise FieldError("rows", "Хичээл бүрт нэр бичнэ үү.")
+        out.append({"group": line(r.group), "group_en": line(r.group_en), "name": name, "name_en": line(r.name_en), "tag": line(r.tag),
+                    "description": text(r.description), "description_en": text(r.description_en)})
+    names = [s["name"].casefold() for s in out]
+    if len(set(names)) != len(names):
+        dup = next(s["name"] for s in out if names.count(s["name"].casefold()) > 1)
+        raise FieldError("rows", f"«{dup}» хичээл давхардаж байна.")
+    return out

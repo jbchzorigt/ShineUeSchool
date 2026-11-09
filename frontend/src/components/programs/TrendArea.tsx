@@ -1,7 +1,8 @@
 "use client";
 
 /* Жилээрх чиг хандлага — ApexCharts `area`: нэг цуврал, цэг бүр дээр утга, сүүлийн цэгийг point annotation-оор тодруулна.
-   Хоёр хэрэглээ: Cambridge-ийн нийт дундаж оноо (kind="score"), гадаадад элссэн хувь (kind="percent", tooltip-д "16 / 29 төгсөгч").
+   Хэрэглээ: Cambridge-ийн нийт дундаж оноо (kind="score"), гадаадад элссэн төгсөгчдийн хуримтлагдсан тоо (kind="count", tooltip-д
+   "2026 онд +40 · 40 / 63 төгсөгч"); kind="percent" — 0–100% тэнхлэг.
    Тэнхлэг 0-ээс эхэлнэ (area-ийн талбай үнэн харьцаатай). Client дээр dynamic import; unmount-д destroy; reduced motion үед анимацигүй. */
 
 import { useEffect, useRef } from "react";
@@ -13,7 +14,7 @@ const INK = "#1d1d1f", MUTED = "#4a5068", GRID = "#e4e9f5";
 
 export interface TrendPoint { label: string; value: number; detail?: string }
 
-export function TrendArea({ points, color, kind, name, ariaLabel }: { points: TrendPoint[]; color: string; kind: "score" | "percent"; name: string; ariaLabel: string }) {
+export function TrendArea({ points, color, kind, name, ariaLabel }: { points: TrendPoint[]; color: string; kind: "score" | "percent" | "count"; name: string; ariaLabel: string }) {
   const box = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -27,7 +28,7 @@ export function TrendArea({ points, color, kind, name, ariaLabel }: { points: Tr
       const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       const fmt = (v: number) => (kind === "percent" ? `${num(v)}%` : num(v));
       const values = points.map((p) => p.value);
-      const max = values.every((v) => v <= 100) ? 100 : niceRange(values).max;
+      const max = kind === "count" ? niceRange([0, ...values]).max : values.every((v) => v <= 100) ? 100 : niceRange(values).max;
       const last = points[points.length - 1];
 
       const options: ApexOptions = {

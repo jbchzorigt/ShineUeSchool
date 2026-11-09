@@ -1,11 +1,11 @@
-/* «Үр дүн» хэсэг: хичээлийн оноо (dumbbell, radar өгөгдөл) + нийт дундаж оноо (area, series[].total) + гадаадад элссэн хувь
-   (area, outcomes). Өгөгдөлгүй карт харагдахгүй; оноо байвал өргөн карт (3/5), бусад нь 2/5. Server component — графикууд client. */
+/* «Үр дүн» хэсэг: хичээлийн оноо (dumbbell, radar өгөгдөл) + нийт дундаж оноо (area, series[].total) + гадаадад элссэн төгсөгчдийн
+   хуримтлагдсан тоо (area, outcomes — хуримтлагдсан тул үргэлж өсөх чиглэлтэй; он бүрийн тоо, харьцаа tooltip-д). Өгөгдөлгүй карт харагдахгүй; оноо байвал өргөн карт (3/5), бусад нь 2/5. Server component — графикууд client. */
 
 import { getDict, type Lang } from "@/lib/i18n";
 import type { ProgramDetail } from "@/lib/types";
 import { ScoreDumbbell } from "./ScoreDumbbell";
 import { TrendArea, type TrendPoint } from "./TrendArea";
-import { num, pct, themeFor } from "./theme";
+import { cumulative, num, themeFor } from "./theme";
 
 function ChartCard({ title, sub, wide, children }: { title: string; sub?: string; wide?: boolean; children: React.ReactNode }) {
   return (
@@ -34,7 +34,11 @@ export function ProgramResults({ program, lang = "mn" }: { program: ProgramDetai
   const totals = totalsOf(program);
   const outcomes = program.outcomes;
   const totalPoints: TrendPoint[] = totals.map((s) => ({ label: s.name, value: s.total }));
-  const abroadPoints: TrendPoint[] = outcomes.map((o) => ({ label: String(o.year), value: pct(o.abroad, o.graduates), detail: t.abroadOf(o.abroad, o.graduates) }));
+  // Гадаадад элссэн төгсөгчдийн хуримтлагдсан тоо (он бүрийн нэмэгдэл, тухайн оны харьцаа tooltip-д)
+  const runs = cumulative(outcomes.map((o) => o.abroad));
+  const run = runs[runs.length - 1] ?? 0;
+  const abroadPoints: TrendPoint[] = outcomes.map((o, i) => ({ label: String(o.year), value: runs[i], detail: `${t.addedIn(o.year, String(o.abroad))} · ${t.abroadOf(o.abroad, o.graduates)}` }));
+  const years = outcomes.length ? `${outcomes[0].year}–${outcomes[outcomes.length - 1].year}` : "";
   const first = radar?.series[0]?.name ?? "", last = radar?.series[radar.series.length - 1]?.name ?? "";
   const side = (totals.length > 1 ? 1 : 0) + (outcomes.length > 1 ? 1 : 0);
 
@@ -54,10 +58,9 @@ export function ProgramResults({ program, lang = "mn" }: { program: ProgramDetai
           </ChartCard>
         )}
         {outcomes.length > 1 && (
-          <ChartCard title={t.abroadTitle}
-                     sub={t.abroadSub(`${num(abroadPoints[0].value)}% (${abroadPoints[0].label})`, `${num(abroadPoints[abroadPoints.length - 1].value)}% (${abroadPoints[abroadPoints.length - 1].label})`)}>
-            <TrendArea points={abroadPoints} color={strong} kind="percent" name={t.abroadSeries}
-                       ariaLabel={t.abroadAria(abroadPoints.map((p) => `${p.label}: ${num(p.value)}% (${p.detail})`).join(", "))} />
+          <ChartCard title={t.abroadTitle} sub={t.abroadSub(years, run)}>
+            <TrendArea points={abroadPoints} color={strong} kind="count" name={t.abroadSeries}
+                       ariaLabel={t.abroadAria(abroadPoints.map((p) => `${p.label}: ${p.value} (${p.detail})`).join(", "))} />
           </ChartCard>
         )}
       </div>

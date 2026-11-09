@@ -31,6 +31,8 @@ class Program(Base):
     radar: Mapped[dict] = mapped_column(JSONB, default=dict)
     # Төгсөгчдийн үр дүн жилээр: [{"year", "graduates", "abroad"}] (он өсөхөөр) — хоосон [] бол харуулахгүй
     outcomes: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")
+    # Заадаг хичээлүүд: [{"group", "group_en", "name", "name_en", "tag", "description", "description_en"}] (админы эрэмбээр) — хоосон [] бол харуулахгүй
+    subjects: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")
     order: Mapped[int] = mapped_column(SmallInteger, default=0)
     is_published: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

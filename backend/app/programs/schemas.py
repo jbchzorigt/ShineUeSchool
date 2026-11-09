@@ -61,11 +61,37 @@ class OutcomesIn(BaseModel):
     rows: list[OutcomeRow] = Field(default_factory=list)
 
 
+class SubjectRow(BaseModel):
+    """Нэг хичээл (админ): бүлэг (ж.нь IB Group 4, IGCSE), нэр, тэмдэг (HL · SL, 9–10-р анги), товч тайлбар — монгол + англи."""
+    group: str = Field(default="", max_length=60)
+    group_en: str = Field(default="", max_length=60)
+    name: str = Field(max_length=80)
+    name_en: str = Field(default="", max_length=80)
+    tag: str = Field(default="", max_length=30)
+    description: str = Field(default="", max_length=400)
+    description_en: str = Field(default="", max_length=400)
+
+
+class SubjectsIn(BaseModel):
+    rows: list[SubjectRow] = Field(default_factory=list)
+
+
+class SubjectOut(BaseModel):
+    """Нийтийн хариунд: group, name, description нь `?lang`-аар. `key` — монгол нэр, `name_en` — англи нэр (онооны графиктай тааруулахад)."""
+    key: str
+    group: str
+    name: str
+    name_en: str = ""
+    tag: str
+    description: str
+
+
 class ProgramDetail(ProgramCard):
     body_html: str
     body_html_en: str = ""
     radar: RadarIn | None
     outcomes: list[OutcomeRow]
+    subjects: list[SubjectOut]
     works: list[WorkOut]
     scholarships: list[ScholarshipOut]
     scholarship_total_usd: int
@@ -84,6 +110,7 @@ class ProgramAdmin(ProgramCard):
 class ProgramAdminDetail(ProgramAdmin):
     radar: RadarIn | None
     outcomes: list[OutcomeRow]
+    subjects: list[SubjectRow]
     works: list[WorkOut]
     scholarships: list[ScholarshipOut]
 

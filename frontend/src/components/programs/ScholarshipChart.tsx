@@ -1,9 +1,9 @@
 "use client";
 
-/* Тэтгэлгийн мөнгөн дүн жилээр — ApexCharts "line with annotations" (apexcharts.com демо) загвар:
-   жил бүрийн нийт дүн хөх шугам + өнгөт цэг (ногоон/шар/улбар/улаан/бордоо ээлжлэн), цэг бүр дээр $ дүн; дундаж дүнг y тэнхлэгийн
-   annotation (улбар тасархай шугам, шар хаяг), хамгийн их жилийг бордоо point annotation-оор тэмдэглэнэ. Tooltip-д сурагчийн тоо. ApexCharts window хэрэглэдэг тул client дээр
-   dynamic import; unmount-д destroy. Өнгө: хэрэглэгчийн өгсөн палитр (P). Өгөгдөл: ProgramDetail.scholarships (year, amount_usd) → жилээр нэгтгэнэ. */
+/* Тэтгэлгийн хуримтлагдсан нийт дүн жилээр — ApexCharts line: хөх шугам + өнгөт цэг (ногоон/шар/улбар/улаан/бордоо ээлжлэн), цэг бүр
+   дээр тухайн он хүртэлх нийт $ дүн (хуримтлагдсан тул үргэлж өсөх чиглэлтэй), сүүлийн цэгийг тодруулна. Tooltip-д тухайн оны нэмэгдэл,
+   сурагчийн тоо. ApexCharts window хэрэглэдэг тул client дээр dynamic import; unmount-д destroy. Өнгө: хэрэглэгчийн өгсөн палитр (P).
+   Өгөгдөл: ProgramDetail.scholarships (year, amount_usd) → жилээр нэгтгэж хуримтлуулна. */
 
 import { useDict } from "@/components/site/LangProvider";
 import { useEffect, useRef } from "react";
@@ -11,6 +11,7 @@ import type ApexCharts from "apexcharts";
 import type { ApexOptions } from "apexcharts";
 import type { Scholarship } from "@/lib/types";
 import { formatUsd } from "./money";
+import { cumulative } from "./theme";
 
 /* Графикийн палитр (хэрэглэгчийн өгсөн): хөх шугам, цэгүүд ногоон→шар→улбар→улаан→бордоо ээлжлэн, хар бичиг, цагаан дэвсгэр */
 const P = { blue: "#223A62", green: "#2EC23C", yellow: "#FFF457", orange: "#FFAB1A", red: "#D1460A", maroon: "#980B01", black: "#000000", white: "#FFFFFF" };
@@ -25,6 +26,13 @@ export function byYear(items: Scholarship[]) {
     m.set(s.year, e);
   }
   return [...m.entries()].sort((a, b) => a[0] - b[0]).map(([year, v]) => ({ year, ...v }));
+}
+
+/** Дэлгэц уншигчид: "2022: $75,100, 2023: $1,468,628, …" (хуримтлагдсан) */
+function ariaValues(items: Scholarship[]) {
+  const rows = byYear(items);
+  const runs = cumulative(rows.map((r) => r.total));
+  return rows.map((r, i) => `${r.year}: ${formatUsd(runs[i])}`).join(", ");
 }
 
 export function ScholarshipChart({ items }: { items: Scholarship[] }) {
@@ -43,9 +51,8 @@ export function ScholarshipChart({ items }: { items: Scholarship[] }) {
       const { default: Apex } = await import("apexcharts");
       if (cancelled) return;
       const years = rows.map((r) => String(r.year));
-      const totals = rows.map((r) => r.total);
-      const avg = Math.round(totals.reduce((a, b) => a + b, 0) / totals.length);
-      const maxI = totals.indexOf(Math.max(...totals));
+      const totals = cumulative(rows.map((r) => r.total));   // хуримтлагдсан
+      const last = totals.length - 1;
       const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
       const options: ApexOptions = {
@@ -75,18 +82,11 @@ export function ScholarshipChart({ items }: { items: Scholarship[] }) {
           // Apex-ийн саарал tooltip-ийн оронд хөх карт (гадна хүрээг .scholarship-chart CSS-ээр арилгана, globals.css)
           custom: ({ dataPointIndex }) => {
             const r = rows[dataPointIndex];
-            return r ? `<div class="rounded-lg bg-[#223A62] px-3 py-2 text-sm text-white shadow-lg"><div class="font-semibold text-[#FFF457]">${t.year(r.year)}</div><div>${formatUsd(r.total)} · ${t.students(r.count)}</div></div>` : "";
+            return r ? `<div class="rounded-lg bg-[#223A62] px-3 py-2 text-sm text-white shadow-lg"><div class="font-semibold text-[#FFF457]">${t.year(r.year)}</div><div><b>${formatUsd(totals[dataPointIndex])}</b></div><div>${t.addedIn(r.year, formatUsd(r.total))} · ${t.students(r.count)}</div></div>` : "";
           },
         },
         annotations: {
-          yaxis: [{
-            y: avg, borderColor: P.orange, strokeDashArray: 6,
-            label: { position: "right", textAnchor: "end", offsetX: -4, offsetY: 20, borderColor: P.orange, style: { color: P.black, background: P.yellow, fontWeight: 700 }, text: t.average(formatUsd(avg)) },
-          }],
-          points: [{
-            x: years[maxI], y: totals[maxI], marker: { size: 10, fillColor: P.yellow, strokeColor: P.maroon, strokeWidth: 3 },
-            label: { offsetY: -4, borderColor: P.maroon, style: { color: P.white, background: P.maroon, fontWeight: 700 }, text: t.highest },
-          }],
+          points: [{ x: years[last], y: totals[last], marker: { size: 10, fillColor: P.yellow, strokeColor: P.blue, strokeWidth: 3 } }],
         },
         responsive: [{ breakpoint: 640, options: { chart: { height: 260 }, dataLabels: { style: { fontSize: "11px" } }, yaxis: { labels: { formatter: (v: number) => `$${Math.round(v / 1000)}k` } } } }],
       };
@@ -101,7 +101,7 @@ export function ScholarshipChart({ items }: { items: Scholarship[] }) {
   return (
     <figure className="scholarship-chart rounded-2xl border border-line bg-white p-4 lg:p-6">
       <figcaption className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted">{t.chartCaption}</figcaption>
-      <div ref={box} className="min-h-[260px] sm:min-h-[320px]" role="img" aria-label={t.chartAria} />
+      <div ref={box} className="min-h-[260px] sm:min-h-[320px]" role="img" aria-label={t.chartAria(ariaValues(items))} />
     </figure>
   );
 }

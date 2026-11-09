@@ -1,6 +1,6 @@
 "use client";
 
-/* /admin/programs/[id] — хөтөлбөрийн бүтээл, тэтгэлэг, онооны график, төгсөгчдийн үр дүн (tab ?tab=works|scholarships|radar|outcomes). */
+/* /admin/programs/[id] — хөтөлбөрийн хичээлүүд, бүтээл, тэтгэлэг, онооны график, төгсөгчдийн үр дүн (tab ?tab=subjects|works|scholarships|radar|outcomes). */
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -8,22 +8,23 @@ import { useState } from "react";
 import { OutcomesPanel } from "@/components/admin/programs/OutcomesPanel";
 import { RadarPanel } from "@/components/admin/programs/RadarPanel";
 import { ScholarshipsPanel } from "@/components/admin/programs/ScholarshipsPanel";
+import { SubjectsPanel } from "@/components/admin/programs/SubjectsPanel";
 import { WorksPanel } from "@/components/admin/programs/WorksPanel";
 import { Badge, Spinner } from "@/components/ui";
 import { api } from "@/lib/api";
 import { useFetch } from "@/lib/useFetch";
 import type { ProgramAdminDetail } from "@/lib/types";
 
-type Tab = "works" | "scholarships" | "radar" | "outcomes";
-const TABS: Tab[] = ["works", "scholarships", "radar", "outcomes"];
-const LABELS: [Tab, string][] = [["works", "Бүтээлийн булан"], ["scholarships", "Тэтгэлэг"], ["radar", "Онооны график"], ["outcomes", "Төгсөгчдийн үр дүн"]];
+type Tab = "subjects" | "works" | "scholarships" | "radar" | "outcomes";
+const TABS: Tab[] = ["subjects", "works", "scholarships", "radar", "outcomes"];
+const LABELS: [Tab, string][] = [["subjects", "Хичээлүүд"], ["works", "Бүтээлийн булан"], ["scholarships", "Тэтгэлэг"], ["radar", "Онооны график"], ["outcomes", "Төгсөгчдийн үр дүн"]];
 // Tab bar-ыг зөвхөн `program` ачаалсны дараа render хийдэг (SSR ба клиентийн эхний render хоёулаа
 // доорх Spinner-ийг харуулна), тиймээс энд window.location уншсан ч hydration mismatch гарахгүй.
 // Хэрэв ирээдүйд tab-уудыг өгөгдөл ирэхээс өмнө render хийх бол useSearchParams() руу шилжих хэрэгтэй.
 function initialTab(): Tab {
-  if (typeof window === "undefined") return "works";
+  if (typeof window === "undefined") return "subjects";
   const t = new URLSearchParams(window.location.search).get("tab");
-  return TABS.includes(t as Tab) ? (t as Tab) : "works";
+  return TABS.includes(t as Tab) ? (t as Tab) : "subjects";
 }
 
 export default function ProgramDetailAdminPage() {
@@ -54,6 +55,7 @@ export default function ProgramDetailAdminPage() {
                   className={`-mb-px border-b-2 px-3 py-2 text-sm font-semibold ${tab === t ? "border-navy text-navy" : "border-transparent text-slate-600 hover:text-navy"}`}>{label}</button>
         ))}
       </nav>
+      {tab === "subjects" && <SubjectsPanel key={program.id} programId={program.id} subjects={program.subjects} onChanged={q.reload} />}
       {tab === "works" && <WorksPanel programId={program.id} works={program.works} onChanged={q.reload} />}
       {tab === "scholarships" && <ScholarshipsPanel programId={program.id} items={program.scholarships} onChanged={q.reload} />}
       {tab === "radar" && <RadarPanel key={program.id} programId={program.id} radar={program.radar} onChanged={q.reload} />}

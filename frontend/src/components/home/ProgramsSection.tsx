@@ -1,10 +1,10 @@
 /* Нүүрний "Хөтөлбөрүүд" хэсэг: гарчиг → хөтөлбөрийн картууд (1 / md 2 / 3+ бол lg 3 багана, сургуулийн navy/алтан загвар),
    карт бүрт гол үзүүлэлт + sparkline. Үзүүлэлт хөтөлбөрийн дэлгэрэнгүйгээс (fetchProgram, 60 сек cache):
-   гадаадад элссэн % (outcomes) → нийт дундаж оноо (radar total) → тэтгэлэг жилээр. Хоосон бол render хийхгүй. Server component. */
+   гадаадад элссэн төгсөгчдийн хуримтлагдсан тоо (outcomes) → нийт дундаж оноо (radar total) → тэтгэлгийн хуримтлагдсан дүн. Хоосон бол render хийхгүй. Server component. */
 
 import { Reveal } from "@/components/site/Reveal";
 import { formatUsd } from "@/components/programs/money";
-import { num, pct } from "@/components/programs/theme";
+import { cumulative, num } from "@/components/programs/theme";
 import { getDict, type Lang } from "@/lib/i18n";
 import { fetchProgram } from "@/lib/programs-api";
 import type { ProgramCard as ProgramCardData, ProgramDetail } from "@/lib/types";
@@ -17,10 +17,11 @@ function statFor(p: ProgramDetail | null, lang: Lang): CardStat | null {
   const aria = (label: string, pairs: [string | number, string][]) => ht.sparkAria(label, pairs.map(([k, v]) => `${k}: ${v}`).join(", "));
   const o = p.outcomes;
   if (o.length) {
-    const last = o[o.length - 1];
-    const values = o.map((r) => pct(r.abroad, r.graduates));
-    return { label: pt.abroadKpi, value: `${num(values[values.length - 1])}%`, sub: `${last.year} · ${pt.abroadOf(last.abroad, last.graduates)}`, values,
-             aria: aria(pt.abroadKpi, o.map((r, i) => [r.year, `${num(values[i])}%`])) };
+    // Гадаадад элссэн төгсөгчдийн хуримтлагдсан тоо (хөтөлбөрийн хуудасны графиктай ижил)
+    const values = cumulative(o.map((r) => r.abroad));
+    const years = o.length > 1 ? `${o[0].year}–${o[o.length - 1].year}` : String(o[0].year);
+    return { label: pt.abroadCountKpi, value: String(values[values.length - 1]), sub: pt.abroadCountSub(years), values,
+             aria: aria(pt.abroadCountKpi, o.map((r, i) => [r.year, String(values[i])])) };
   }
   const totals = (p.radar?.series ?? []).filter((s): s is typeof s & { total: number } => typeof s.total === "number");
   if (totals.length) {
@@ -32,8 +33,9 @@ function statFor(p: ProgramDetail | null, lang: Lang): CardStat | null {
     const byYear = new Map<number, number>();
     for (const s of p.scholarships) byYear.set(s.year, (byYear.get(s.year) ?? 0) + s.amount_usd);
     const years = [...byYear.keys()].sort((a, b) => a - b);
+    const values = cumulative(years.map((y) => byYear.get(y)!));   // хуримтлагдсан (тэтгэлгийн графиктай ижил)
     return { label: pt.scholarship, value: formatUsd(p.scholarship_total_usd), sub: years.length > 1 ? `${years[0]}–${years[years.length - 1]}` : String(years[0]),   // мөрүүд нь ихэвчлэн жилийн нийт дүн тул сурагчийн тоо биш
-             values: years.map((y) => byYear.get(y)!), aria: aria(pt.scholarship, years.map((y) => [y, formatUsd(byYear.get(y)!)])) };
+             values, aria: aria(pt.scholarship, years.map((y, i) => [y, formatUsd(values[i])])) };
   }
   return null;
 }
