@@ -8,7 +8,7 @@
 import { useEffect, useRef } from "react";
 import type ApexCharts from "apexcharts";
 import type { ApexOptions } from "apexcharts";
-import { niceRange, num } from "./theme";
+import { esc, niceRange, num } from "./theme";
 
 const INK = "#1d1d1f", MUTED = "#4a5068", GRID = "#e4e9f5";
 
@@ -51,7 +51,7 @@ export function TrendArea({ points, color, kind, name, ariaLabel }: { points: Tr
         tooltip: {
           custom: ({ dataPointIndex }: { dataPointIndex: number }) => {
             const p = points[dataPointIndex];
-            return p ? `<div class="rounded-lg bg-[#223A62] px-3 py-2 text-sm text-white shadow-lg"><div class="font-semibold text-[#FFF457]">${p.label}</div><div><b>${fmt(p.value)}</b>${p.detail ? ` · ${p.detail}` : ""}</div></div>` : "";
+            return p ? `<div class="rounded-lg bg-[#223A62] px-3 py-2 text-sm text-white shadow-lg"><div class="font-semibold text-[#FFF457]">${esc(p.label)}</div><div><b>${fmt(p.value)}</b>${p.detail ? ` · ${esc(p.detail)}` : ""}</div></div>` : "";
           },
         },
         responsive: [{ breakpoint: 640, options: { chart: { height: 260 }, dataLabels: { style: { fontSize: "11px" } } } }],

@@ -16,4 +16,8 @@ async function getJson<T>(path: string): Promise<T | null> {
 }
 
 export const fetchPrograms = (lang: Lang = "mn") => getJson<ProgramCard[]>(`/api/programs/?lang=${lang}`);
-export const fetchProgram = (slug: string, lang: Lang = "mn") => getJson<ProgramDetail>(`/api/programs/${encodeURIComponent(slug)}/?lang=${lang}`);
+/** Хуучин backend эсвэл migration-аас өмнөх cache-д outcomes/subjects байхгүй байж болно — хоосон массив болгоно (хуудас унахгүй) */
+export async function fetchProgram(slug: string, lang: Lang = "mn"): Promise<ProgramDetail | null> {
+  const p = await getJson<ProgramDetail>(`/api/programs/${encodeURIComponent(slug)}/?lang=${lang}`);
+  return p && { ...p, outcomes: p.outcomes ?? [], subjects: p.subjects ?? [] };
+}

@@ -43,3 +43,5 @@ export const pct = (a: number, b: number) => (b ? Math.round((a / b) * 1000) / 1
 export const signed = (v: number) => (v > 0 ? `+${num(v)}` : num(v));
 /** Хуримтлагдсан нийлбэр: [10, 14, 20] → [10, 24, 44] (гадаадад элссэн тоо, тэтгэлгийн дүнгийн графикт) */
 export const cumulative = (values: number[]) => values.reduce<number[]>((acc, v) => [...acc, (acc[acc.length - 1] ?? 0) + v], []);
+/** ApexCharts-ийн custom tooltip HTML мөр болж ордог тул админы бичсэн текстийг (хичээл, цувралын нэр) заавал шүүнэ */
+export const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);

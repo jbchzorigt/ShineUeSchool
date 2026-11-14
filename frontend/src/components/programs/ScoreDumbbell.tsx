@@ -11,10 +11,9 @@ import type ApexCharts from "apexcharts";
 import type { ApexOptions } from "apexcharts";
 import type { ProgramRadar } from "@/lib/types";
 import { useDict } from "@/components/site/LangProvider";
-import { niceRange, num, ramp, signed } from "./theme";
+import { esc, niceRange, num, ramp, signed } from "./theme";
 
 const INK = "#1d1d1f", MUTED = "#4a5068", GRID = "#e4e9f5";
-const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 
 /** Хичээл бүрийн эхний ба сүүлийн бодит оноо */
 function ends(values: (number | null)[]) {

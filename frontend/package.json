@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --test src/lib/i18n/paths.test.ts src/lib/permissions.test.ts src/lib/color.test.ts"
+    "test": "node --test src/lib/i18n/paths.test.ts src/lib/permissions.test.ts src/lib/color.test.ts src/components/programs/theme.test.ts"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
