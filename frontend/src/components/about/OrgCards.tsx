@@ -3,9 +3,11 @@
 /* Байгууллагын бүтцийн картууд.
    - LeaderCard: зураг (байхгүй бол navy дээр алтан эхний үсэг), нэр, албан тушаал. Хамгийн дээд (root) карт navy дэвсгэртэй, алтан хүрээтэй зурагтай —
      диаграмын цорын ганц тод цэг; бусад нь цагаан. Гар утсанд хэвтээ (зураг зүүн талд), md+ босоо, голлуулсан.
-   - DepartmentCard: зураггүй, дээд талдаа алтан зураастай; нэр, эрхлэгч(ид), багшийн тоо. Багштай бол товч дарж багш нарын жагсаалтыг
+   - DepartmentCard: удирдлагын карттай ижил хэв маяг (цагаан карт, хүрээ, ижил хэмжээ; гар утсанд хэвтээ, md+ босоо голлуулсан) — зурагны оронд
+     номын тэмдэгтэй алтан тойрог; нэр, эрхлэгч(ид), багшийн тоо. Багштай бол товч дарж багш нарын жагсаалтыг (эхний үсэгтэй жижиг мөрүүд)
      нээж/хаана (GSAP өндөр + opacity; reduced motion үед шууд). Багшгүй бол "удахгүй" гэсэн мөр. */
 
+import { BookOpen } from "lucide-react";
 import Image from "next/image";
 import { useId, useRef, useState } from "react";
 import { gsap, reduceMotion, useGSAP } from "@/components/site/gsap";
@@ -63,32 +65,42 @@ export function DepartmentCard({ department }: { department: AboutDepartment }) 
   }
 
   return (
-    <div ref={box} className="flex w-full flex-col gap-2 rounded-2xl border border-line border-t-4 border-t-gold bg-white px-4 py-4 md:w-52 md:px-5">
-      <span className="font-display text-[16px] font-extrabold leading-tight break-words text-navy">{department.name}</span>
-      {heads.map((h) => (
-        <span key={h.id} className="text-sm leading-snug break-words text-ink">
-          <span className="text-muted">{t.head}:</span> {h.full_name}
+    <div ref={box} className="flex w-full flex-col rounded-2xl border border-line bg-white px-4 py-4 md:w-52 md:px-5 md:py-6">
+      <div className="flex items-center gap-4 md:flex-col md:gap-3 md:text-center">
+        <span aria-hidden="true" className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-gold/25 text-navy ring-4 ring-paper-3 md:h-20 md:w-20">
+          <BookOpen className="h-6 w-6 md:h-8 md:w-8" strokeWidth={2.2} />
         </span>
-      ))}
-      {n > 0 ? (
+        <span className="flex min-w-0 flex-col gap-1 md:w-full">
+          <span className="font-display text-[17px] font-extrabold leading-tight break-words text-ink">{department.name}</span>
+          {heads.length > 0 && <span className="text-sm leading-snug break-words text-muted">{t.head}: {heads.map((h) => h.full_name).join(", ")}</span>}
+          {n === 0 && <span className="text-xs leading-snug text-muted">{t.teachersSoon}</span>}
+        </span>
+      </div>
+      {n > 0 && (
         <>
           <button type="button" onClick={toggle} aria-expanded={open} aria-controls={`${id}-teachers`} title={open ? t.orgHideTeachers : t.orgShowTeachers}
-                  className="mt-1 inline-flex w-fit items-center gap-1.5 rounded-full bg-paper-3 px-3 py-1 text-xs font-bold text-navy transition hover:bg-navy hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy">
+                  className="mt-3 inline-flex w-fit items-center gap-1.5 self-start rounded-full bg-paper-3 px-3 py-1 text-xs font-bold text-navy transition hover:bg-navy hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy md:self-center">
             {t.orgTeachers(n)}<span className="sr-only">, {open ? t.orgHideTeachers : t.orgShowTeachers}</span>
             <span aria-hidden="true" className={`transition-transform ${open ? "rotate-180" : ""}`}>▾</span>
           </button>
           <ul id={`${id}-teachers`} data-panel hidden={!open} className="overflow-hidden">
             {department.teachers.map((x) => (
-              <li key={x.id} className="flex flex-col border-t border-line py-2 text-left first:mt-1">
-                <span className="text-sm font-semibold leading-snug break-words text-ink">
-                  {x.full_name}{x.is_head && <span className="ml-1.5 rounded-full bg-gold/25 px-2 py-0.5 text-[11px] font-bold text-ink">{t.head}</span>}
+              <li key={x.id} className="flex items-center gap-2.5 border-t border-line py-2 text-left first:mt-3">
+                <span aria-hidden="true" className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-navy/10 text-xs font-bold text-navy">{x.full_name.trim().charAt(0)}</span>
+                <span className="flex min-w-0 flex-col">
+                  <span className="text-sm font-semibold leading-snug break-words text-ink">{x.full_name}</span>
+                  {(x.is_head || x.role) && (
+                    <span className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs leading-snug break-words text-muted">
+                      {x.is_head && <span className="rounded-full bg-gold/25 px-2 py-0.5 text-[11px] font-bold text-ink">{t.head}</span>}
+                      {x.role}
+                    </span>
+                  )}
                 </span>
-                {x.role && <span className="text-xs leading-snug break-words text-muted">{x.role}</span>}
               </li>
             ))}
           </ul>
         </>
-      ) : <span className="text-xs text-muted">{t.teachersSoon}</span>}
+      )}
     </div>
   );
 }
