@@ -21,7 +21,8 @@ export function LeaderCard({ leader, root }: { leader: AboutLeader; root: boolea
           ? <Image src={leader.photo} alt="" fill unoptimized sizes="96px" className="object-cover object-top" />
           : <span className="grid h-full w-full place-items-center bg-navy font-display text-2xl font-extrabold text-gold md:text-3xl" aria-hidden="true">{leader.full_name.trim().charAt(0)}</span>}
       </span>
-      <span className="flex min-w-0 flex-col gap-1">
+      {/* md:w-full — босоо картад урт нэг үгтэй нэр ч картын өргөнд таслагдана (fit-content-оос болж халихгүй) */}
+      <span className="flex min-w-0 flex-col gap-1 md:w-full">
         <span className={`font-display text-[17px] font-extrabold leading-tight break-words ${root ? "text-white" : "text-ink"}`}>{leader.full_name}</span>
         <span className={`text-sm leading-snug break-words ${root ? "text-gold" : "text-muted"}`}>{leader.position}</span>
       </span>
