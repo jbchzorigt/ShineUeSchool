@@ -3,6 +3,7 @@
 /* Бүртгэлийн диалог: 1 Имэйл → 2 Код → 3 Мэдээлэл → Амжилттай.
    Token 401 болвол кодын алхам руу буцна; `club`/`grade` алдаа (дүүрсэн/хаагдсан/суудал дүүрсэн) бол дээд хэсэгт улаанаар + router.refresh(). */
 
+import { StepProgress } from "@/components/site/StepProgress";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { Button, Field, Input, Select } from "@/components/ui";
@@ -113,14 +114,7 @@ export function RegisterDialog({ club, grade, onClose }: { club: Club | null; gr
           </div>
 
           {step !== "done" && (
-            <ol className="mb-5 flex gap-2 text-xs font-semibold" aria-label="Алхмууд">
-              {STEPS.map((s, i) => (
-                <li key={s.key} aria-current={s.key === step ? "step" : undefined}
-                    className={`flex flex-1 items-center gap-1.5 rounded-full px-3 py-1.5 ${i <= idx ? "bg-navy text-white" : "bg-paper-3 text-muted"}`}>
-                  <span>{i + 1}</span><span>{s.label}</span>
-                </li>
-              ))}
-            </ol>
+            <StepProgress steps={STEPS.map((s) => s.label)} current={idx} ariaLabel="Алхмууд" className="mb-5" />
           )}
 
           {errors.non_field_errors && <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{errors.non_field_errors}</p>}
@@ -132,7 +126,7 @@ export function RegisterDialog({ club, grade, onClose }: { club: Club | null; gr
               <Field label="Сурагчийн имэйл" error={errors.email} hint={`Зөвхөн @${EMAIL_DOMAIN} хаяг. Баталгаажуулах код илгээнэ.`}>
                 <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={`нэр@${EMAIL_DOMAIN}`} autoFocus required />
               </Field>
-              <Button type="submit" className="w-full" disabled={busy}>Код илгээх</Button>
+              <Button type="submit" variant="success" className="w-full" disabled={busy}>Код илгээх</Button>
             </form>
           )}
 
@@ -143,7 +137,7 @@ export function RegisterDialog({ club, grade, onClose }: { club: Club | null; gr
                 <Input inputMode="numeric" pattern="[0-9]{6}" maxLength={6} autoComplete="one-time-code" value={code}
                        onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} className="text-center text-2xl tracking-[0.4em]" autoFocus required />
               </Field>
-              <Button type="submit" className="w-full" disabled={busy || code.length !== 6}>Баталгаажуулах</Button>
+              <Button type="submit" variant="success" className="w-full" disabled={busy || code.length !== 6}>Баталгаажуулах</Button>
               <div className="flex items-center justify-between text-sm">
                 <button type="button" onClick={() => { setStep("email"); setErrors({}); }} className="font-semibold text-navy hover:underline">Хаяг солих</button>
                 <button type="button" onClick={() => sendCode()} disabled={busy || resendIn > 0} className="font-semibold text-navy hover:underline disabled:text-muted disabled:no-underline">
@@ -172,7 +166,7 @@ export function RegisterDialog({ club, grade, onClose }: { club: Club | null; gr
                 </Field>
               </div>
               <Field label="Имэйл"><Input value={email} readOnly className="bg-paper-2 text-muted" /></Field>
-              <Button type="submit" className="w-full" disabled={busy}>Бүртгүүлэх</Button>
+              <Button type="submit" variant="success" className="w-full" disabled={busy}>Бүртгүүлэх</Button>
             </form>
           )}
 

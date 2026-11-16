@@ -6,6 +6,7 @@
 
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { gsap, reduceMotion, useGSAP } from "@/components/site/gsap";
+import { StepProgress } from "@/components/site/StepProgress";
 import { useDict, useLang } from "@/components/site/LangProvider";
 import { Button, Field, Input, Select } from "@/components/ui";
 import { api, ApiError } from "@/lib/api";
@@ -42,8 +43,7 @@ export function AdmissionSignup({ round }: { round: AdmissionRoundPublic }) {
     if (firstStep.current) { firstStep.current = false; return; }
     // "done" алхамд самбар unmount болсон — scope null бол selector бүх хуудсыг хайх тул зогсооно
     if (!panelRef.current || reduceMotion()) return;
-    gsap.from("[data-step-body]", { autoAlpha: 0, x: 24, duration: 0.4, ease: "power2.out" });
-    gsap.from("[aria-current='step']", { scale: 0.94, duration: 0.35, ease: "back.out(2)" });
+    gsap.from("[data-step-body]", { autoAlpha: 0, x: 24, duration: 0.4, ease: "power2.out" });   // алхмын заагчийн хөдөлгөөнийг StepProgress хариуцна
   }, { scope: panelRef, dependencies: [step] });
 
   useEffect(() => {
@@ -106,14 +106,7 @@ export function AdmissionSignup({ round }: { round: AdmissionRoundPublic }) {
   return (
     <div ref={panelRef} className="overflow-hidden rounded-2xl border border-line bg-white p-5 shadow-sm sm:p-7">
       <h2 className="font-display text-[22px] font-extrabold text-navy">{t.register}</h2>
-      <ol className="mb-6 mt-4 flex gap-2 text-xs font-semibold" aria-label={t.stepsAria}>
-        {STEPS.map((s, i) => (
-          <li key={s} aria-current={s === step ? "step" : undefined}
-              className={`flex flex-1 items-center gap-1.5 rounded-full px-3 py-1.5 ${i <= idx ? "bg-navy text-white" : "bg-paper-3 text-muted"}`}>
-            <span>{i + 1}</span><span>{t.steps[s]}</span>
-          </li>
-        ))}
-      </ol>
+      <StepProgress steps={STEPS.map((s) => t.steps[s])} current={idx} ariaLabel={t.stepsAria} tone="green" className="mb-6 mt-4" />
 
       {errors.non_field_errors && <p role="alert" className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{errors.non_field_errors}</p>}
 
@@ -122,7 +115,7 @@ export function AdmissionSignup({ round }: { round: AdmissionRoundPublic }) {
           <Field label={t.emailLabel} error={errors.email} hint={t.emailHint}>
             <Input type="email" inputMode="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t.emailPlaceholder} required />
           </Field>
-          <Button type="submit" className="w-full py-2.5" disabled={busy}>{t.sendCode}</Button>
+          <Button type="submit" variant="success" className="w-full py-2.5" disabled={busy}>{t.sendCode}</Button>
         </form>
       )}
 
@@ -133,7 +126,7 @@ export function AdmissionSignup({ round }: { round: AdmissionRoundPublic }) {
             <Input inputMode="numeric" pattern="[0-9]{6}" maxLength={6} autoComplete="one-time-code" value={code}
                    onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} className="text-center text-2xl tracking-[0.4em]" autoFocus required />
           </Field>
-          <Button type="submit" className="w-full py-2.5" disabled={busy || code.length !== 6}>{t.verify}</Button>
+          <Button type="submit" variant="success" className="w-full py-2.5" disabled={busy || code.length !== 6}>{t.verify}</Button>
           <div className="flex items-center justify-between text-sm">
             <button type="button" onClick={() => { setStep("email"); setErrors({}); }} className="font-semibold text-navy hover:underline">{t.changeEmail}</button>
             <button type="button" onClick={() => sendCode()} disabled={busy || resendIn > 0} className="font-semibold text-navy hover:underline disabled:text-muted disabled:no-underline">
@@ -187,7 +180,7 @@ export function AdmissionSignup({ round }: { round: AdmissionRoundPublic }) {
               {errors.consent && <span className="mt-1 block text-xs font-medium text-red-600">{errors.consent}</span>}
             </span>
           </label>
-          <Button type="submit" className="w-full py-2.5" disabled={busy}>{t.register}</Button>
+          <Button type="submit" variant="success" className="w-full py-2.5" disabled={busy}>{t.register}</Button>
         </form>
       )}
     </div>
@@ -264,7 +257,7 @@ export function RemindCode() {
       <Field label={t.remindEmail}>
         <Input type="email" autoComplete="email" value={email} onChange={(e) => { setEmail(e.target.value); setState("idle"); }} required />
       </Field>
-      <Button type="submit" variant="ghost" className="border border-line" disabled={state === "busy"}>{t.remindSubmit}</Button>
+      <Button type="submit" variant="success" disabled={state === "busy"}>{t.remindSubmit}</Button>
       {state === "sent" && <p role="status" className="text-sm text-ink">{t.remindSent}</p>}
       {state === "error" && <p role="alert" className="text-sm text-red-700">{t.remindFailed}</p>}
     </form>

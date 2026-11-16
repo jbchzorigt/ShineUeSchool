@@ -16,12 +16,13 @@ export const useReadOnly = () => useContext(ReadOnlyContext);
 export const READ_ONLY_HINT = "Танд энэ хэсгийг зөвхөн харах эрх байна";
 
 /* ---------- Button ---------- */
-type Variant = "primary" | "secondary" | "danger" | "ghost";
+type Variant = "primary" | "secondary" | "danger" | "ghost" | "success";
 const variants: Record<Variant, string> = {
   primary: "bg-navy text-white hover:bg-navy/90 focus-visible:ring-navy",
   secondary: "bg-gold text-navy hover:bg-gold/90 focus-visible:ring-gold",
   danger: "bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-600",
   ghost: "bg-transparent text-navy hover:bg-navy/10 focus-visible:ring-navy",
+  success: "bg-emerald-600 text-white hover:bg-emerald-700 focus-visible:ring-emerald-600",   // бүртгэлийн үйлдэл (элсэлт, дугуйлан)
 };
 export function Button({ variant = "primary", className, mutates, ...p }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant; mutates?: boolean }) {
   const blocked = useReadOnly() && (p.type === "submit" || variant === "danger" || !!mutates);

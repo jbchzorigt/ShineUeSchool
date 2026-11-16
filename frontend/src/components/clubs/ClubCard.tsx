@@ -60,7 +60,7 @@ export function ClubCard({ club, selectedGrade, onRegister }: { club: Club; sele
           <div className="flex items-center justify-between border-t border-slate-200 pt-1 text-sm font-semibold text-navy">
             <span>Нийт</span><span>{club.slots_left}/{club.capacity} сул</span>
           </div>
-          <Button className="mt-auto w-full" disabled={!canRegister} onClick={() => onRegister(club)}>{buttonLabel}</Button>
+          <Button variant={canRegister ? "success" : "primary"} className="mt-auto w-full" disabled={!canRegister} onClick={() => onRegister(club)}>{buttonLabel}</Button>
         </div>
       </div>
 
