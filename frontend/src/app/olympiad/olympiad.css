@@ -650,28 +650,38 @@
 .olympiad .grade-tabs button:hover { background: rgba(30, 58, 143, 0.08); color: var(--navy); }
 .olympiad .grade-tabs button.is-active { background: var(--navy); color: #fff; }
 
+/* Гэгээлэг хүснэгт: үндсэн цэнхэр толгой мөр (цагаан үсэг), цагаан мөрүүд; бодлого бүр тусдаа багана (Б1…Бn), нийт оноо цэнхэр тод */
 .olympiad .results-wrap {
-  width: min(820px, 100%);
+  width: min(1040px, 100%);
   overflow-x: auto;
-  border: 2px solid var(--navy);
+  border: 1px solid rgba(30, 58, 143, 0.16);
   border-radius: 16px;
   background: #fff;
+  box-shadow: 0 18px 40px -22px rgba(30, 58, 143, 0.35);
 }
 .olympiad .results {
   width: 100%;
   border-collapse: collapse;
   text-align: left;
   font-size: 0.98rem;
+  color: var(--ink);
 }
-.olympiad .results th, .olympiad .results td { padding: 14px 18px; border-bottom: 1px solid rgba(30, 58, 143, 0.12); }
+.olympiad .results th, .olympiad .results td { padding: 13px 16px; border-bottom: 1px solid rgba(30, 58, 143, 0.08); white-space: nowrap; }
 .olympiad .results th {
-  font-size: 0.75rem;
-  letter-spacing: 0.12em;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: #fff;
   background: var(--navy);
 }
+.olympiad .results th.col-rank { text-align: center; }
+.olympiad .results th.col-p, .olympiad .results td.p { text-align: center; }
+.olympiad .results th.col-total, .olympiad .results td.score { text-align: right; }
+.olympiad .results tbody tr:nth-child(even) td { background: #f6f8fd; }
 .olympiad .results tbody tr:last-child td { border-bottom: 0; }
+.olympiad .results tbody tr:hover td { background: #eef2fb; }
+.olympiad .results .rank { text-align: center; }
 .olympiad .results .rank span {
   display: inline-grid;
   place-items: center;
@@ -679,17 +689,35 @@
   height: 32px;
   border-radius: 50%;
   font-weight: 800;
-  border: 2px solid var(--navy);
+  border: 2px solid rgba(30, 58, 143, 0.35);
   color: var(--navy);
+  background: #fff;
 }
-.olympiad .results .name  { font-weight: 700; }
-.olympiad .results .school { color: var(--muted); }
-.olympiad .results .score { font-weight: 800; color: var(--navy); text-align: right; font-variant-numeric: tabular-nums; }
-/* Медаль: 1 = алт, 2 = мөнгө, 3 = хүрэл */
-.olympiad .medal-gold   .rank span { background: var(--gold); border-color: var(--gold); color: var(--navy); }
-.olympiad .medal-silver .rank span { background: #d8dce6; border-color: #d8dce6; color: var(--navy); }
-.olympiad .medal-bronze .rank span { background: #e0a56a; border-color: #e0a56a; color: #fff; }
-.olympiad .medal-gold td { background: rgba(255, 194, 14, 0.12); }
+.olympiad .results .name .last { color: var(--muted); font-weight: 500; }
+.olympiad .results .name strong { color: var(--ink); font-weight: 800; }
+.olympiad .results .school { color: var(--muted); white-space: normal; min-width: 140px; }
+.olympiad .results td.p { color: var(--ink); font-variant-numeric: tabular-nums; }
+.olympiad .results .score { font-weight: 800; font-size: 1.08rem; color: var(--navy); font-variant-numeric: tabular-nums; }
+.olympiad .results .medal-tag { display: inline-flex; align-items: center; gap: 4px; margin-left: 10px; font-size: 0.8rem; font-weight: 700; vertical-align: middle; }
+.olympiad .results .medal-icon { flex: none; }
+.olympiad .results .medal-tag-gold { color: #b07d00; }
+.olympiad .results .medal-tag-silver { color: #6b7488; }
+.olympiad .results .medal-tag-bronze { color: #b2601f; }
+/* Байрын дугуй ба мөр медалиар (АЛТ/МӨНГӨ/ХҮРЭЛ) */
+.olympiad .medal-gold   .rank span { background: #ffd54a; border-color: #ffd54a; color: var(--navy); box-shadow: 0 0 0 4px rgba(255, 213, 74, 0.3); }
+.olympiad .medal-silver .rank span { background: #e3e7f1; border-color: #c9d0e0; color: var(--navy); }
+.olympiad .medal-bronze .rank span { background: #f3b27a; border-color: #f3b27a; color: var(--navy); }
+.olympiad .results .medal-gold td { background: #fff8de; }
+/* Гар утсанд: хүснэгт хажуу тийш гүйхэд байр ба нэр зүүн талд бэхлэгдэнэ (тунгалаг биш дэвсгэртэй) */
+@media (max-width: 720px) {
+  .olympiad .results th.col-rank, .olympiad .results td.rank { position: sticky; left: 0; z-index: 2; width: 56px; min-width: 56px; padding-left: 10px; padding-right: 10px; }
+  .olympiad .results th:nth-child(2), .olympiad .results td.name { position: sticky; left: 56px; z-index: 2; box-shadow: 6px 0 10px -6px rgba(30, 58, 143, 0.25); }
+  .olympiad .results td.rank, .olympiad .results td.name { background: #fff; }
+  .olympiad .results tbody tr:nth-child(even) td.rank, .olympiad .results tbody tr:nth-child(even) td.name { background: #f6f8fd; }
+  .olympiad .results .medal-gold td.rank, .olympiad .results .medal-gold td.name { background: #fff8de; }
+  .olympiad .results th.col-rank, .olympiad .results th:nth-child(2) { background: var(--navy); }
+  .olympiad .results .medal-tag { display: flex; margin: 4px 0 0; }
+}
 .olympiad .results-note { margin: 8px 0 0; font-size: 0.8rem; color: var(--muted); }
 
 /* ------- Математикийн томъёо: section бүрт 4–5 (6–12-р анги) ------- */
