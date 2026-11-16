@@ -290,8 +290,8 @@ export interface ClubRegistrationAdmin {
 
 /* ---- Бидний тухай (backend/app/about/schemas.py) ---- */
 export interface AboutStat { value: string; label: string; label_en?: string }
-export interface AboutPage { intro_title: string; intro_title_en: string; intro_html: string; intro_html_en: string; stats: AboutStat[] }
-export type AboutPageInput = AboutPage;
+export interface AboutPage { intro_title: string; intro_title_en: string; intro_html: string; intro_html_en: string; stats: AboutStat[]; hero_image?: string | null }   // hero_image: бүтэн өргөнтэй дэвсгэр (хуучин cache-д байхгүй байж болно)
+export type AboutPageInput = Omit<AboutPage, "hero_image">;   // hero зураг тусдаа upload endpoint-оор
 /** parent_id — харьяалагдах дээд албан тушаалтан (null — хамгийн дээд) */
 export interface AboutLeader { id: number; full_name: string; position: string; position_en: string; level: number; photo: string | null; parent_id: number | null }
 export interface AboutLeaderInput { full_name: string; position: string; position_en?: string; level: number; parent_id?: number | null }

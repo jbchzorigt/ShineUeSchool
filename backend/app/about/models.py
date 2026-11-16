@@ -24,6 +24,7 @@ class AboutPage(Base):
     intro_html: Mapped[str] = mapped_column(Text, default="")
     intro_html_en: Mapped[str] = mapped_column(Text, default="", server_default="")
     stats: Mapped[list] = mapped_column(JSONB, default=list)  # [{value, label, label_en}] 0–4
+    hero_image: Mapped[str | None] = mapped_column(String(255), nullable=True)   # "about/hero/uuid.jpg" — бүтэн өргөнтэй дэвсгэр
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 

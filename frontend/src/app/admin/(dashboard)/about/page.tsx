@@ -1,6 +1,6 @@
 "use client";
 
-/* /admin/about — танилцуулгын гарчиг, rich text, үзүүлэлт (0–4). Олимпиадын тохиргооны хуудастай ижил загвар. */
+/* /admin/about — hero дэвсгэр зураг, танилцуулгын гарчиг, rich text, үзүүлэлт (0–4). Олимпиадын тохиргооны хуудастай ижил загвар. */
 
 import { useState, type FormEvent } from "react";
 import { RichText } from "@/components/admin/RichText";
@@ -11,6 +11,7 @@ import { api, ApiError } from "@/lib/api";
 import { useFetch } from "@/lib/useFetch";
 import type { AboutPageInput, AboutStat } from "@/lib/types";
 import { DeleteLabel, actionBtn } from "@/components/admin/ActionLabel";
+import { HeroImageCard } from "@/components/admin/about/HeroImageCard";
 
 const STATS_MAX = 4;
 
@@ -21,6 +22,7 @@ export default function AboutPageAdmin() {
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
   const [tab, setTab] = useState<Lang>("mn");
+  const [hero, setHero] = useState<string | null | undefined>(undefined);   // undefined — серверийн утга
   // Серверийн өгөгдөл ирэхэд формыг нэг удаа дүүргэнэ (render-д, effect-гүй)
   const data = form ?? q.data ?? null;
   const set = (patch: Partial<AboutPageInput>) => data && setForm({ ...data, ...patch });
@@ -37,14 +39,16 @@ export default function AboutPageAdmin() {
 
   if (q.error) return <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{q.error}</p>;
   if (!data) return <Spinner />;
+  const heroUrl = hero === undefined ? (q.data?.hero_image ?? null) : hero;
 
   return (
     <form onSubmit={save} className="max-w-4xl space-y-6">
       <div>
         <h1 className="text-2xl font-black text-navy">Танилцуулга</h1>
-        <p className="text-sm text-slate-600">Олон нийтийн <code>/about</code> хуудасны дээд хэсэг: гарчиг, танилцуулга, тоон үзүүлэлт.</p>
+        <p className="text-sm text-slate-600">Олон нийтийн <code>/about</code> хуудасны дээд хэсэг: дэвсгэр зураг, гарчиг, танилцуулга, тоон үзүүлэлт.</p>
       </div>
       {errors.non_field_errors && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{errors.non_field_errors}</p>}
+      <HeroImageCard url={heroUrl} title={data.intro_title} onChange={setHero} />
       <Card className="space-y-4">
         <LangTabs value={tab} onChange={setTab} enFilled={!!data.intro_title_en.trim()} />
         <div className={langPane(tab === "mn")}>

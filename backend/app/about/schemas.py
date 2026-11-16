@@ -16,6 +16,7 @@ class PageOut(BaseModel):
     intro_html: str
     intro_html_en: str = ""
     stats: list[StatItem]
+    hero_image: str | None = None   # бүтэн URL (дэвсгэр зураг)
 
 
 class PagePatch(BaseModel):

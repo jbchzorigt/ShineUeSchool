@@ -1,6 +1,6 @@
 """
 Бидний тухай — менежерийн API (manager эрх), prefix /api/about/admin.
-  GET/PATCH /page/   POST /upload-image/
+  GET/PATCH /page/   POST/DELETE /page/hero/ (дэвсгэр зураг)   POST /upload-image/
   GET/POST /leaders/   PATCH/DELETE /leaders/{id}/   POST/DELETE /leaders/{id}/photo/   PUT /leaders/order/
   GET/POST /departments/   PATCH/DELETE /departments/{id}/   PUT /departments/order/
   POST /departments/{id}/teachers/   PATCH/DELETE /teachers/{id}/   PUT /departments/{id}/teachers/order/
@@ -41,12 +41,12 @@ async def _get_or_404(db: AsyncSession, model, id: int):
 
 # ---- танилцуулгын тохиргоо ----
 @router.get("/page/", response_model=PageOut)
-async def page_get(db: DB, _: Manager):
-    return page_out(await get_page(db))
+async def page_get(request: Request, db: DB, _: Manager):
+    return page_out(request, await get_page(db))
 
 
 @router.patch("/page/", response_model=PageOut)
-async def page_patch(body: PagePatch, db: DB, _: Manager):
+async def page_patch(body: PagePatch, request: Request, db: DB, _: Manager):
     p = await get_page(db)
     data = body.model_dump(exclude_unset=True)
     if "stats" in data and data["stats"] is not None:
@@ -62,7 +62,30 @@ async def page_patch(body: PagePatch, db: DB, _: Manager):
     if data.get("intro_html_en") is not None:
         p.intro_html_en = clean_rich(data["intro_html_en"])   # хоосон "<p></p>" → "" (монгол fallback)
     await db.commit()
-    return page_out(p)
+    return page_out(request, p)
+
+
+@router.post("/page/hero/", response_model=PageOut)
+async def page_hero_upload(request: Request, db: DB, _: Manager, image: Annotated[UploadFile, File()]):
+    """Танилцуулгын hero дэвсгэр зураг — солиход хуучин файлыг устгана."""
+    p = await get_page(db)
+    old = p.hero_image
+    p.hero_image = await save_upload(image, "about/hero")
+    await db.commit()
+    if old:
+        delete_file(old)
+    return page_out(request, p)
+
+
+@router.delete("/page/hero/", response_model=PageOut)
+async def page_hero_delete(request: Request, db: DB, _: Manager):
+    p = await get_page(db)
+    old = p.hero_image
+    p.hero_image = None
+    await db.commit()
+    if old:
+        delete_file(old)
+    return page_out(request, p)
 
 
 @router.post("/upload-image/", status_code=201)

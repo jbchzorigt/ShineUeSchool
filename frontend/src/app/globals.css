@@ -152,3 +152,8 @@ body {
 }
 @keyframes meter-stripes { to { background-position: 14px 0; } }
 @media (prefers-reduced-motion: reduce) { .step-halo, .meter-stripes { animation: none; } .step-check { animation: none; stroke-dashoffset: 0; } }
+
+/* Бидний тухай hero: дэвсгэр зураг ачаалахад нэг удаа зөөлөн томролтоос буцна */
+.hero-zoom { animation: hero-zoom 1.8s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+@keyframes hero-zoom { from { transform: scale(1.06); } to { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .hero-zoom { animation: none; } }

@@ -36,10 +36,11 @@ def _stat(s: dict, lang: Lang) -> StatItem:
     return StatItem(value=s["value"], label=localized(s["label"], en, lang), label_en=en)
 
 
-def page_out(p: AboutPage, lang: Lang = "mn") -> PageOut:
+def page_out(request: Request, p: AboutPage, lang: Lang = "mn") -> PageOut:
     return PageOut(intro_title=localized(p.intro_title, p.intro_title_en, lang), intro_title_en=p.intro_title_en,
                    intro_html=localized(p.intro_html, p.intro_html_en, lang), intro_html_en=p.intro_html_en,
-                   stats=[_stat(s, lang) for s in (p.stats or [])])
+                   stats=[_stat(s, lang) for s in (p.stats or [])],
+                   hero_image=media_url(request, p.hero_image) if p.hero_image else None)
 
 
 def leader_out(request: Request, l: Leader, lang: Lang = "mn") -> LeaderOut:

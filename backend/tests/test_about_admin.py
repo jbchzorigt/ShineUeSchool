@@ -168,3 +168,40 @@ async def test_departments_and_teachers(client, make_user):
     assert (await client.delete(f"{A}/departments/{d1}/", headers=h)).status_code == 204
     assert (await client.patch(f"{A}/teachers/{t1['id']}/", headers=h, json={"role": "x"})).status_code == 404
     assert [x["name"] for x in (await client.get("/api/about/")).json()["departments"]] == ["Физик"]
+
+
+async def test_hero_image_upload_replace_delete(client, make_user, tmp_path, monkeypatch):
+    """Танилцуулгын hero (бүтэн өргөнтэй дэвсгэр) зураг: оруулах → нийтийн API-д URL, солиход хуучин файл устна, устгах."""
+    from app.config import settings
+    monkeypatch.setattr(settings, "media_dir", tmp_path)
+    h = await manager_headers(client, make_user)
+    assert (await client.get(f"{A}/page/", headers=h)).json()["hero_image"] is None
+
+    r = await client.post(f"{A}/page/hero/", headers=h, files={"image": ("a.png", png_bytes(), "image/png")})
+    assert r.status_code == 200, r.text
+    url = r.json()["hero_image"]
+    assert "/media/about/hero/" in url
+    first = tmp_path / url.split("/media/")[1]
+    assert first.exists()
+    assert (await client.get("/api/about/")).json()["page"]["hero_image"] == url
+    assert (await client.get("/api/about/?lang=en")).json()["page"]["hero_image"] == url
+
+    r = await client.post(f"{A}/page/hero/", headers=h, files={"image": ("b.png", png_bytes((200, 0, 0)), "image/png")})
+    second = tmp_path / r.json()["hero_image"].split("/media/")[1]
+    assert second.exists() and not first.exists()
+
+    r = await client.delete(f"{A}/page/hero/", headers=h)
+    assert r.status_code == 200 and r.json()["hero_image"] is None
+    assert not second.exists()
+    assert (await client.get("/api/about/")).json()["page"]["hero_image"] is None
+
+
+async def test_hero_image_validation_and_permissions(client, make_user, tmp_path, monkeypatch):
+    from app.config import settings
+    monkeypatch.setattr(settings, "media_dir", tmp_path)
+    h = await manager_headers(client, make_user)
+    r = await client.post(f"{A}/page/hero/", headers=h, files={"image": ("t.txt", b"hello", "text/plain")})
+    assert r.status_code == 400 and "image" in r.json()
+    hv = await staff_headers(client, make_user, "viewer", roles=("about.view",))
+    assert (await client.post(f"{A}/page/hero/", headers=hv, files={"image": ("a.png", png_bytes(), "image/png")})).status_code == 403
+    assert (await client.delete(f"{A}/page/hero/", headers=hv)).status_code == 403

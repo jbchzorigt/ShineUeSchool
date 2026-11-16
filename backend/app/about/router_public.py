@@ -1,6 +1,6 @@
 """
 Бидний тухай — нээлттэй API.
-  GET /api/about/ → {page:{intro_title,intro_html,stats}, leaders:[...], departments:[{id,name,teachers:[...]}]}
+  GET /api/about/ → {page:{intro_title,intro_html,stats,hero_image}, leaders:[...], departments:[{id,name,teachers:[...]}]}
 """
 
 from typing import Annotated
@@ -21,7 +21,7 @@ DB = Annotated[AsyncSession, Depends(get_db)]
 async def about_get(request: Request, db: DB, lang: Lang = "mn"):
     """`?lang=en` — танилцуулга, үзүүлэлтийн шошго, албан тушаал, тэнхим, багшийн үүрэг англиар (хоосон бол монгол)."""
     return AboutOut(
-        page=page_out(await get_page(db), lang),
+        page=page_out(request, await get_page(db), lang),
         leaders=[leader_out(request, l, lang) for l in await list_leaders(db)],
         departments=[department_out(d, lang) for d in await list_departments(db)],
     )

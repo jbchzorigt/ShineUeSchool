@@ -105,6 +105,8 @@ export async function revalidateCache(tags: string[], paths: string[] = ["/mn", 
 const afterSave = <T,>(p: Promise<T>, tags: string[], paths?: string[]): Promise<T> => p.then((r) => { void revalidateCache(tags, paths); return r; });
 /** Олимпиадын хуудас + header-ийн оны хавтантай нүүр хуудсууд */
 const OLYMPIAD_PATHS = ["/olympiad", "/mn", "/en"];
+/** Бидний тухай хуудас (монгол нь дотооддоо "/mn/about") */
+const ABOUT_PATHS = ["/mn/about", "/en/about"];
 
 const q = (params: Record<string, string | number | boolean | undefined>) => {
   const s = new URLSearchParams();
@@ -387,7 +389,9 @@ export const api = {
   about: {
     page: {
       get: () => request<AboutPage>("/api/about/admin/page/"),
-      update: (d: Partial<AboutPageInput>) => request<AboutPage>("/api/about/admin/page/", { method: "PATCH", body: d }),
+      update: (d: Partial<AboutPageInput>) => afterSave(request<AboutPage>("/api/about/admin/page/", { method: "PATCH", body: d }), ["about"], ABOUT_PATHS),
+      setHero: (file: File) => { const fd = new FormData(); fd.append("image", file); return afterSave(request<AboutPage>("/api/about/admin/page/hero/", { method: "POST", body: fd }), ["about"], ABOUT_PATHS); },
+      removeHero: () => afterSave(request<AboutPage>("/api/about/admin/page/hero/", { method: "DELETE" }), ["about"], ABOUT_PATHS),
       uploadImage: (file: File) => { const fd = new FormData(); fd.append("image", file); return request<{ url: string }>("/api/about/admin/upload-image/", { method: "POST", body: fd }); },
     },
     leaders: {
