@@ -160,15 +160,21 @@ def clean_outcomes(data: OutcomesIn) -> list[dict]:
     return [r.model_dump() for r in sorted(rows, key=lambda r: r.year)]
 
 
-EXAM_MAX_ROWS, EXAM_MAX_SCORE = 30, 45   # IB дипломын дээд оноо 45
+EXAM_MAX_ROWS = 30
+EXAM_SCALE = {"national-core-curriculum": 800}   # хөтөлбөрийн шалгалтын дээд оноо: ЭЕШ — 800 (улсын дундажтай); бусад (IB диплом) — 45 (дэлхийн дундажтай)
+
+
+def exam_max(slug: str) -> int:
+    return EXAM_SCALE.get(slug, 45)
 
 
 def exam_scores_out(p: Program) -> list[ExamScoreRow]:
     return [ExamScoreRow(**r) for r in (p.exam_scores or [])]
 
 
-def clean_exam_scores(data: ExamScoresIn) -> list[dict]:
-    """Шалгалтын дундаж оноо: мөр ≤30, он 2000–2100 давхардалгүй, манай ба дэлхийн дундаж 0–45 (1 оронтой бутархай). Он өсөхөөр; хоосон → []."""
+def clean_exam_scores(data: ExamScoresIn, max_score: int = 45) -> list[dict]:
+    """Шалгалтын дундаж оноо: мөр ≤30, он 2000–2100 давхардалгүй, манай ба жишиг (дэлхийн/улсын) дундаж 0–max_score (1 оронтой бутархай).
+    Он өсөхөөр; хоосон → []."""
     rows = data.rows
     if len(rows) > EXAM_MAX_ROWS:
         raise FieldError("rows", f"Хамгийн ихдээ {EXAM_MAX_ROWS} он.")
@@ -178,8 +184,8 @@ def clean_exam_scores(data: ExamScoresIn) -> list[dict]:
     if len(set(years)) != len(years):
         raise FieldError("rows", "Он давхардаж байна.")
     for r in rows:
-        if not (0 <= r.school <= EXAM_MAX_SCORE and 0 <= r.world <= EXAM_MAX_SCORE):
-            raise FieldError("rows", f"{r.year}: оноо 0–{EXAM_MAX_SCORE} байна.")
+        if not (0 <= r.school <= max_score and 0 <= r.world <= max_score):
+            raise FieldError("rows", f"{r.year}: оноо 0–{max_score} байна.")
     return [{"year": r.year, "school": round(r.school, 1), "world": round(r.world, 1)} for r in sorted(rows, key=lambda r: r.year)]
 
 

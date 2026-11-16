@@ -305,3 +305,19 @@ async def test_program_grade_rates(client, make_user):
     r = await client.put(f"{A}/programs/{p['id']}/grade-rates/", headers=h, json={"rows": []})
     assert r.status_code == 200 and r.json()["grade_rates"] == []
     assert (await client.put(f"{A}/programs/{p['id']}/grade-rates/", headers=await staff_headers(client, make_user), json={"rows": rows})).status_code == 403
+
+
+async def test_exam_scores_scale_per_program(client, make_user):
+    """Шалгалтын онооны хязгаар хөтөлбөрөөр: IB — 45 (дэлхийн дундаж), Үндэсний цөм — ЭЕШ 800 (улсын дундаж)."""
+    h = await manager_headers(client, make_user)
+    ib = await mk(client, h, name="IB Diploma", badge="IBDP")
+    nat = await mk(client, h, name="National core curriculum", badge="Үндэсний", grade_from=1, grade_to=12)
+    assert nat["slug"] == "national-core-curriculum"
+    rows = [{"year": 2025, "school": 641.4, "world": 512.2}]
+    r = await client.put(f"{A}/programs/{nat['id']}/exam-scores/", headers=h, json={"rows": rows})
+    assert r.status_code == 200, r.text
+    assert r.json()["exam_scores"] == [{"year": 2025, "school": 641.4, "world": 512.2}]
+    r = await client.put(f"{A}/programs/{nat['id']}/exam-scores/", headers=h, json={"rows": [{"year": 2025, "school": 801, "world": 500}]})
+    assert r.status_code == 400 and "800" in r.json()["rows"][0]
+    r = await client.put(f"{A}/programs/{ib['id']}/exam-scores/", headers=h, json={"rows": rows})
+    assert r.status_code == 400 and "45" in r.json()["rows"][0]

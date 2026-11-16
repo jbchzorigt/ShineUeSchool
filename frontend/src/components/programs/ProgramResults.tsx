@@ -10,7 +10,7 @@ import { ExamScoresChart } from "./ExamScoresChart";
 import { GradeRatesChart } from "./GradeRatesChart";
 import { ScoreDumbbell } from "./ScoreDumbbell";
 import { TrendArea, type TrendPoint } from "./TrendArea";
-import { cumulative, num, themeFor } from "./theme";
+import { cumulative, examScale, num, themeFor } from "./theme";
 
 type Span = "wide" | "narrow" | "full";
 const SPAN: Record<Span, string> = { wide: "lg:col-span-3", narrow: "lg:col-span-2", full: "" };
@@ -50,6 +50,7 @@ export function ProgramResults({ program, lang = "mn" }: { program: ProgramDetai
   const first = radar?.series[0]?.name ?? "", last = radar?.series[radar.series.length - 1]?.name ?? "";
   const side = (totals.length > 1 ? 1 : 0) + (outcomes.length > 1 ? 1 : 0);
   const exams = program.exam_scores;
+  const scale = examScale(program.slug), national = scale.ref === "national";
   const examYears = exams.length > 1 ? `${exams[0].year}–${exams[exams.length - 1].year}` : String(exams[0]?.year ?? "");
   const grades = program.grade_rates;
   const gradeYears = grades.length > 1 ? `${grades[0].year}–${grades[grades.length - 1].year}` : String(grades[0]?.year ?? "");
@@ -69,9 +70,9 @@ export function ProgramResults({ program, lang = "mn" }: { program: ProgramDetai
           </ChartCard>
         )}
         {exams.length > 0 && (
-          <ChartCard span={span("exam")} title={t.examTitle(program.badge)} sub={t.examSub(examYears)}>
-            <ExamScoresChart scores={exams} schoolName={t.examSchool} worldName={t.examWorld} diffName={t.examDiff}
-                             ariaLabel={t.examAria(exams.map((e) => `${e.year}: ${num(e.school)} / ${num(e.world)}`).join(", "))} />
+          <ChartCard span={span("exam")} title={national ? t.examTitleNational : t.examTitle(program.badge)} sub={national ? t.examSubNational(examYears) : t.examSub(examYears)}>
+            <ExamScoresChart scores={exams} max={scale.max} schoolName={t.examSchool} worldName={national ? t.examNational : t.examWorld} diffName={t.examDiff}
+                             ariaLabel={(national ? t.examAriaNational : t.examAria)(exams.map((e) => `${e.year}: ${num(e.school)} / ${num(e.world)}`).join(", "))} />
           </ChartCard>
         )}
         {grades.length > 0 && (

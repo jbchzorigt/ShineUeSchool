@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import { ExamScoresPanel } from "@/components/admin/programs/ExamScoresPanel";
+import { examScale } from "@/components/programs/theme";
 import { GradeRatesPanel } from "@/components/admin/programs/GradeRatesPanel";
 import { OutcomesPanel } from "@/components/admin/programs/OutcomesPanel";
 import { RadarPanel } from "@/components/admin/programs/RadarPanel";
@@ -62,7 +63,8 @@ export default function ProgramDetailAdminPage() {
       {tab === "works" && <WorksPanel programId={program.id} works={program.works} onChanged={q.reload} />}
       {tab === "scholarships" && <ScholarshipsPanel programId={program.id} items={program.scholarships} onChanged={q.reload} />}
       {tab === "radar" && <RadarPanel key={program.id} programId={program.id} radar={program.radar} onChanged={q.reload} />}
-      {tab === "exams" && <ExamScoresPanel key={program.id} programId={program.id} scores={program.exam_scores ?? []} onChanged={q.reload} />}
+      {tab === "exams" && <ExamScoresPanel key={program.id} programId={program.id} scores={program.exam_scores ?? []} max={examScale(program.slug).max}
+                                            national={examScale(program.slug).ref === "national"} onChanged={q.reload} />}
       {tab === "grades" && <GradeRatesPanel key={program.id} programId={program.id} rates={program.grade_rates ?? []} onChanged={q.reload} />}
       {tab === "outcomes" && <OutcomesPanel key={program.id} programId={program.id} outcomes={program.outcomes} onChanged={q.reload} />}
     </div>

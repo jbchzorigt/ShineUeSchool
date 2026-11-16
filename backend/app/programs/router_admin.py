@@ -26,7 +26,7 @@ from ..news.sanitize import clean_rich
 from .models import Program, ProgramWork, Scholarship
 from .schemas import (ExamScoresIn, GradeRatesIn, OrderIn, ProgramAdmin, ProgramAdminDetail, ProgramIn, ProgramPatch, OutcomesIn, RadarIn, ScholarshipIn, ScholarshipOut,
                       ScholarshipPatch, SubjectsIn, WorkOut, WorkPatch)
-from .service import (admin_detail_out, admin_out, clean_exam_scores, clean_grade_rates, clean_outcomes, clean_radar, clean_subjects, get_or_404, list_programs, media_url, scholarship_out,
+from .service import (admin_detail_out, admin_out, clean_exam_scores, clean_grade_rates, exam_max, clean_outcomes, clean_radar, clean_subjects, get_or_404, list_programs, media_url, scholarship_out,
                       unique_slug, work_out)
 
 router = APIRouter(prefix="/api/programs/admin", tags=["programs-admin"])
@@ -346,7 +346,7 @@ async def program_subjects(id: int, body: SubjectsIn, request: Request, db: DB, 
 @router.put("/programs/{id}/exam-scores/", response_model=ProgramAdminDetail)
 async def program_exam_scores(id: int, body: ExamScoresIn, request: Request, db: DB, _: Manager):
     p = await get_or_404(db, Program, id)
-    p.exam_scores = clean_exam_scores(body)
+    p.exam_scores = clean_exam_scores(body, exam_max(p.slug))
     await db.commit()
     await db.refresh(p)
     return admin_detail_out(request, p)
