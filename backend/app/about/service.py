@@ -47,9 +47,12 @@ def leader_out(request: Request, l: Leader, lang: Lang = "mn") -> LeaderOut:
                      level=l.level, photo=media_url(request, l.photo) if l.photo else None, parent_id=l.parent_id)
 
 
+ID_MAX = 2**31 - 1   # Postgres integer — үүнээс их id-аар хайвал DB алдаа (500) өгнө
+
+
 async def check_leader(db: AsyncSession, leader_id: int | None) -> int | None:
     """Тэнхимийн харьяалагдах удирдлага: null эсвэл байгаа гишүүн."""
-    if leader_id is not None and await db.get(Leader, leader_id) is None:
+    if leader_id is not None and (not 1 <= leader_id <= ID_MAX or await db.get(Leader, leader_id) is None):
         raise FieldError("leader_id", "Ийм гишүүн олдсонгүй.")
     return leader_id
 
@@ -60,7 +63,7 @@ async def check_parent(db: AsyncSession, leader_id: int | None, parent_id: int |
         return None
     if parent_id == leader_id:
         raise FieldError("parent_id", "Өөрийгөө дээд албан тушаалтан болгох боломжгүй.")
-    if await db.get(Leader, parent_id) is None:
+    if not 1 <= parent_id <= ID_MAX or await db.get(Leader, parent_id) is None:
         raise FieldError("parent_id", "Ийм гишүүн олдсонгүй.")
     if leader_id is not None:
         parents = dict((await db.execute(select(Leader.id, Leader.parent_id))).all())

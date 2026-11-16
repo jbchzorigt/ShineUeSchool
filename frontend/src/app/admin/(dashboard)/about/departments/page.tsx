@@ -34,7 +34,7 @@ export default function DepartmentsAdminPage() {
       <div className="grid gap-6 lg:grid-cols-3">
         <DepartmentList departments={list} selectedId={selected?.id ?? null} onSelect={setPicked} onChanged={q.reload} />
         <div className="space-y-6 lg:col-span-2">
-          {selected && <DepartmentLeaderSelect department={selected} leaders={leadersQ.data ?? []} onChanged={q.reload} />}
+          {selected && <DepartmentLeaderSelect key={selected.id} department={selected} leaders={leadersQ.data ?? null} loadError={leadersQ.error} onChanged={q.reload} />}
           {selected ? <TeacherTable key={selected.id} department={selected} onChanged={q.reload} /> : <Empty>Тэнхим нэмнэ үү.</Empty>}
         </div>
       </div>

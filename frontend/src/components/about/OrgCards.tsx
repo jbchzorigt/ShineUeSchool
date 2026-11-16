@@ -35,6 +35,7 @@ export function DepartmentCard({ department }: { department: AboutDepartment }) 
   const id = useId();
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
+  const closing = useRef(false);   // хаах анимаци явж байгаа эсэх (дахин дарвал буцааж нээнэ)
   const heads = department.teachers.filter((x) => x.is_head);
   const n = department.teachers.length;
 
@@ -44,12 +45,20 @@ export function DepartmentCard({ department }: { department: AboutDepartment }) 
     if (!open || !panel || reduceMotion()) return;
     gsap.from(panel, { height: 0, autoAlpha: 0, duration: 0.35, ease: "power2.out", clearProps: "height,opacity,visibility" });
   }, { scope: box, dependencies: [open] });
+  // Анимаци дунд дахин дарвал: өмнөх tween-ийг зогсоож одоогийн өндрөөс үргэлжилнэ (анивчихгүй, давхар хаахгүй)
   function toggle() {
-    if (!open) { setOpen(true); return; }
     const panel = box.current?.querySelector<HTMLElement>("[data-panel]");
-    if (!panel || reduceMotion()) { setOpen(false); return; }
+    if (panel) gsap.killTweensOf(panel);
+    if (!open) { setOpen(true); return; }
+    if (!panel || reduceMotion()) { closing.current = false; setOpen(false); return; }
+    if (closing.current) {
+      closing.current = false;
+      contextSafe(() => { gsap.to(panel, { height: "auto", autoAlpha: 1, duration: 0.25, ease: "power2.out", clearProps: "height,opacity,visibility" }); })();
+      return;
+    }
+    closing.current = true;
     contextSafe(() => {
-      gsap.to(panel, { height: 0, autoAlpha: 0, duration: 0.25, ease: "power2.in", onComplete: () => { gsap.set(panel, { clearProps: "height,opacity,visibility" }); setOpen(false); } });
+      gsap.to(panel, { height: 0, autoAlpha: 0, duration: 0.25, ease: "power2.in", onComplete: () => { closing.current = false; gsap.set(panel, { clearProps: "height,opacity,visibility" }); setOpen(false); } });
     })();
   }
 

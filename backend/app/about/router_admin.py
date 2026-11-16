@@ -10,6 +10,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
 from sqlalchemy import func, select, update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.deps import require_section
@@ -78,14 +79,23 @@ def _clean_name(v: str | None, field: str, msg: str) -> str:
     return v
 
 
-def _form_id(v: str) -> int | None:
-    """Multipart-ийн id талбар: хоосон → None; тоо биш → олдсонгүй алдаа."""
+def _form_id(v: str, field: str) -> int | None:
+    """Multipart-ийн id талбар: хоосон → None; аравтын тоо биш ("²" г.м.) → олдсонгүй алдаа (хязгаарыг check_* шалгана)."""
     v = v.strip()
     if not v:
         return None
-    if not v.isdigit():
-        raise FieldError("parent_id", "Ийм гишүүн олдсонгүй.")
+    if not (v.isascii() and v.isdecimal()):
+        raise FieldError(field, "Ийм гишүүн олдсонгүй.")
     return int(v)
+
+
+async def _commit_fk(db: AsyncSession, field: str) -> None:
+    """Шалгалтын дараа, хадгалахаас өмнө харьяалагдах гишүүн устгагдвал (FK зөрчил) 500 биш 400."""
+    try:
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raise FieldError(field, "Ийм гишүүн олдсонгүй.") from None
 
 
 def _check_level(level: int) -> int:
@@ -110,12 +120,17 @@ async def leader_create(request: Request, db: DB, _: Manager, full_name: Annotat
                         position_en: Annotated[str, Form()] = "", parent_id: Annotated[str, Form()] = ""):
     l = Leader(full_name=_clean_name(full_name, "full_name", "Нэр оруулна уу."),
                position=_clean_name(position, "position", "Албан тушаал оруулна уу."), position_en=position_en.strip()[:160],
-               level=_check_level(level), parent_id=await check_parent(db, None, _form_id(parent_id)))
+               level=_check_level(level), parent_id=await check_parent(db, None, _form_id(parent_id, "parent_id")))
     l.order = await _next_order(db, l.level)
     if photo is not None and photo.filename:
         l.photo = await save_upload(photo, "about", "photo")
     db.add(l)
-    await db.commit()
+    try:
+        await _commit_fk(db, "parent_id")
+    except FieldError:
+        if l.photo:
+            delete_file(l.photo)
+        raise
     return leader_out(request, l)
 
 
@@ -134,7 +149,7 @@ async def leader_patch(id: int, body: LeaderPatch, request: Request, db: DB, _: 
         l.order = await _next_order(db, l.level)
     if "parent_id" in d:
         l.parent_id = await check_parent(db, l.id, d["parent_id"])
-    await db.commit()
+    await _commit_fk(db, "parent_id")
     return leader_out(request, l)
 
 
@@ -198,7 +213,7 @@ async def department_create(body: DepartmentIn, db: DB, _: Manager):
     d = Department(name=_clean_name(body.name, "name", "Нэр оруулна уу."), name_en=body.name_en.strip(), order=(mx or 0) + 1,
                    leader_id=await check_leader(db, body.leader_id))
     db.add(d)
-    await db.commit()
+    await _commit_fk(db, "leader_id")
     await db.refresh(d)
     return department_out(d)
 
@@ -212,7 +227,7 @@ async def department_patch(id: int, body: DepartmentPatch, db: DB, _: Manager):
         d.name_en = body.name_en.strip()
     if "leader_id" in body.model_fields_set:
         d.leader_id = await check_leader(db, body.leader_id)
-    await db.commit()
+    await _commit_fk(db, "leader_id")
     await db.refresh(d)
     return department_out(d)
 

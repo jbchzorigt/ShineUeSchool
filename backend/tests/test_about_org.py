@@ -111,3 +111,33 @@ def test_parent_map_from_levels():
     rows = [(1, 1, 1), (2, 2, 1), (3, 3, 2), (4, 3, 1), (5, 3, 3), (6, 5, 1)]
     assert m.parent_map(rows) == {2: 1, 3: 2, 4: 2, 5: 2, 6: 4}   # 6 → өмнөх хамгийн ойр түвшний (3) эхний гишүүн (order 1 → id 4)
     assert m.parent_map([(1, 2, 1), (2, 2, 2)]) == {}             # нэг түвшин → харьяалалгүй
+
+
+async def test_out_of_range_and_non_decimal_ids(client, make_user):
+    """int32-оос их id, "²" (isdigit боловч тоо биш) → 400, 500 биш."""
+    h = await manager_headers(client, make_user)
+    a = await mk(client, h, "А", 1)
+    r = await client.patch(f"{A}/leaders/{a['id']}/", headers=h, json={"parent_id": 2**31})
+    assert r.status_code == 400 and r.json()["parent_id"] == ["Ийм гишүүн олдсонгүй."]
+    r = await client.post(f"{A}/leaders/", headers=h, data={"full_name": "Г", "position": "x", "level": "1", "parent_id": "²"})
+    assert r.status_code == 400 and r.json()["parent_id"] == ["Ийм гишүүн олдсонгүй."]
+    r = await client.post(f"{A}/leaders/", headers=h, data={"full_name": "Г", "position": "x", "level": "1", "parent_id": str(2**40)})
+    assert r.status_code == 400 and r.json()["parent_id"] == ["Ийм гишүүн олдсонгүй."]
+    r = await client.post(f"{A}/departments/", headers=h, json={"name": "Мат", "leader_id": 2**40})
+    assert r.status_code == 400 and r.json()["leader_id"] == ["Ийм гишүүн олдсонгүй."]
+
+
+async def test_leader_deleted_between_check_and_commit(client, make_user, monkeypatch):
+    """Шалгалтын дараа, хадгалахаас өмнө гишүүн устгагдвал (FK зөрчил) → 400, 500 биш."""
+    import app.about.router_admin as ra
+
+    async def unchecked(db, *args):
+        return args[-1]
+    monkeypatch.setattr(ra, "check_parent", unchecked)
+    monkeypatch.setattr(ra, "check_leader", unchecked)
+    h = await manager_headers(client, make_user)
+    a = await mk(client, h, "А", 1)
+    r = await client.patch(f"{A}/leaders/{a['id']}/", headers=h, json={"parent_id": 99999})
+    assert r.status_code == 400 and r.json()["parent_id"] == ["Ийм гишүүн олдсонгүй."]
+    r = await client.post(f"{A}/departments/", headers=h, json={"name": "Мат", "leader_id": 99999})
+    assert r.status_code == 400 and r.json()["leader_id"] == ["Ийм гишүүн олдсонгүй."]
