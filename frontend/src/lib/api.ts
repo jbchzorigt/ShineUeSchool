@@ -390,6 +390,7 @@ export const api = {
       create: (d: AboutLeaderInput, photo: File | null) => {
         const fd = new FormData();
         fd.append("full_name", d.full_name); fd.append("position", d.position); fd.append("position_en", d.position_en ?? ""); fd.append("level", String(d.level));
+        fd.append("parent_id", d.parent_id == null ? "" : String(d.parent_id));   // хоосон — харьяалалгүй
         if (photo) fd.append("photo", photo);
         return request<AboutLeader>("/api/about/admin/leaders/", { method: "POST", body: fd });
       },
@@ -405,6 +406,8 @@ export const api = {
       update: (id: number, name: string, nameEn?: string) => request<AboutDepartment>(`/api/about/admin/departments/${id}/`, { method: "PATCH", body: nameEn === undefined ? { name } : { name, name_en: nameEn } }),
       remove: (id: number) => request<void>(`/api/about/admin/departments/${id}/`, { method: "DELETE" }),
       reorder: (ids: number[]) => request<AboutDepartment[]>("/api/about/admin/departments/order/", { method: "PUT", body: { ids } }),
+      /** Харьяалагдах удирдлага (null — харьяалалгүй, бүтцийн диаграмд гарахгүй) */
+      setLeader: (id: number, leaderId: number | null) => request<AboutDepartment>(`/api/about/admin/departments/${id}/`, { method: "PATCH", body: { leader_id: leaderId } }),
     },
     teachers: {
       create: (deptId: number, d: AboutTeacherInput) => request<AboutTeacher>(`/api/about/admin/departments/${deptId}/teachers/`, { method: "POST", body: d }),

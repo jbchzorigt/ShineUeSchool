@@ -1,18 +1,24 @@
 "use client";
 
-/* Удирдлагын гишүүн үүсгэх/засах Modal: нэр, албан тушаал, түвшин, зураг (preview). Үүсгэх: multipart нэг хүсэлт;
-   засах: PATCH + (зураг сонгосон бол) setPhoto. "Зураг устгах" зөвхөн засах үед. */
+/* Удирдлагын гишүүн үүсгэх/засах Modal: нэр, албан тушаал, түвшин, харьяалагдах дээд албан тушаалтан, зураг (preview). Үүсгэх: multipart нэг хүсэлт;
+   засах: PATCH + (зураг сонгосон бол) setPhoto. "Зураг устгах" зөвхөн засах үед. Харьяаллын жагсаалтаас өөрийг нь ба доод гишүүдийг нь хасна (давталт). */
 
 import Image from "next/image";
 import { useEffect, useState, type FormEvent } from "react";
 import { Button, Field, Input, Modal, Select } from "@/components/ui";
 import { api, ApiError } from "@/lib/api";
+import { descendantIds } from "@/lib/org-tree";
 import type { AboutLeader, AboutLeaderInput } from "@/lib/types";
 
-export function LeaderDialog({ leader, defaultLevel, levels, open, onClose, onSaved }: {
-  leader: AboutLeader | null; defaultLevel: number; levels: number[]; open: boolean; onClose: () => void; onSaved: () => void;
+export function LeaderDialog({ leader, leaders, defaultLevel, levels, open, onClose, onSaved }: {
+  leader: AboutLeader | null; leaders: AboutLeader[]; defaultLevel: number; levels: number[]; open: boolean; onClose: () => void; onSaved: () => void;
 }) {
-  const [d, setD] = useState<AboutLeaderInput>(() => leader ? { full_name: leader.full_name, position: leader.position, position_en: leader.position_en, level: leader.level } : { full_name: "", position: "", position_en: "", level: defaultLevel });
+  // Шинэ гишүүний анхдагч харьяалал: өмнөх түвшний эхний гишүүн (байхгүй бол харьяалалгүй)
+  const [d, setD] = useState<AboutLeaderInput>(() => leader
+    ? { full_name: leader.full_name, position: leader.position, position_en: leader.position_en, level: leader.level, parent_id: leader.parent_id ?? null }
+    : { full_name: "", position: "", position_en: "", level: defaultLevel, parent_id: leaders.find((l) => l.level === defaultLevel - 1)?.id ?? null });
+  const blocked = leader ? new Set([leader.id, ...descendantIds(leaders, leader.id)]) : new Set<number>();
+  const parents = leaders.filter((l) => !blocked.has(l.id));
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [photo, setPhoto] = useState<string | null>(leader?.photo ?? null);
@@ -29,7 +35,7 @@ export function LeaderDialog({ leader, defaultLevel, levels, open, onClose, onSa
   async function save(e: FormEvent) {
     e.preventDefault();
     setBusy(true); setErrors({});
-    const body = { full_name: d.full_name.trim(), position: d.position.trim(), position_en: (d.position_en ?? "").trim(), level: d.level };
+    const body = { full_name: d.full_name.trim(), position: d.position.trim(), position_en: (d.position_en ?? "").trim(), level: d.level, parent_id: d.parent_id ?? null };
     try {
       if (leader) {
         await api.about.leaders.update(leader.id, body);
@@ -62,6 +68,12 @@ export function LeaderDialog({ leader, defaultLevel, levels, open, onClose, onSa
         <Field label="Түвшин" error={errors.level} hint="1 — захирал, 2 — дэд захирлууд, 3+ — менежер, ахлахууд. Шинэ түвшинг жагсаалтын «Түвшин нэмэх»-ээр нэмнэ.">
           <Select value={d.level} onChange={(e) => setD({ ...d, level: Number(e.target.value) })}>
             {levels.map((lv) => <option key={lv} value={lv}>{lv}-р түвшин</option>)}
+          </Select>
+        </Field>
+        <Field label="Харьяалагдах дээд албан тушаалтан" error={errors.parent_id} hint="Олон нийтийн хуудасны бүтцийн диаграмд сонгосон хүний доор гарна.">
+          <Select value={d.parent_id ?? ""} onChange={(e) => setD({ ...d, parent_id: e.target.value ? Number(e.target.value) : null })}>
+            <option value="">— Хамгийн дээд (харьяалалгүй)</option>
+            {parents.map((l) => <option key={l.id} value={l.id}>{l.full_name} — {l.position}</option>)}
           </Select>
         </Field>
         <div className="flex items-start gap-4">

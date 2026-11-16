@@ -1,6 +1,6 @@
 "use client";
 
-/* /admin/about/leaders — удирдлагын гишүүд (түвшин 1–10), нэмэх/засах dialog, түвшин нэмэх. */
+/* /admin/about/leaders — удирдлагын гишүүд (түвшин 1–10, харьяалал), нэмэх/засах dialog, түвшин нэмэх. Тэнхимүүдийг устгалын анхааруулгад ачаална. */
 
 import { useState } from "react";
 import { LeaderDialog } from "@/components/admin/about/LeaderDialog";
@@ -14,6 +14,7 @@ const LEVEL_MAX = 10;   // backend LEVEL_MAX-тай ижил
 
 export default function LeadersAdminPage() {
   const q = useFetch(() => api.about.leaders.list(), []);
+  const deptQ = useFetch(() => api.about.departments.list(), []);
   const [dialog, setDialog] = useState<{ leader: AboutLeader | null; level: number } | null>(null);
   // reload() дуудагдахад q.data агшин зуур undefined болдог (useFetch); хэрэв dialog нээлттэй үед үүнд
   // тулгуурлаж Spinner үзүүлбэл LeaderDialog unmount хийгдэж, дотоод state (жишээ нь зураг устгасан
@@ -32,11 +33,11 @@ export default function LeadersAdminPage() {
     <div className="max-w-4xl space-y-6">
       <div>
         <h1 className="text-2xl font-black text-navy">Удирдлага</h1>
-        <p className="text-sm text-slate-600">Олон нийтийн хуудсанд түвшин бүр нэг мөрөөр, энд байгаа дарааллаар харагдана.</p>
+        <p className="text-sm text-slate-600">Харьяаллаар олон нийтийн хуудсанд бүтцийн диаграм болж гарна; нэг дээд албан тушаалтны доод гишүүд энд байгаа дарааллаар.</p>
       </div>
-      <LeaderList leaders={leaders} levels={levels} canAddLevel={shown < LEVEL_MAX} onAdd={(level) => setDialog({ leader: null, level })} onAddLevel={() => setWant(shown + 1)}
+      <LeaderList leaders={leaders} departments={deptQ.data ?? []} levels={levels} canAddLevel={shown < LEVEL_MAX} onAdd={(level) => setDialog({ leader: null, level })} onAddLevel={() => setWant(shown + 1)}
                   onRemoveLevel={() => setWant(shown - 1)} onEdit={(l) => setDialog({ leader: l, level: l.level })} onChanged={q.reload} />
-      {dialog && <LeaderDialog key={dialog.leader?.id ?? "new"} leader={dialog.leader} defaultLevel={dialog.level} levels={levels} open onClose={() => setDialog(null)} onSaved={q.reload} />}
+      {dialog && <LeaderDialog key={dialog.leader?.id ?? "new"} leader={dialog.leader} leaders={leaders} defaultLevel={dialog.level} levels={levels} open onClose={() => setDialog(null)} onSaved={q.reload} />}
     </div>
   );
 }

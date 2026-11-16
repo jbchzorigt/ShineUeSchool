@@ -1,6 +1,6 @@
 "use client";
 
-/* Зүүн багана: тэнхимийн жагсаалт (сонгох, inline нэр засах, ▲▼, устгах), доор "Тэнхим нэмэх" мөр. */
+/* Зүүн багана: тэнхимийн жагсаалт (сонгох, inline нэр засах, ▲▼, устгах; харьяалалгүй бол «диаграмд гарахгүй»), доор "Тэнхим нэмэх" мөр. */
 
 import { useState, type FormEvent } from "react";
 import { Button, Card, Empty, Input } from "@/components/ui";
@@ -67,6 +67,7 @@ export function DepartmentList({ departments, selectedId, onSelect, onChanged }:
               ) : (
                 <button type="button" onClick={() => onSelect(d.id)} className={`min-w-0 flex-1 truncate text-left font-semibold ${d.id === selectedId ? "text-navy" : "text-slate-800"}`}>
                   {d.name} <span className="text-xs font-normal text-slate-500">({d.teachers.length})</span>
+                  {d.leader_id == null && <span className="ml-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">диаграмд гарахгүй</span>}
                 </button>
               )}
               <span className="whitespace-nowrap">

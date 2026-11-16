@@ -1,9 +1,9 @@
-/* /about — Бидний тухай: танилцуулга + үзүүлэлт, түүх 2003–2026 (snake timeline), хамт олон (marquee картууд), тэнхимүүд. Server component. */
+/* /about — Бидний тухай: танилцуулга + үзүүлэлт, түүх 2003–2026 (snake timeline), байгууллагын бүтэц (харьяаллын мод), тэнхимүүд. Server component. */
 
 import type { Metadata } from "next";
 import { Departments } from "@/components/about/Departments";
 import { IntroSection } from "@/components/about/IntroSection";
-import { LeadershipChart } from "@/components/about/LeadershipChart";
+import { OrgChart } from "@/components/about/OrgChart";
 import { HistoryTimeline } from "@/components/home/HistoryTimeline";
 import { SiteFooter } from "@/components/home/SiteFooter";
 import { Reveal } from "@/components/site/Reveal";
@@ -34,7 +34,7 @@ export default async function Page({ params }: Props) {
           </Reveal>
         )}
         <Reveal><HistoryTimeline /></Reveal>
-        {data && <LeadershipChart leaders={data.leaders} />}
+        {data && <OrgChart leaders={data.leaders} departments={data.departments} />}
         {data && <Departments departments={data.departments} lang={lang} />}
       </main>
       <SiteFooter />

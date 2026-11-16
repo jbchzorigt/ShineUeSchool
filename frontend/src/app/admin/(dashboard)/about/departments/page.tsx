@@ -1,8 +1,9 @@
 "use client";
 
-/* /admin/about/departments — зүүн тэнхимийн жагсаалт, баруун сонгосон тэнхимийн багш нар. Утсанд дээр доороо. */
+/* /admin/about/departments — зүүн тэнхимийн жагсаалт, баруун сонгосон тэнхимийн харьяалагдах удирдлага + багш нар. Утсанд дээр доороо. */
 
 import { useState } from "react";
+import { DepartmentLeaderSelect } from "@/components/admin/about/DepartmentLeaderSelect";
 import { DepartmentList } from "@/components/admin/about/DepartmentList";
 import { TeacherTable } from "@/components/admin/about/TeacherTable";
 import { Empty, Spinner } from "@/components/ui";
@@ -12,6 +13,7 @@ import type { AboutDepartment } from "@/lib/types";
 
 export default function DepartmentsAdminPage() {
   const q = useFetch(() => api.about.departments.list(), []);
+  const leadersQ = useFetch(() => api.about.leaders.list(), []);
   const [picked, setPicked] = useState<number | null>(null);
   // reload() дуудагдахад q.data агшин зуур undefined болдог (useFetch); хэрэв үүнд тулгуурлаж Spinner
   // үзүүлбэл DepartmentList/TeacherTable unmount хийгдэж, дотоод state (inline засварын мөр) алдагдана.
@@ -31,7 +33,8 @@ export default function DepartmentsAdminPage() {
       </div>
       <div className="grid gap-6 lg:grid-cols-3">
         <DepartmentList departments={list} selectedId={selected?.id ?? null} onSelect={setPicked} onChanged={q.reload} />
-        <div className="lg:col-span-2">
+        <div className="space-y-6 lg:col-span-2">
+          {selected && <DepartmentLeaderSelect department={selected} leaders={leadersQ.data ?? []} onChanged={q.reload} />}
           {selected ? <TeacherTable key={selected.id} department={selected} onChanged={q.reload} /> : <Empty>Тэнхим нэмнэ үү.</Empty>}
         </div>
       </div>

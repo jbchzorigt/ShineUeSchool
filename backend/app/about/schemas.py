@@ -47,6 +47,7 @@ class LeaderOut(BaseModel):
     position_en: str = ""
     level: int
     photo: str | None
+    parent_id: int | None = None   # харьяалагдах дээд албан тушаалтан (null — хамгийн дээд)
 
 
 class LeaderPatch(BaseModel):
@@ -54,6 +55,7 @@ class LeaderPatch(BaseModel):
     position: str | None = Field(default=None, max_length=160)
     position_en: str | None = Field(default=None, max_length=160)
     level: int | None = None
+    parent_id: int | None = None   # илгээгээгүй бол хөндөхгүй (exclude_unset), null бол арилгана
 
 
 class LeaderOrderItem(BaseModel):
@@ -96,17 +98,20 @@ class DepartmentOut(BaseModel):
     id: int
     name: str
     name_en: str = ""
+    leader_id: int | None = None   # харьяалагдах удирдлага (null — бүтцийн диаграмд гарахгүй)
     teachers: list[TeacherOut]
 
 
 class DepartmentIn(BaseModel):
     name: str = Field(max_length=120)
     name_en: str = Field(default="", max_length=120)
+    leader_id: int | None = None
 
 
 class DepartmentPatch(BaseModel):
     name: str | None = Field(default=None, max_length=120)
     name_en: str | None = Field(default=None, max_length=120)
+    leader_id: int | None = None   # илгээгээгүй бол хөндөхгүй (exclude_unset), null бол арилгана
 
 
 class AboutOut(BaseModel):

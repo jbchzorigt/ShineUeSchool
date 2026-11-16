@@ -276,11 +276,13 @@ export interface ClubRegistrationAdmin {
 export interface AboutStat { value: string; label: string; label_en?: string }
 export interface AboutPage { intro_title: string; intro_title_en: string; intro_html: string; intro_html_en: string; stats: AboutStat[] }
 export type AboutPageInput = AboutPage;
-export interface AboutLeader { id: number; full_name: string; position: string; position_en: string; level: number; photo: string | null }
-export interface AboutLeaderInput { full_name: string; position: string; position_en?: string; level: number }
+/** parent_id — харьяалагдах дээд албан тушаалтан (null — хамгийн дээд) */
+export interface AboutLeader { id: number; full_name: string; position: string; position_en: string; level: number; photo: string | null; parent_id: number | null }
+export interface AboutLeaderInput { full_name: string; position: string; position_en?: string; level: number; parent_id?: number | null }
 export interface AboutTeacher { id: number; full_name: string; role: string; role_en: string; is_head: boolean }
 export interface AboutTeacherInput { full_name: string; role: string; role_en?: string; is_head: boolean }
-export interface AboutDepartment { id: number; name: string; name_en: string; teachers: AboutTeacher[] }
+/** leader_id — харьяалагдах удирдлага (null — бүтцийн диаграмд гарахгүй) */
+export interface AboutDepartment { id: number; name: string; name_en: string; leader_id: number | null; teachers: AboutTeacher[] }
 export interface AboutData { page: AboutPage; leaders: AboutLeader[]; departments: AboutDepartment[] }
 
 /* ---- Хөтөлбөрүүд (backend/app/programs/schemas.py) ---- */

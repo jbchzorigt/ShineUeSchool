@@ -37,6 +37,8 @@ class Leader(Base):
     level: Mapped[int] = mapped_column(SmallInteger, default=1)   # 1–3
     order: Mapped[int] = mapped_column(SmallInteger, default=0)
     photo: Mapped[str | None] = mapped_column(String(255), nullable=True)   # "about/uuid.jpg"
+    # Байгууллагын бүтэц: харьяалагдах дээд албан тушаалтан (null — хамгийн дээд); дээд нь устгагдвал null
+    parent_id: Mapped[int | None] = mapped_column(ForeignKey("about_leaders.id", ondelete="SET NULL"), nullable=True, index=True)
 
 
 class Department(Base):
@@ -46,6 +48,8 @@ class Department(Base):
     name: Mapped[str] = mapped_column(String(120))
     name_en: Mapped[str] = mapped_column(String(120), default="", server_default="")
     order: Mapped[int] = mapped_column(SmallInteger, default=0)
+    # Харьяалагдах удирдлага (null — бүтцийн диаграмд гарахгүй); удирдлага устгагдвал null
+    leader_id: Mapped[int | None] = mapped_column(ForeignKey("about_leaders.id", ondelete="SET NULL"), nullable=True, index=True)
     teachers: Mapped[list["DeptTeacher"]] = relationship(
         lazy="selectin", cascade="all, delete-orphan",
         order_by="desc(DeptTeacher.is_head), DeptTeacher.order, DeptTeacher.id",

@@ -5,6 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..common.errors import FieldError
 from ..common.i18n import Lang, localized
 from ..config import settings
 from .models import PAGE_DEFAULTS, AboutPage, Department, DeptTeacher, Leader
@@ -43,7 +44,33 @@ def page_out(p: AboutPage, lang: Lang = "mn") -> PageOut:
 
 def leader_out(request: Request, l: Leader, lang: Lang = "mn") -> LeaderOut:
     return LeaderOut(id=l.id, full_name=l.full_name, position=localized(l.position, l.position_en, lang), position_en=l.position_en,
-                     level=l.level, photo=media_url(request, l.photo) if l.photo else None)
+                     level=l.level, photo=media_url(request, l.photo) if l.photo else None, parent_id=l.parent_id)
+
+
+async def check_leader(db: AsyncSession, leader_id: int | None) -> int | None:
+    """Тэнхимийн харьяалагдах удирдлага: null эсвэл байгаа гишүүн."""
+    if leader_id is not None and await db.get(Leader, leader_id) is None:
+        raise FieldError("leader_id", "Ийм гишүүн олдсонгүй.")
+    return leader_id
+
+
+async def check_parent(db: AsyncSession, leader_id: int | None, parent_id: int | None) -> int | None:
+    """Харьяалагдах дээд албан тушаалтны шалгалт: байгаа гишүүн, өөрөө биш, давталт үүсгэхгүй (шинэ дээдээс дээш явахад өөрийгөө олохгүй)."""
+    if parent_id is None:
+        return None
+    if parent_id == leader_id:
+        raise FieldError("parent_id", "Өөрийгөө дээд албан тушаалтан болгох боломжгүй.")
+    if await db.get(Leader, parent_id) is None:
+        raise FieldError("parent_id", "Ийм гишүүн олдсонгүй.")
+    if leader_id is not None:
+        parents = dict((await db.execute(select(Leader.id, Leader.parent_id))).all())
+        cur, seen = parent_id, set()
+        while cur is not None and cur not in seen:
+            if cur == leader_id:
+                raise FieldError("parent_id", "Харьяалал давталт үүсгэж байна.")
+            seen.add(cur)
+            cur = parents.get(cur)
+    return parent_id
 
 
 def teacher_out(t: DeptTeacher, lang: Lang = "mn") -> TeacherOut:
@@ -51,7 +78,7 @@ def teacher_out(t: DeptTeacher, lang: Lang = "mn") -> TeacherOut:
 
 
 def department_out(d: Department, lang: Lang = "mn") -> DepartmentOut:
-    return DepartmentOut(id=d.id, name=localized(d.name, d.name_en, lang), name_en=d.name_en,
+    return DepartmentOut(id=d.id, name=localized(d.name, d.name_en, lang), name_en=d.name_en, leader_id=d.leader_id,
                          teachers=[teacher_out(t, lang) for t in d.teachers])
 
 

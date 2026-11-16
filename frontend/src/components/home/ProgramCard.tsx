@@ -1,6 +1,6 @@
 /* Хөтөлбөрийн карт (reference: зураг → badge → гарчиг → summary → гол үзүүлэлт + sparkline → "Дэлгэрэнгүй →") — сургуулийн сайтын
    загвараар: navy блок + дэвтрийн нүд, гэрлийн тойрог (нүүр зураг байвал navy-д уусгаж доор нь), алтан ангийн хаяг, цагаан карт
-   border-line, үзүүлэлтийн мөр paper-2 дээр navy тоо, navy товч; hover-т дээш хөдөлж navy сүүдэр (LeadershipChart-тай ижил).
+   border-line, үзүүлэлтийн мөр paper-2 дээр navy тоо, navy товч; hover-т дээш хөдөлж navy сүүдэр.
    Үзүүлэлтийг ProgramsSection тооцоолж өгнө (өгөгдөлгүй бол харагдахгүй). Server component; sparkline client. */
 
 import Image from "next/image";

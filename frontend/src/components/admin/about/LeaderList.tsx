@@ -1,20 +1,21 @@
 "use client";
 
-/* Түвшин бүрт нэг блок (levels prop — хуудас тооцно); блок бүрт гишүүдийн мөр (зураг, нэр, албан тушаал, ▲▼, ✎, 🗑).
-   ▲▼ → бүх жагсаалтыг reorder. Хоосон хамгийн доод түвшинг ✕-ээр хаана; «Түвшин нэмэх» доор. */
+/* Түвшин бүрт нэг блок (levels prop — хуудас тооцно); блок бүрт гишүүдийн мөр (зураг, нэр, албан тушаал, харьяалал, ▲▼, ✎, 🗑).
+   ▲▼ → бүх жагсаалтыг reorder. Хоосон хамгийн доод түвшинг ✕-ээр хаана; «Түвшин нэмэх» доор.
+   Устгахад доод гишүүд, тэнхимүүд харьяалалгүй болохыг confirm-д анхааруулна. */
 
 import Image from "next/image";
 import { Button, Card, Empty } from "@/components/ui";
 import { api, ApiError } from "@/lib/api";
-import type { AboutLeader } from "@/lib/types";
+import type { AboutDepartment, AboutLeader } from "@/lib/types";
 import { DeleteButton, EditLabel, MoveButton, actionBtn } from "@/components/admin/ActionLabel";
 
 const LEVEL_HINT: Record<number, string> = { 1: "захирал", 2: "дэд захирлууд", 3: "менежерүүд" };
 const levelLabel = (lv: number) => `${lv}-р түвшин${LEVEL_HINT[lv] ? ` (${LEVEL_HINT[lv]})` : ""}`;
 const iconBtn = "inline-grid h-8 w-8 place-items-center rounded-lg text-base transition hover:bg-navy/10";
 
-export function LeaderList({ leaders, levels, canAddLevel, onAdd, onAddLevel, onRemoveLevel, onEdit, onChanged }: {
-  leaders: AboutLeader[]; levels: number[]; canAddLevel: boolean; onAdd: (level: number) => void; onAddLevel: () => void;
+export function LeaderList({ leaders, departments, levels, canAddLevel, onAdd, onAddLevel, onRemoveLevel, onEdit, onChanged }: {
+  leaders: AboutLeader[]; departments: AboutDepartment[]; levels: number[]; canAddLevel: boolean; onAdd: (level: number) => void; onAddLevel: () => void;
   onRemoveLevel: (level: number) => void; onEdit: (l: AboutLeader) => void; onChanged: () => void;
 }) {
   const maxUsed = Math.max(0, ...leaders.map((l) => l.level));
@@ -27,8 +28,11 @@ export function LeaderList({ leaders, levels, canAddLevel, onAdd, onAddLevel, on
     try { await api.about.leaders.reorder(items); onChanged(); } catch { alert("Эрэмбийг хадгалж чадсангүй."); }
   }
 
+  const byId = new Map(leaders.map((l) => [l.id, l]));
   async function remove(l: AboutLeader) {
-    if (!confirm(`«${l.full_name}» гишүүнийг устгах уу?`)) return;
+    const kids = leaders.filter((x) => x.parent_id === l.id).length, depts = departments.filter((d) => d.leader_id === l.id).length;
+    const lost = [kids && `${kids} гишүүн`, depts && `${depts} тэнхим`].filter(Boolean).join(", ");
+    if (!confirm(`«${l.full_name}» гишүүнийг устгах уу?${lost ? ` ${lost} харьяалалгүй болно.` : ""}`)) return;
     try { await api.about.leaders.remove(l.id); onChanged(); }
     catch (e) { alert(e instanceof ApiError ? e.message : "Устгаж чадсангүй."); }
   }
@@ -61,6 +65,7 @@ export function LeaderList({ leaders, levels, canAddLevel, onAdd, onAddLevel, on
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-semibold text-slate-900">{l.full_name}</span>
                       <span className="block truncate text-sm text-slate-600">{l.position}</span>
+                      <span className="block truncate text-xs text-slate-500">{l.parent_id != null && byId.has(l.parent_id) ? `→ ${byId.get(l.parent_id)!.full_name}` : "Хамгийн дээд"}</span>
                     </span>
                     <span className="whitespace-nowrap">
                       <button type="button" onClick={() => onEdit(l)} className={`${actionBtn} text-navy hover:bg-navy/10`}><EditLabel /></button>

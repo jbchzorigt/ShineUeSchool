@@ -9,7 +9,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.deps import require_section
@@ -21,7 +21,7 @@ from ..news.sanitize import clean_html, clean_rich
 from .models import Department, DeptTeacher, Leader
 from .schemas import (DepartmentIn, DepartmentOut, DepartmentPatch, LeaderOut, LeaderPatch, LeadersOrderIn, OrderIn, PageOut,
                       PagePatch, TeacherIn, TeacherOut, TeacherPatch)
-from .service import department_out, get_page, leader_out, list_departments, list_leaders, media_url, page_out, teacher_out
+from .service import check_leader, check_parent, department_out, get_page, leader_out, list_departments, list_leaders, media_url, page_out, teacher_out
 
 router = APIRouter(prefix="/api/about/admin", tags=["about-admin"])
 DB = Annotated[AsyncSession, Depends(get_db)]
@@ -78,6 +78,16 @@ def _clean_name(v: str | None, field: str, msg: str) -> str:
     return v
 
 
+def _form_id(v: str) -> int | None:
+    """Multipart-ийн id талбар: хоосон → None; тоо биш → олдсонгүй алдаа."""
+    v = v.strip()
+    if not v:
+        return None
+    if not v.isdigit():
+        raise FieldError("parent_id", "Ийм гишүүн олдсонгүй.")
+    return int(v)
+
+
 def _check_level(level: int) -> int:
     if not 1 <= level <= LEVEL_MAX:
         raise FieldError("level", f"Түвшин 1–{LEVEL_MAX} байна.")
@@ -97,10 +107,10 @@ async def leaders_list(request: Request, db: DB, _: Manager):
 @router.post("/leaders/", response_model=LeaderOut, status_code=201)
 async def leader_create(request: Request, db: DB, _: Manager, full_name: Annotated[str, Form()], position: Annotated[str, Form()],
                         level: Annotated[int, Form()], photo: Annotated[UploadFile | None, File()] = None,
-                        position_en: Annotated[str, Form()] = ""):
+                        position_en: Annotated[str, Form()] = "", parent_id: Annotated[str, Form()] = ""):
     l = Leader(full_name=_clean_name(full_name, "full_name", "Нэр оруулна уу."),
                position=_clean_name(position, "position", "Албан тушаал оруулна уу."), position_en=position_en.strip()[:160],
-               level=_check_level(level))
+               level=_check_level(level), parent_id=await check_parent(db, None, _form_id(parent_id)))
     l.order = await _next_order(db, l.level)
     if photo is not None and photo.filename:
         l.photo = await save_upload(photo, "about", "photo")
@@ -122,6 +132,8 @@ async def leader_patch(id: int, body: LeaderPatch, request: Request, db: DB, _: 
     if d.get("level") is not None and d["level"] != l.level:
         l.level = _check_level(d["level"])
         l.order = await _next_order(db, l.level)
+    if "parent_id" in d:
+        l.parent_id = await check_parent(db, l.id, d["parent_id"])
     await db.commit()
     return leader_out(request, l)
 
@@ -130,6 +142,9 @@ async def leader_patch(id: int, body: LeaderPatch, request: Request, db: DB, _: 
 async def leader_delete(id: int, db: DB, _: Manager):
     l = await _get_or_404(db, Leader, id)
     old = l.photo
+    # Доод гишүүд, тэнхимүүд харьяалалгүй болно (DB-ийн FK SET NULL нөөц хамгаалалт; энд session-ий объектуудыг ч шинэчилнэ)
+    await db.execute(update(Leader).where(Leader.parent_id == id).values(parent_id=None))
+    await db.execute(update(Department).where(Department.leader_id == id).values(leader_id=None))
     await db.delete(l)
     await db.commit()
     if old:
@@ -180,7 +195,8 @@ async def departments_list(db: DB, _: Manager):
 @router.post("/departments/", response_model=DepartmentOut, status_code=201)
 async def department_create(body: DepartmentIn, db: DB, _: Manager):
     mx = (await db.execute(select(func.max(Department.order)))).scalar_one()
-    d = Department(name=_clean_name(body.name, "name", "Нэр оруулна уу."), name_en=body.name_en.strip(), order=(mx or 0) + 1)
+    d = Department(name=_clean_name(body.name, "name", "Нэр оруулна уу."), name_en=body.name_en.strip(), order=(mx or 0) + 1,
+                   leader_id=await check_leader(db, body.leader_id))
     db.add(d)
     await db.commit()
     await db.refresh(d)
@@ -194,6 +210,8 @@ async def department_patch(id: int, body: DepartmentPatch, db: DB, _: Manager):
         d.name = _clean_name(body.name, "name", "Нэр оруулна уу.")
     if body.name_en is not None:
         d.name_en = body.name_en.strip()
+    if "leader_id" in body.model_fields_set:
+        d.leader_id = await check_leader(db, body.leader_id)
     await db.commit()
     await db.refresh(d)
     return department_out(d)
