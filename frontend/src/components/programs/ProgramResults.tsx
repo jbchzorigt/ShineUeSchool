@@ -1,4 +1,5 @@
-/* «Үр дүн» хэсэг: хичээлийн оноо (dumbbell, radar өгөгдөл) + шалгалтын дундаж оноо дэлхийн дундажтай (bar, exam_scores — IB) + нийт дундаж оноо
+/* «Үр дүн» хэсэг: хичээлийн оноо (dumbbell, radar өгөгдөл) + шалгалтын дундаж оноо дэлхийн дундажтай (bar, exam_scores — IB)
+   + IGCSE дүнгийн хувь дэлхийнхтэй (stacked bar, grade_rates — Cambridge) + нийт дундаж оноо
    (area, series[].total) + гадаадад элссэн төгсөгчдийн хуримтлагдсан тоо (area, outcomes — хуримтлагдсан тул үргэлж өсөх чиглэлтэй; он бүрийн тоо,
    харьцаа tooltip-д). Өгөгдөлгүй карт харагдахгүй; онооны (эсвэл онооны график байхгүй бол шалгалтын) карт өргөн (3/5), бусад нь 2/5, ганц карт бүтэн.
    Server component — графикууд client. */
@@ -6,6 +7,7 @@
 import { getDict, type Lang } from "@/lib/i18n";
 import type { ProgramDetail } from "@/lib/types";
 import { ExamScoresChart } from "./ExamScoresChart";
+import { GradeRatesChart } from "./GradeRatesChart";
 import { ScoreDumbbell } from "./ScoreDumbbell";
 import { TrendArea, type TrendPoint } from "./TrendArea";
 import { cumulative, num, themeFor } from "./theme";
@@ -29,7 +31,7 @@ function ChartCard({ title, sub, span, children }: { title: string; sub?: string
 export const totalsOf = (p: ProgramDetail) => (p.radar?.series ?? []).filter((s) => typeof s.total === "number") as { name: string; total: number }[];
 
 export function hasResults(p: ProgramDetail) {
-  return !!p.radar || p.exam_scores.length > 0 || totalsOf(p).length > 1 || p.outcomes.length > 1;
+  return !!p.radar || p.exam_scores.length > 0 || p.grade_rates.length > 0 || totalsOf(p).length > 1 || p.outcomes.length > 1;
 }
 
 export function ProgramResults({ program, lang = "mn" }: { program: ProgramDetail; lang?: Lang }) {
@@ -49,9 +51,12 @@ export function ProgramResults({ program, lang = "mn" }: { program: ProgramDetai
   const side = (totals.length > 1 ? 1 : 0) + (outcomes.length > 1 ? 1 : 0);
   const exams = program.exam_scores;
   const examYears = exams.length > 1 ? `${exams[0].year}–${exams[exams.length - 1].year}` : String(exams[0]?.year ?? "");
-  const count = (radar ? 1 : 0) + (exams.length ? 1 : 0) + side;
-  const wide = radar ? "radar" : exams.length ? "exam" : null;   // өргөн карт (3/5): онооны график, байхгүй бол шалгалтын
-  const span = (who: "radar" | "exam" | "side"): Span => (count === 1 ? "full" : wide === who ? "wide" : "narrow");
+  const grades = program.grade_rates;
+  const gradeYears = grades.length > 1 ? `${grades[0].year}–${grades[grades.length - 1].year}` : String(grades[0]?.year ?? "");
+  const count = (radar ? 1 : 0) + (exams.length ? 1 : 0) + (grades.length ? 1 : 0) + side;
+  // өргөн карт (3/5): онооны график, байхгүй бол шалгалтын, байхгүй бол IGCSE-ийн
+  const wide = radar ? "radar" : exams.length ? "exam" : grades.length ? "grade" : null;
+  const span = (who: "radar" | "exam" | "grade" | "side"): Span => (count === 1 ? "full" : wide === who ? "wide" : "narrow");
   const grid = count === 1 ? "" : wide ? "lg:grid-cols-5" : side > 1 ? "lg:grid-cols-4" : "lg:grid-cols-2";
 
   return (
@@ -67,6 +72,12 @@ export function ProgramResults({ program, lang = "mn" }: { program: ProgramDetai
           <ChartCard span={span("exam")} title={t.examTitle(program.badge)} sub={t.examSub(examYears)}>
             <ExamScoresChart scores={exams} schoolName={t.examSchool} worldName={t.examWorld} diffName={t.examDiff}
                              ariaLabel={t.examAria(exams.map((e) => `${e.year}: ${num(e.school)} / ${num(e.world)}`).join(", "))} />
+          </ChartCard>
+        )}
+        {grades.length > 0 && (
+          <ChartCard span={span("grade")} title={t.gradeTitle} sub={t.gradeSub(gradeYears)}>
+            <GradeRatesChart rates={grades} schoolName={t.gradeSchool} worldName={t.gradeWorld}
+                             ariaLabel={t.gradeAria(grades.map((g) => `${g.year}: A*–A ${num(g.school_a)}% / ${num(g.world_a)}%, A*–C ${num(g.school_c)}% / ${num(g.world_c)}%`).join("; "))} />
           </ChartCard>
         )}
         {totals.length > 1 && (

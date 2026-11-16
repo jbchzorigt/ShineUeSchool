@@ -14,7 +14,7 @@ import type {
   ProgramWork, PublishResult, Result, ResultInput, Room, RoomInput, Scholarship, ScholarshipInput, SectionInfo, Stage, StageInput, Stats,
   Subject, SubjectInput, Teacher, TeacherInput, TimetableImportResponse, TimetableStats, User, UserInput, VisitorAdmin, WorkInput,
   Years,
-  CountryCatalogueItem, GraduateDestination, GraduateDestinationInput, GraduateStats, ProgramExamScore, ProgramOutcome, ProgramRadar, ProgramSubjectRow,
+  CountryCatalogueItem, GraduateDestination, GraduateDestinationInput, GraduateStats, ProgramExamScore, ProgramGradeRate, ProgramOutcome, ProgramRadar, ProgramSubjectRow,
   AdmissionApplicantAdmin, AdmissionApplication, AdmissionApplicationInput, AdmissionImportReport, AdmissionRoundAdmin,
   AdmissionRoundInput, AdmissionRoundPatch, AdmissionRoundPublic, AdmissionResult,
 } from "./types";
@@ -432,6 +432,7 @@ export const api = {
     setRadar: (id: number, radar: ProgramRadar) => afterSave(request<ProgramAdminDetail>(`/api/programs/admin/programs/${id}/radar/`, { method: "PUT", body: radar }), ["programs"]),
     setOutcomes: (id: number, rows: ProgramOutcome[]) => afterSave(request<ProgramAdminDetail>(`/api/programs/admin/programs/${id}/outcomes/`, { method: "PUT", body: { rows } }), ["programs"]),
     setExamScores: (id: number, rows: ProgramExamScore[]) => afterSave(request<ProgramAdminDetail>(`/api/programs/admin/programs/${id}/exam-scores/`, { method: "PUT", body: { rows } }), ["programs"]),
+    setGradeRates: (id: number, rows: ProgramGradeRate[]) => afterSave(request<ProgramAdminDetail>(`/api/programs/admin/programs/${id}/grade-rates/`, { method: "PUT", body: { rows } }), ["programs"]),
     setSubjects: (id: number, rows: ProgramSubjectRow[]) => afterSave(request<ProgramAdminDetail>(`/api/programs/admin/programs/${id}/subjects/`, { method: "PUT", body: { rows } }), ["programs"]),
     works: {
       create: (programId: number, d: WorkInput, image: File) => {

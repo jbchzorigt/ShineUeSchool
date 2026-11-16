@@ -15,7 +15,7 @@ const THEMES: Record<string, ProgramTheme> = {};
 export const themeFor = (slug: string): ProgramTheme => THEMES[slug] ?? NAVY;
 
 /** "Заадаг хичээлүүд"-ийг жагсаалтын оронд бүлгийн дугуйгаар (SubjectWheel) харуулах хөтөлбөрүүд — 2–8 бүлэгтэй үед */
-export const WHEEL_SLUGS = new Set(["ib-diploma-programme"]);
+export const WHEEL_SLUGS = new Set(["ib-diploma-programme", "cambridge-international"]);
 
 /** Сурагчдын бүтээлийн булан нийтийн хуудсанд (хэсэг, tab, KPI) — одоогоор нуусан. Өгөгдөл ба админы таб хэвээр; буцааж харуулах бол true. */
 export const SHOW_WORKS = false;

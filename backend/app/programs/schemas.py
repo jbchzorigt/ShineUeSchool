@@ -72,6 +72,19 @@ class ExamScoresIn(BaseModel):
     rows: list[ExamScoreRow] = Field(default_factory=list)
 
 
+class GradeRateRow(BaseModel):
+    """Нэг оны IGCSE дүнгийн хувь (%): A*–A ба A*–C — манай сургууль ба дэлхийн (Cambridge-ийн нийт)."""
+    year: int
+    school_a: float
+    world_a: float
+    school_c: float
+    world_c: float
+
+
+class GradeRatesIn(BaseModel):
+    rows: list[GradeRateRow] = Field(default_factory=list)
+
+
 class SubjectRow(BaseModel):
     """Нэг хичээл (админ): бүлэг (ж.нь IB Group 4, IGCSE), нэр, тэмдэг (HL · SL, 9–10-р анги), товч тайлбар — монгол + англи."""
     group: str = Field(default="", max_length=60)
@@ -104,6 +117,7 @@ class ProgramDetail(ProgramCard):
     outcomes: list[OutcomeRow]
     subjects: list[SubjectOut]
     exam_scores: list[ExamScoreRow]
+    grade_rates: list[GradeRateRow]
     works: list[WorkOut]
     scholarships: list[ScholarshipOut]
     scholarship_total_usd: int
@@ -124,6 +138,7 @@ class ProgramAdminDetail(ProgramAdmin):
     outcomes: list[OutcomeRow]
     subjects: list[SubjectRow]
     exam_scores: list[ExamScoreRow]
+    grade_rates: list[GradeRateRow]
     works: list[WorkOut]
     scholarships: list[ScholarshipOut]
 

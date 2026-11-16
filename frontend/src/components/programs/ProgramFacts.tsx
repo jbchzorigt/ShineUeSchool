@@ -26,6 +26,8 @@ export function ProgramFacts({ program, lang = "mn" }: { program: ProgramDetail;
   const facts: { label: string; value: string; sub?: string }[] = [{ label: t.grades, value: t.gradeRange(program.grade_from, program.grade_to) }];
   const exam = program.exam_scores[program.exam_scores.length - 1];
   if (exam) facts.push({ label: t.examKpi(program.badge), value: num(exam.school), sub: t.examKpiSub(num(exam.world), exam.year) });
+  const grade = program.grade_rates[program.grade_rates.length - 1];
+  if (grade) facts.push({ label: t.gradeKpi, value: `${num(grade.school_c)}%`, sub: t.gradeKpiSub(num(grade.world_c), grade.year) });
   if (totals.length) {
     const [a, z] = [totals[0], totals[totals.length - 1]];
     facts.push({ label: t.totalKpi, value: num(z.total), sub: totals.length > 1 ? t.since(signed(z.total - a.total), a.name) : z.name });

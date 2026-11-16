@@ -1,4 +1,4 @@
-/* Шаттай зам (Figma «03 · Cambridge»): хөтөлбөрийн шатууд (толь бичгийн `programs.stages[slug]`, одоогоор Cambridge) → сүүлийн карт
+/* Шаттай зам (Figma «03 · Cambridge»): хөтөлбөрийн шатууд (толь бичгийн `programs.stages[slug]`, одоогоор Cambridge — Primary, Lower Secondary, IGCSE) → сүүлийн карт
    «Сонголт»: энэ хөтөлбөрийн дараагийн ангийг (grade_to + 1) хамардаг бусад хөтөлбөрүүд (IBDP, Үндэсний) холбоосоор. Server component. */
 
 import Link from "next/link";
@@ -15,13 +15,15 @@ export function ProgramStages({ program, programs, lang = "mn" }: { program: Pro
   const color = themeFor(program.slug).scale[1];
   const g = program.grade_to + 1;
   const next = programs.filter((p) => p.slug !== program.slug && p.grade_from <= g && g <= p.grade_to);
+  // lg: карт бүр 1fr, хооронд нь сум (auto) — шатны тоо (+ «Сонголт» карт)-аас хамаарна
+  const cols = Array(stages.length + (next.length > 0 ? 1 : 0)).fill("1fr").join(" auto ");
   return (
     <section aria-labelledby="stages-title" className="flex flex-col gap-5">
       <div className="flex flex-col gap-2">
         <h2 id="stages-title" className="font-display text-[26px] font-extrabold text-navy lg:text-[32px]">{t.stagesTitle}</h2>
         <p className="max-w-3xl text-[17px] text-muted">{t.stagesLead}</p>
       </div>
-      <ol className="grid gap-4 lg:grid-cols-[1fr_auto_1fr_auto_1fr]">
+      <ol className="grid gap-4 lg:grid-cols-[var(--stage-cols)]" style={{ "--stage-cols": cols } as React.CSSProperties}>
         {stages.map((s, i) => (
           <li key={s.name} className="contents">
             <div className="flex flex-col gap-2 rounded-2xl border-2 bg-white p-5" style={{ borderColor: color }}>

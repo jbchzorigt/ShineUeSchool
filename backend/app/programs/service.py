@@ -10,7 +10,7 @@ from ..common.i18n import Lang, localized
 from ..config import settings
 from ..news.slug import slugify
 from .models import Program, ProgramWork, Scholarship
-from .schemas import (ExamScoreRow, ExamScoresIn, OutcomeRow, OutcomesIn, RadarIn, ProgramAdmin, ProgramAdminDetail, ProgramCard, ProgramDetail, ScholarshipOut, SubjectOut,
+from .schemas import (ExamScoreRow, ExamScoresIn, GradeRateRow, GradeRatesIn, OutcomeRow, OutcomesIn, RadarIn, ProgramAdmin, ProgramAdminDetail, ProgramCard, ProgramDetail, ScholarshipOut, SubjectOut,
                       SubjectRow, SubjectsIn, WorkOut)
 
 
@@ -71,7 +71,7 @@ def scholarship_out(request: Request, s: Scholarship) -> ScholarshipOut:
 
 def detail_out(request: Request, p: Program, lang: Lang = "mn") -> ProgramDetail:
     return ProgramDetail(**_card(request, p, lang), body_html=localized(p.body_html, p.body_html_en, lang), body_html_en=p.body_html_en,
-                         radar=radar_out(p), outcomes=outcomes_out(p), subjects=subjects_out(p, lang), exam_scores=exam_scores_out(p), works=[work_out(request, w, lang) for w in p.works],
+                         radar=radar_out(p), outcomes=outcomes_out(p), subjects=subjects_out(p, lang), exam_scores=exam_scores_out(p), grade_rates=grade_rates_out(p), works=[work_out(request, w, lang) for w in p.works],
                          scholarships=[scholarship_out(request, s) for s in p.scholarships],
                          scholarship_total_usd=sum(s.amount_usd for s in p.scholarships), scholarship_count=len(p.scholarships))
 
@@ -82,7 +82,7 @@ def admin_out(request: Request, p: Program) -> ProgramAdmin:
 
 
 def admin_detail_out(request: Request, p: Program) -> ProgramAdminDetail:
-    return ProgramAdminDetail(**admin_out(request, p).model_dump(), radar=radar_out(p), outcomes=outcomes_out(p), exam_scores=exam_scores_out(p),
+    return ProgramAdminDetail(**admin_out(request, p).model_dump(), radar=radar_out(p), outcomes=outcomes_out(p), exam_scores=exam_scores_out(p), grade_rates=grade_rates_out(p),
                               subjects=[SubjectRow(**s) for s in (p.subjects or [])],
                               works=[work_out(request, w) for w in p.works], scholarships=[scholarship_out(request, s) for s in p.scholarships])
 
@@ -181,6 +181,32 @@ def clean_exam_scores(data: ExamScoresIn) -> list[dict]:
         if not (0 <= r.school <= EXAM_MAX_SCORE and 0 <= r.world <= EXAM_MAX_SCORE):
             raise FieldError("rows", f"{r.year}: оноо 0–{EXAM_MAX_SCORE} байна.")
     return [{"year": r.year, "school": round(r.school, 1), "world": round(r.world, 1)} for r in sorted(rows, key=lambda r: r.year)]
+
+
+GRADE_MAX_ROWS = 30
+
+
+def grade_rates_out(p: Program) -> list[GradeRateRow]:
+    return [GradeRateRow(**r) for r in (p.grade_rates or [])]
+
+
+def clean_grade_rates(data: GradeRatesIn) -> list[dict]:
+    """IGCSE дүнгийн хувь: мөр ≤30, он 2000–2100 давхардалгүй, хувь бүр 0–100 (1 оронтой), A*–A ≤ A*–C (манай, дэлхийн аль алинд). Он өсөхөөр; хоосон → []."""
+    rows = data.rows
+    if len(rows) > GRADE_MAX_ROWS:
+        raise FieldError("rows", f"Хамгийн ихдээ {GRADE_MAX_ROWS} он.")
+    years = [r.year for r in rows]
+    if any(not 2000 <= y <= 2100 for y in years):
+        raise FieldError("rows", "Он 2000–2100 байна.")
+    if len(set(years)) != len(years):
+        raise FieldError("rows", "Он давхардаж байна.")
+    for r in rows:
+        if not all(0 <= v <= 100 for v in (r.school_a, r.world_a, r.school_c, r.world_c)):
+            raise FieldError("rows", f"{r.year}: хувь 0–100 байна.")
+        if r.school_a > r.school_c or r.world_a > r.world_c:
+            raise FieldError("rows", f"{r.year}: A*–A-ийн хувь A*–C-ээс их байж болохгүй.")
+    keys = ("school_a", "world_a", "school_c", "world_c")
+    return [{"year": r.year, **{k: round(getattr(r, k), 1) for k in keys}} for r in sorted(rows, key=lambda r: r.year)]
 
 
 SUBJECTS_MAX_ROWS = 40

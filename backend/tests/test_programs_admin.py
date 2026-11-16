@@ -280,3 +280,28 @@ async def test_program_exam_scores(client, make_user):
     r = await client.put(f"{A}/programs/{p['id']}/exam-scores/", headers=h, json={"rows": []})
     assert r.status_code == 200 and r.json()["exam_scores"] == []
     assert (await client.put(f"{A}/programs/{p['id']}/exam-scores/", headers=await staff_headers(client, make_user), json={"rows": rows})).status_code == 403
+
+
+async def test_program_grade_rates(client, make_user):
+    """Cambridge IGCSE дүнгийн хувь жилээр (A*–A, A*–C), дэлхийнхтэй: он өсөхөөр, 1 оронтой, A*–A ≤ A*–C, 0–100, арилгах, эрх."""
+    h = await manager_headers(client, make_user)
+    p = await mk(client, h, name="Cambridge", badge="Cambridge", grade_from=1, grade_to=10)
+    assert (await client.get(f"/api/programs/{p['slug']}/")).json()["grade_rates"] == []
+    rows = [{"year": 2025, "school_a": 55.04, "world_a": 42.9, "school_c": 97, "world_c": 86.63},
+            {"year": 2024, "school_a": 52, "world_a": 42.6, "school_c": 95, "world_c": 86.3}]
+    r = await client.put(f"{A}/programs/{p['id']}/grade-rates/", headers=h, json={"rows": rows})
+    assert r.status_code == 200, r.text
+    got = r.json()["grade_rates"]
+    assert [x["year"] for x in got] == [2024, 2025]
+    assert got[1] == {"year": 2025, "school_a": 55.0, "world_a": 42.9, "school_c": 97.0, "world_c": 86.6}
+    assert (await client.get(f"/api/programs/{p['slug']}/?lang=en")).json()["grade_rates"][1]["school_c"] == 97.0
+    for bad in ([{"year": 2025, "school_a": 60, "world_a": 40, "school_c": 50, "world_c": 80}],   # A*–A > A*–C
+                [{"year": 2025, "school_a": 50, "world_a": 90, "school_c": 95, "world_c": 80}],
+                [{"year": 2025, "school_a": 50, "world_a": 40, "school_c": 101, "world_c": 80}],
+                [{"year": 2025, "school_a": -1, "world_a": 40, "school_c": 90, "world_c": 80}],
+                [{"year": 1999, "school_a": 50, "world_a": 40, "school_c": 90, "world_c": 80}], [rows[0], rows[0]]):
+        r = await client.put(f"{A}/programs/{p['id']}/grade-rates/", headers=h, json={"rows": bad})
+        assert r.status_code == 400 and "rows" in r.json(), bad
+    r = await client.put(f"{A}/programs/{p['id']}/grade-rates/", headers=h, json={"rows": []})
+    assert r.status_code == 200 and r.json()["grade_rates"] == []
+    assert (await client.put(f"{A}/programs/{p['id']}/grade-rates/", headers=await staff_headers(client, make_user), json={"rows": rows})).status_code == 403
