@@ -17,20 +17,24 @@ export function ProgramCard({ program, stat, lang = "mn" }: { program: ProgramCa
   const dict = getDict(lang);
   return (
     <li className="group flex flex-col overflow-hidden rounded-2xl border border-line bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-navy/15">
-      <Link href={href} className="relative block aspect-[16/10] w-full overflow-hidden bg-navy" aria-hidden="true" tabIndex={-1}>
-        {program.cover_image && (
-          <>
-            <Image src={program.cover_image} alt="" fill unoptimized sizes="(max-width: 768px) 100vw, 33vw" className="object-cover opacity-45 mix-blend-luminosity transition duration-500 group-hover:scale-[1.04]" />
-            <span className="absolute inset-0 bg-gradient-to-t from-navy via-navy/30 to-transparent" />
-          </>
-        )}
-        {/* дэвтрийн нүд (сайтын paper-grid санаа) + гэрлийн тойргууд */}
-        <span className="absolute inset-0 opacity-15 [background-image:linear-gradient(#fff_1px,transparent_1px),linear-gradient(90deg,#fff_1px,transparent_1px)] [background-size:28px_28px]" />
-        <span className="absolute -right-12 -top-16 h-56 w-56 rounded-full bg-white/10 transition duration-500 group-hover:scale-110" />
-        <span className="absolute -right-4 top-24 h-24 w-24 rounded-full transition duration-500 group-hover:-translate-y-2" style={{ border: "3px solid rgb(255 194 14 / 0.7)" }} />
-        <span className="absolute left-4 top-4 rounded-full bg-gold px-3 py-1 text-xs font-bold text-navy-deep">{dict.programs.gradeRange(program.grade_from, program.grade_to)}</span>
-        <span className="absolute bottom-4 left-5 font-display text-[34px] font-extrabold leading-none text-white lg:text-[40px]">{program.badge}</span>
-      </Link>
+      {program.cover_image ? (
+        // Cover (хөтөлбөрийн лого — Cambridge, IB, Боловсролын яам): цагаан дэвсгэр дээр бүтнээр нь (object-contain), өнгө хэвээр
+        <Link href={href} className="relative block aspect-[16/10] w-full overflow-hidden border-b border-line bg-white" aria-hidden="true" tabIndex={-1}>
+          <span className="absolute inset-x-8 bottom-6 top-12">
+            <Image src={program.cover_image} alt="" fill unoptimized sizes="(max-width: 768px) 100vw, 33vw" className="object-contain transition duration-500 group-hover:scale-[1.03]" />
+          </span>
+          <span className="absolute left-4 top-4 rounded-full bg-gold px-3 py-1 text-xs font-bold text-navy-deep">{dict.programs.gradeRange(program.grade_from, program.grade_to)}</span>
+        </Link>
+      ) : (
+        <Link href={href} className="relative block aspect-[16/10] w-full overflow-hidden bg-navy" aria-hidden="true" tabIndex={-1}>
+          {/* дэвтрийн нүд (сайтын paper-grid санаа) + гэрлийн тойргууд */}
+          <span className="absolute inset-0 opacity-15 [background-image:linear-gradient(#fff_1px,transparent_1px),linear-gradient(90deg,#fff_1px,transparent_1px)] [background-size:28px_28px]" />
+          <span className="absolute -right-12 -top-16 h-56 w-56 rounded-full bg-white/10 transition duration-500 group-hover:scale-110" />
+          <span className="absolute -right-4 top-24 h-24 w-24 rounded-full transition duration-500 group-hover:-translate-y-2" style={{ border: "3px solid rgb(255 194 14 / 0.7)" }} />
+          <span className="absolute left-4 top-4 rounded-full bg-gold px-3 py-1 text-xs font-bold text-navy-deep">{dict.programs.gradeRange(program.grade_from, program.grade_to)}</span>
+          <span className="absolute bottom-4 left-5 font-display text-[34px] font-extrabold leading-none text-white lg:text-[40px]">{program.badge}</span>
+        </Link>
+      )}
       <div className="flex flex-1 flex-col gap-4 px-6 py-6 lg:px-7">
         <h3 className="font-display text-[22px] font-extrabold leading-tight text-ink lg:text-[25px]">
           <Link href={href} className="transition hover:text-navy">{program.name}</Link>
