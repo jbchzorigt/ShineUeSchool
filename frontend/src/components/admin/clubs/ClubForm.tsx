@@ -94,19 +94,29 @@ export function ClubForm({ roundId, club, open, onClose, onSaved }: { roundId: n
             </div>
           )}
         </Field>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className="flex items-center gap-2 self-end pb-2 text-sm font-semibold text-slate-700">
+        {/* Төлбөр: чагт → (төлбөртэй бол) дүн ба тайлбар зэрэгцээ */}
+        <fieldset className="space-y-3 rounded-xl border border-slate-200 p-4">
+          <legend className="px-1 text-xs font-semibold uppercase tracking-wider text-slate-600">Төлбөр</legend>
+          <label className="flex w-fit items-center gap-2 text-sm font-semibold text-slate-700">
             <input type="checkbox" checked={d.is_paid} onChange={(e) => up("is_paid", e.target.checked)} />Төлбөртэй
           </label>
-          {d.is_paid && (
-            <>
-              <Field label="Дүн (₮)" error={errors.fee}><Input type="number" min={1} value={d.fee} onChange={(e) => up("fee", e.target.value)} required /></Field>
-              <Field label="Төлбөрийн тайлбар" error={errors.fee_note} hint="ж: сард, улиралд"><Input value={d.fee_note} onChange={(e) => up("fee_note", e.target.value)} maxLength={120} /></Field>
-            </>
-          )}
-          <Field label="Бүртгэл эхлэх" error={errors.registration_start}><Input type="datetime-local" value={d.registration_start} onChange={(e) => up("registration_start", e.target.value)} required /></Field>
-          <Field label="Бүртгэл дуусах" error={errors.registration_end}><Input type="datetime-local" value={d.registration_end} onChange={(e) => up("registration_end", e.target.value)} required /></Field>
-        </div>
+          {d.is_paid
+            ? (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Дүн (₮)" error={errors.fee}><Input type="number" min={1} value={d.fee} onChange={(e) => up("fee", e.target.value)} required /></Field>
+                <Field label="Төлбөрийн тайлбар" error={errors.fee_note} hint="ж: сард, улиралд"><Input value={d.fee_note} onChange={(e) => up("fee_note", e.target.value)} maxLength={120} /></Field>
+              </div>
+            )
+            : <p className="text-xs text-slate-500">Үнэгүй — олон нийтийн хуудсанд «Үнэгүй» гэж харагдана.</p>}
+        </fieldset>
+        {/* Бүртгэлийн хугацаа: эхлэх ба дуусах зэрэгцээ */}
+        <fieldset className="space-y-3 rounded-xl border border-slate-200 p-4">
+          <legend className="px-1 text-xs font-semibold uppercase tracking-wider text-slate-600">Бүртгэлийн хугацаа</legend>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Бүртгэл эхлэх" error={errors.registration_start}><Input type="datetime-local" value={d.registration_start} onChange={(e) => up("registration_start", e.target.value)} required /></Field>
+            <Field label="Бүртгэл дуусах" error={errors.registration_end}><Input type="datetime-local" value={d.registration_end} onChange={(e) => up("registration_end", e.target.value)} required /></Field>
+          </div>
+        </fieldset>
         <Field label="Зураг" error={errors.images} hint="JPG, PNG, WebP; олон файл сонгож болно. Эхнийх нь картын нүүр зураг болно.">
           <Input type="file" accept="image/*" multiple onChange={(e) => { setFiles((cur) => [...cur, ...Array.from(e.target.files ?? [])]); e.target.value = ""; }} />
         </Field>
