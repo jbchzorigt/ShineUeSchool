@@ -260,3 +260,23 @@ async def test_program_subjects(client, make_user):
     r = await client.put(f"{A}/programs/{p['id']}/subjects/", headers=h, json={"rows": []})
     assert r.status_code == 200 and r.json()["subjects"] == []
     assert (await client.put(f"{A}/programs/{p['id']}/subjects/", headers=await staff_headers(client, make_user), json={"rows": rows})).status_code == 403
+
+
+async def test_program_exam_scores(client, make_user):
+    """IB шалгалтын дундаж оноо жилээр, дэлхийн дундажтай: он өсөхөөр, 1 оронтой бутархай, шалгалт, арилгах, эрх."""
+    h = await manager_headers(client, make_user)
+    p = await mk(client, h)
+    assert (await client.get(f"/api/programs/{p['slug']}/")).json()["exam_scores"] == []
+    rows = [{"year": 2025, "school": 33.14, "world": 30.32}, {"year": 2023, "school": 31.6, "world": 30.24}]
+    r = await client.put(f"{A}/programs/{p['id']}/exam-scores/", headers=h, json={"rows": rows})
+    assert r.status_code == 200, r.text
+    assert r.json()["exam_scores"] == [{"year": 2023, "school": 31.6, "world": 30.2}, {"year": 2025, "school": 33.1, "world": 30.3}]
+    pub = (await client.get(f"/api/programs/{p['slug']}/?lang=en")).json()["exam_scores"]
+    assert pub[1] == {"year": 2025, "school": 33.1, "world": 30.3}
+    for bad in ([{"year": 2025, "school": 46, "world": 30}], [{"year": 2025, "school": 33, "world": -1}],
+                [{"year": 1999, "school": 30, "world": 30}], [rows[0], rows[0]], [{"year": 2000 + i, "school": 30, "world": 30} for i in range(31)]):
+        r = await client.put(f"{A}/programs/{p['id']}/exam-scores/", headers=h, json={"rows": bad})
+        assert r.status_code == 400 and "rows" in r.json(), bad
+    r = await client.put(f"{A}/programs/{p['id']}/exam-scores/", headers=h, json={"rows": []})
+    assert r.status_code == 200 and r.json()["exam_scores"] == []
+    assert (await client.put(f"{A}/programs/{p['id']}/exam-scores/", headers=await staff_headers(client, make_user), json={"rows": rows})).status_code == 403

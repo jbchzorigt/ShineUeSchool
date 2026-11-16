@@ -6,6 +6,7 @@
   PUT /programs/{id}/radar/  (онооны график: хичээл × цуврал — ЭЕШ, IGCSE, IB г.м.)
   PUT /programs/{id}/outcomes/  (төгсөгчдийн үр дүн жилээр: төгссөн, гадаадад элссэн)
   PUT /programs/{id}/subjects/  (заадаг хичээлүүд: бүлэг, нэр, тэмдэг, товч тайлбар)
+  PUT /programs/{id}/exam-scores/  (шалгалтын дундаж оноо жилээр, дэлхийн дундажтай — IB 45 оноо)
   POST /upload-image/  (rich text дундах зураг)
 """
 
@@ -22,9 +23,9 @@ from ..common.media import delete_file, save_upload
 from ..db import get_db
 from ..news.sanitize import clean_rich
 from .models import Program, ProgramWork, Scholarship
-from .schemas import (OrderIn, ProgramAdmin, ProgramAdminDetail, ProgramIn, ProgramPatch, OutcomesIn, RadarIn, ScholarshipIn, ScholarshipOut,
+from .schemas import (ExamScoresIn, OrderIn, ProgramAdmin, ProgramAdminDetail, ProgramIn, ProgramPatch, OutcomesIn, RadarIn, ScholarshipIn, ScholarshipOut,
                       ScholarshipPatch, SubjectsIn, WorkOut, WorkPatch)
-from .service import (admin_detail_out, admin_out, clean_outcomes, clean_radar, clean_subjects, get_or_404, list_programs, media_url, scholarship_out,
+from .service import (admin_detail_out, admin_out, clean_exam_scores, clean_outcomes, clean_radar, clean_subjects, get_or_404, list_programs, media_url, scholarship_out,
                       unique_slug, work_out)
 
 router = APIRouter(prefix="/api/programs/admin", tags=["programs-admin"])
@@ -336,6 +337,15 @@ async def program_outcomes(id: int, body: OutcomesIn, request: Request, db: DB, 
 async def program_subjects(id: int, body: SubjectsIn, request: Request, db: DB, _: Manager):
     p = await get_or_404(db, Program, id)
     p.subjects = clean_subjects(body)
+    await db.commit()
+    await db.refresh(p)
+    return admin_detail_out(request, p)
+
+
+@router.put("/programs/{id}/exam-scores/", response_model=ProgramAdminDetail)
+async def program_exam_scores(id: int, body: ExamScoresIn, request: Request, db: DB, _: Manager):
+    p = await get_or_404(db, Program, id)
+    p.exam_scores = clean_exam_scores(body)
     await db.commit()
     await db.refresh(p)
     return admin_detail_out(request, p)

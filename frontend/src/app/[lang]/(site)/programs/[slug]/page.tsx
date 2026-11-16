@@ -10,10 +10,12 @@ import { hasResults, ProgramResults } from "@/components/programs/ProgramResults
 import { ProgramStages } from "@/components/programs/ProgramStages";
 import { Scholarships } from "@/components/programs/Scholarships";
 import { ProgramSubjects, type SubjectScore } from "@/components/programs/ProgramSubjects";
-import { num, SHOW_WORKS, signed } from "@/components/programs/theme";
+import { num, SHOW_WORKS, signed, WHEEL_SLUGS } from "@/components/programs/theme";
+import { SubjectWheel } from "@/components/programs/SubjectWheel";
 import { WorksGallery } from "@/components/programs/WorksGallery";
 import { Reveal } from "@/components/site/Reveal";
 import { fetchProgram, fetchPrograms } from "@/lib/programs-api";
+import { wheelFits } from "@/lib/subject-wheel";
 import { getDict, isLang, type Lang } from "@/lib/i18n";
 import { alternates } from "@/lib/i18n/metadata";
 import type { ProgramDetail } from "@/lib/types";
@@ -84,7 +86,9 @@ export default async function ProgramPage({ params }: { params: Params }) {
                       <h2 id="impl-title" className="font-display text-[26px] font-extrabold text-navy lg:text-[32px]">{t.implementation}</h2>
                       {intro && <div className="news-body max-w-3xl text-[17px] text-ink" dangerouslySetInnerHTML={{ __html: intro }} />}
                     </div>
-                    {p.subjects.length > 0 && <ProgramSubjects subjects={p.subjects} scores={subjectScores(p, lang)} />}
+                    {p.subjects.length > 0 && (WHEEL_SLUGS.has(p.slug) && wheelFits(p.subjects)
+                      ? <SubjectWheel subjects={p.subjects} badge={p.badge} />
+                      : <ProgramSubjects subjects={p.subjects} scores={subjectScores(p, lang)} />)}
                     {rest && <div className="news-body max-w-3xl text-[17px] text-ink" dangerouslySetInnerHTML={{ __html: rest }} />}
                   </section>
                 </Reveal>

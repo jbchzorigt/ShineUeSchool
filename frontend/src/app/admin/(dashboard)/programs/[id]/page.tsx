@@ -1,10 +1,12 @@
 "use client";
 
-/* /admin/programs/[id] — хөтөлбөрийн хичээлүүд, бүтээл, тэтгэлэг, онооны график, төгсөгчдийн үр дүн (tab ?tab=subjects|works|scholarships|radar|outcomes). */
+/* /admin/programs/[id] — хөтөлбөрийн хичээлүүд, бүтээл, тэтгэлэг, онооны график, шалгалтын дундаж оноо (дэлхийтэй), төгсөгчдийн үр дүн
+   (tab ?tab=subjects|works|scholarships|radar|exams|outcomes). */
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
+import { ExamScoresPanel } from "@/components/admin/programs/ExamScoresPanel";
 import { OutcomesPanel } from "@/components/admin/programs/OutcomesPanel";
 import { RadarPanel } from "@/components/admin/programs/RadarPanel";
 import { ScholarshipsPanel } from "@/components/admin/programs/ScholarshipsPanel";
@@ -15,9 +17,9 @@ import { api } from "@/lib/api";
 import { useFetch } from "@/lib/useFetch";
 import type { ProgramAdminDetail } from "@/lib/types";
 
-type Tab = "subjects" | "works" | "scholarships" | "radar" | "outcomes";
-const TABS: Tab[] = ["subjects", "works", "scholarships", "radar", "outcomes"];
-const LABELS: [Tab, string][] = [["subjects", "Хичээлүүд"], ["works", "Бүтээлийн булан"], ["scholarships", "Тэтгэлэг"], ["radar", "Онооны график"], ["outcomes", "Төгсөгчдийн үр дүн"]];
+type Tab = "subjects" | "works" | "scholarships" | "radar" | "exams" | "outcomes";
+const TABS: Tab[] = ["subjects", "works", "scholarships", "radar", "exams", "outcomes"];
+const LABELS: [Tab, string][] = [["subjects", "Хичээлүүд"], ["works", "Бүтээлийн булан"], ["scholarships", "Тэтгэлэг"], ["radar", "Онооны график"], ["exams", "Шалгалтын оноо"], ["outcomes", "Төгсөгчдийн үр дүн"]];
 // Tab bar-ыг зөвхөн `program` ачаалсны дараа render хийдэг (SSR ба клиентийн эхний render хоёулаа
 // доорх Spinner-ийг харуулна), тиймээс энд window.location уншсан ч hydration mismatch гарахгүй.
 // Хэрэв ирээдүйд tab-уудыг өгөгдөл ирэхээс өмнө render хийх бол useSearchParams() руу шилжих хэрэгтэй.
@@ -59,6 +61,7 @@ export default function ProgramDetailAdminPage() {
       {tab === "works" && <WorksPanel programId={program.id} works={program.works} onChanged={q.reload} />}
       {tab === "scholarships" && <ScholarshipsPanel programId={program.id} items={program.scholarships} onChanged={q.reload} />}
       {tab === "radar" && <RadarPanel key={program.id} programId={program.id} radar={program.radar} onChanged={q.reload} />}
+      {tab === "exams" && <ExamScoresPanel key={program.id} programId={program.id} scores={program.exam_scores ?? []} onChanged={q.reload} />}
       {tab === "outcomes" && <OutcomesPanel key={program.id} programId={program.id} outcomes={program.outcomes} onChanged={q.reload} />}
     </div>
   );

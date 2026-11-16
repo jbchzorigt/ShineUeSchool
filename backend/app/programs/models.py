@@ -33,6 +33,8 @@ class Program(Base):
     outcomes: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")
     # Заадаг хичээлүүд: [{"group", "group_en", "name", "name_en", "tag", "description", "description_en"}] (админы эрэмбээр) — хоосон [] бол харуулахгүй
     subjects: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")
+    # Шалгалтын дундаж оноо жилээр, дэлхийн дундажтай: [{"year", "school", "world"}] (он өсөхөөр; IB — 45 оноо) — хоосон [] бол харуулахгүй
+    exam_scores: Mapped[list] = mapped_column(JSONB, default=list, server_default="[]")
     order: Mapped[int] = mapped_column(SmallInteger, default=0)
     is_published: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

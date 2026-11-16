@@ -61,6 +61,17 @@ class OutcomesIn(BaseModel):
     rows: list[OutcomeRow] = Field(default_factory=list)
 
 
+class ExamScoreRow(BaseModel):
+    """Нэг оны шалгалтын дундаж оноо: манай сургууль ба дэлхийн дундаж (IB диплом — 45 онооноос)."""
+    year: int
+    school: float
+    world: float
+
+
+class ExamScoresIn(BaseModel):
+    rows: list[ExamScoreRow] = Field(default_factory=list)
+
+
 class SubjectRow(BaseModel):
     """Нэг хичээл (админ): бүлэг (ж.нь IB Group 4, IGCSE), нэр, тэмдэг (HL · SL, 9–10-р анги), товч тайлбар — монгол + англи."""
     group: str = Field(default="", max_length=60)
@@ -92,6 +103,7 @@ class ProgramDetail(ProgramCard):
     radar: RadarIn | None
     outcomes: list[OutcomeRow]
     subjects: list[SubjectOut]
+    exam_scores: list[ExamScoreRow]
     works: list[WorkOut]
     scholarships: list[ScholarshipOut]
     scholarship_total_usd: int
@@ -111,6 +123,7 @@ class ProgramAdminDetail(ProgramAdmin):
     radar: RadarIn | None
     outcomes: list[OutcomeRow]
     subjects: list[SubjectRow]
+    exam_scores: list[ExamScoreRow]
     works: list[WorkOut]
     scholarships: list[ScholarshipOut]
 
