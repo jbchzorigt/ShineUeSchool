@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from .about.router_admin import router as about_admin_router
+from .analytics.router import router as analytics_router
 from .admissions.router_admin import router as admissions_admin_router
 from .admissions.router_public import router as admissions_public_router
 from .about.router_public import router as about_public_router
@@ -16,6 +17,7 @@ from .auth.router import router as auth_router
 from .clubs.router_admin import router as clubs_admin_router
 from .clubs.router_public import router as clubs_public_router
 from .common import errors
+from .dashboard.router import router as dashboard_router
 from .config import settings
 from .news import fb_sync
 from .news.router_admin import router as news_admin_router
@@ -75,6 +77,8 @@ app.include_router(graduates_public_router)
 app.include_router(graduates_admin_router)
 app.include_router(admissions_public_router)
 app.include_router(admissions_admin_router)
+app.include_router(analytics_router)
+app.include_router(dashboard_router)
 
 settings.media_dir.mkdir(parents=True, exist_ok=True)
 app.mount("/media", StaticFiles(directory=settings.media_dir), name="media")

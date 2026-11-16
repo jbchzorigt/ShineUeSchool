@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Script from "next/script";
 import { LangProvider } from "@/components/site/LangProvider";
+import { VisitTracker } from "@/components/site/VisitTracker";
 import { getDict, isLang, LANGS } from "@/lib/i18n";
 import { SITE_URL } from "@/lib/site-url";
 import { VisitorProvider } from "@/lib/visitor";
@@ -30,6 +31,7 @@ export default async function LangRootLayout({ children, params }: { children: R
         <Script id="splash-seen-check" strategy="beforeInteractive">{`try{if(sessionStorage.getItem('shineue.splash')==='1'&&!document.getElementById('splash-seen')){var s=document.createElement('style');s.id='splash-seen';s.textContent='.site-splash{display:none}';document.head.appendChild(s)}}catch(e){}`}</Script>
         <LangProvider lang={lang}>
           <VisitorProvider>{children}</VisitorProvider>
+          <VisitTracker />
         </LangProvider>
       </body>
     </html>

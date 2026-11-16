@@ -5,6 +5,7 @@
    - Алдааг ApiError болгон шиднэ (status + backend-ийн JSON).
    ===================================================================== */
 
+import type { AnalyticsRange, AnalyticsSummary, DashboardOverview } from "./types";
 import type {
   AboutDepartment, AboutLeader, AboutLeaderInput, AboutPage, AboutPageInput, AboutTeacher, AboutTeacherInput,
   AcademicYear, AcademicYearInput, AlbumPhoto, CalendarEvent, CalendarEventInput, CategoryItem, ClassGroup, ClassGroupInput,
@@ -125,6 +126,10 @@ export const api = {
   /* ---- ерөнхий ---- */
   years: () => request<Years>("/api/olympiad/years/", { auth: false }),
   stats: () => request<Stats>("/api/olympiad/stats/", { auth: false }),
+  /** Сайтын хандалт: 7 хоног / 30 өдөр (өдрөөр), 12 сар (сараар) */
+  analytics: (range: AnalyticsRange) => request<AnalyticsSummary>(`/api/analytics/admin/summary/?range=${range}`),
+  /** Нүүр хуудасны тойм: элсэлт, дугуйлан, Facebook, сүүлийн сэтгэгдлүүд */
+  dashboard: () => request<DashboardOverview>("/api/dashboard/"),
 
   /* ---- хуваарь ---- */
   stages: {

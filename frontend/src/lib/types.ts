@@ -103,6 +103,22 @@ export interface Years {
   results: number[];
 }
 
+/** Сайтын хандалтын тойм (GET /api/analytics/admin/summary/) */
+export type AnalyticsRange = "week" | "month" | "year";
+export interface AnalyticsPoint { date: string; label: string; visitors: number; views: number }
+export interface AnalyticsSummary {
+  range: AnalyticsRange; points: AnalyticsPoint[]; total_visitors: number; total_views: number;
+  today: { visitors: number; views: number }; top_pages: { path: string; views: number }[];
+}
+/** Админы нүүр хуудасны тойм (GET /api/dashboard/) — эрхгүй хэсэг null/хоосон */
+export interface DashboardComment { id: number; author_name: string; body: string; created_at: string; is_hidden: boolean; post_title: string; post_slug: string }
+export interface DashboardOverview {
+  admission: { round: string; applicants: number; registration_open: boolean } | null;
+  clubs: { round: string; registrations: number } | null;
+  facebook: { followers: number; name: string } | null;
+  comments: DashboardComment[];
+}
+
 export interface Stats {
   stages: number;
   results: number;

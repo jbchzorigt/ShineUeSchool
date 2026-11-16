@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "katex/dist/katex.min.css";
+import { VisitTracker } from "@/components/site/VisitTracker";
 import { bodyClass, htmlClass } from "../fonts";
 import "../globals.css";
 import "./olympiad.css";
@@ -13,7 +14,7 @@ export const metadata: Metadata = {
 export default function OlympiadLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="mn" className={htmlClass}>
-      <body className={bodyClass}>{children}</body>
+      <body className={bodyClass}>{children}<VisitTracker /></body>
     </html>
   );
 }
