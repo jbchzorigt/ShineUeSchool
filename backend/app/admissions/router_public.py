@@ -6,7 +6,7 @@
   POST /api/admissions/email/send/      → баталгаажуулах код илгээх
   POST /api/admissions/email/verify/    → код шалгаж token авах
   POST /api/admissions/applications/    → бүртгүүлэх (token) → элсэгчийн код
-  POST /api/admissions/codes/remind/    → кодоо мартсан: имэйлд бүртгэлтэй кодуудыг дахин илгээнэ (үргэлж ok)
+  POST /api/admissions/codes/remind/    → кодоо мартсан: имэйлд бүртгэлтэй кодуудыг дахин илгээнэ (бүртгэлгүй бол 400)
   GET  /api/admissions/results/         → нийтлэгдсэн дүн: зөвхөн код, анги, оноо, дүн (нэр, хувийн мэдээлэлгүй)
 """
 
@@ -170,21 +170,25 @@ async def apply(body: ApplicationIn, db: DB):
 
 @router.post("/codes/remind/")
 async def codes_remind(body: EmailIn, request: Request, db: DB):
-    """Бүртгэлтэй эсэхийг хариунаас мэдэх боломжгүй (enumeration) — үргэлж ok."""
+    """Имэйлд бүртгэл байхгүй бол 400 {"email": [...]} — хэрэглэгч буруу имэйл оруулснаа мэднэ.
+    (Шийдвэр: бүртгэлтэй эсэхийг ил мэдэгдэнэ; давтан шалгалтыг _throttle_ip хязгаарлана.)"""
     _throttle_ip(request, body.lang)
     email = normalize_email(body.email)
+    if not valid_email(email):
+        raise FieldError("email", msg("email_invalid", body.lang))
     rnd = await active_round(db)
     now = datetime.now(UTC)
     # Кодоо бүртгэл эсвэл дүнгийн хэсэг нээлттэй үед л хэрэглэнэ — хоёул хаалттай бол юу ч илгээхгүй
-    if rnd is not None and (registration_live(rnd, now) or results_live(rnd, now)) and valid_email(email):
+    if rnd is not None and (registration_live(rnd, now) or results_live(rnd, now)):
         apps = (await db.execute(select(Applicant).where(
             Applicant.round_id == rnd.id, Applicant.email == email, Applicant.status == APP_REGISTERED,
         ).order_by(Applicant.created_at))).scalars().all()
-        if apps:
-            try:
-                await mailer.send_reminder(email, list(apps), rnd, body.lang)
-            except mailer.MailError:
-                log.warning("Кодын сануулга илгээгдсэнгүй")
+        if not apps:
+            raise FieldError("email", msg("email_not_registered", body.lang))
+        try:
+            await mailer.send_reminder(email, list(apps), rnd, body.lang)
+        except mailer.MailError:
+            log.warning("Кодын сануулга илгээгдсэнгүй")
     return {"ok": True}
 
 

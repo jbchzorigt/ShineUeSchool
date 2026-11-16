@@ -241,21 +241,28 @@ function Done({ result, onAnother }: { result: AdmissionApplication; onAnother: 
   );
 }
 
-/* Кодоо мартсан: имэйлд бүртгэлтэй кодуудыг дахин илгээнэ (бүртгэлтэй эсэхийг хариунаас мэдэгдэхгүй). */
+/* Кодоо мартсан: имэйлд бүртгэлтэй кодуудыг дахин илгээнэ. Бүртгэлгүй/буруу имэйл бол API-ийн
+   талбарын алдааг (тухайн хэлээр) талбарын доор харуулна; бусад алдаанд ерөнхий мессеж. */
 export function RemindCode() {
   const lang = useLang();
   const t = useDict().admission;
   const [email, setEmail] = useState("");
   const [state, setState] = useState<"idle" | "busy" | "sent" | "error">("idle");
+  const [emailError, setEmailError] = useState("");
   async function submit(e: FormEvent) {
     e.preventDefault();
-    setState("busy");
-    try { await api.admissions.remind(email.trim(), lang); setState("sent"); } catch { setState("error"); }
+    setState("busy"); setEmailError("");
+    try { await api.admissions.remind(email.trim(), lang); setState("sent"); }
+    catch (err) {
+      const fieldMsg = err instanceof ApiError && err.status === 400 ? err.fieldErrors.email : undefined;
+      if (fieldMsg) { setEmailError(fieldMsg); setState("idle"); } else setState("error");
+    }
   }
   return (
     <form onSubmit={submit} className="space-y-3">
-      <Field label={t.remindEmail}>
-        <Input type="email" autoComplete="email" value={email} onChange={(e) => { setEmail(e.target.value); setState("idle"); }} required />
+      <Field label={t.remindEmail} error={emailError}>
+        <Input type="email" autoComplete="email" value={email} onChange={(e) => { setEmail(e.target.value); setState("idle"); setEmailError(""); }}
+               aria-invalid={emailError ? true : undefined} required />
       </Field>
       <Button type="submit" variant="success" disabled={state === "busy"}>{t.remindSubmit}</Button>
       {state === "sent" && <p role="status" className="text-sm text-ink">{t.remindSent}</p>}

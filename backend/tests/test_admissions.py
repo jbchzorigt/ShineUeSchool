@@ -9,6 +9,7 @@ import pytest
 from openpyxl import Workbook, load_workbook
 
 from app.admissions import mailer, router_public
+from app.admissions.messages import msg
 from tests.helpers import staff_headers
 
 
@@ -143,11 +144,18 @@ async def test_wrong_code_counts_attempts(client, make_user, outbox):
     assert r.status_code == 400
 
 
-async def test_remind_always_ok_and_mails_only_registered(client, make_user, outbox):
+async def test_remind_warns_unregistered_and_mails_only_registered(client, make_user, outbox):
     h = await manager(client, make_user)
     await make_round(client, h)
     code = (await apply(client, outbox)).json()["code"]
-    assert (await client.post("/api/admissions/codes/remind/", json={"email": "nobody@gmail.com"})).json() == {"ok": True}
+    sent_before = len(outbox)
+    r = await client.post("/api/admissions/codes/remind/", json={"email": "nobody@gmail.com"})
+    assert r.status_code == 400 and "олдсонгүй" in r.json()["email"][0]
+    r = await client.post("/api/admissions/codes/remind/", json={"email": "nobody@gmail.com", "lang": "en"})
+    assert r.status_code == 400 and r.json()["email"] == [msg("email_not_registered", "en")]
+    assert len(outbox) == sent_before   # бүртгэлгүй имэйл рүү юу ч илгээхгүй
+    r = await client.post("/api/admissions/codes/remind/", json={"email": "not-an-email"})
+    assert r.status_code == 400 and r.json()["email"] == [msg("email_invalid")]
     assert (await client.post("/api/admissions/codes/remind/", json={"email": "EH@gmail.com"})).json() == {"ok": True}
     assert outbox[-1] == ("remind", "eh@gmail.com", [code], "mn")
 

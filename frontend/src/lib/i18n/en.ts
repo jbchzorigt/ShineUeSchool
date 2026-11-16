@@ -255,7 +255,7 @@ export const en: Dict = {
     another: "+ Register another child",
     remindEmail: "Email you registered with",
     remindSubmit: "Email me my codes",
-    remindSent: "If there are registrations under this email, you'll receive the codes shortly.",
+    remindSent: "Your codes have been sent to this email. They should arrive shortly.",
     remindFailed: "Could not send. Please try again later.",
     resultsPageTitle: "Admission results",
     resultsDescription: "Shine Ue School admission test results — search by applicant code.",

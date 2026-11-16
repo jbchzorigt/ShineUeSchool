@@ -7,6 +7,8 @@ MESSAGES: dict[str, tuple[str, str]] = {
                "Admission test registration is currently closed"),
     "too_many_requests": ("Хэт олон хүсэлт. Дараа дахин оролдоно уу", "Too many requests. Please try again later"),
     "email_invalid": ("Имэйл хаяг буруу байна", "Invalid email address"),
+    "email_not_registered": ("Энэ имэйлээр бүртгүүлсэн элсэгч олдсонгүй. Имэйлээ шалгах эсвэл бүртгүүлсэн имэйлээ оруулна уу",
+                             "No registration was found for this email. Check for typos or enter the email you registered with"),
     "too_many_codes": ("Хэт олон удаа код авлаа. 1 цагийн дараа дахин оролдоно уу",
                        "Too many codes requested. Please try again in an hour"),
     "mail_failed": ("Имэйл илгээж чадсангүй. Дараа дахин оролдоно уу", "Could not send the email. Please try again later"),
