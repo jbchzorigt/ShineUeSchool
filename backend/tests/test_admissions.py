@@ -144,6 +144,22 @@ async def test_wrong_code_counts_attempts(client, make_user, outbox):
     assert r.status_code == 400
 
 
+async def test_remind_mail_failure_is_reported(client, make_user, outbox, monkeypatch):
+    """Сануулга илгээж чадаагүй бол "илгээлээ" гэж хариулахгүй — 502 mail_failed (маягт "Илгээж чадсангүй" харуулна)."""
+    h = await manager(client, make_user)
+    await make_round(client, h)
+    await apply(client, outbox)
+
+    async def broken(email, apps, rnd, lang="mn"):
+        raise mailer.MailError("smtp down")
+
+    monkeypatch.setattr(mailer, "send_reminder", broken)
+    r = await client.post("/api/admissions/codes/remind/", json={"email": "eh@gmail.com"})
+    assert r.status_code == 502 and r.json()["detail"] == msg("mail_failed")
+    r = await client.post("/api/admissions/codes/remind/", json={"email": "eh@gmail.com", "lang": "en"})
+    assert r.status_code == 502 and r.json()["detail"] == msg("mail_failed", "en")
+
+
 async def test_remind_warns_unregistered_and_mails_only_registered(client, make_user, outbox):
     h = await manager(client, make_user)
     await make_round(client, h)

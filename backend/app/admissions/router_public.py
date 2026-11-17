@@ -189,6 +189,8 @@ async def codes_remind(body: EmailIn, request: Request, db: DB):
             await mailer.send_reminder(email, list(apps), rnd, body.lang)
         except mailer.MailError:
             log.warning("Кодын сануулга илгээгдсэнгүй")
+            # "Илгээлээ" гэж худал хариулахгүй — маягт "Илгээж чадсангүй" гэж харуулна (email/send-тэй ижил)
+            raise HTTPException(status.HTTP_502_BAD_GATEWAY, msg("mail_failed", body.lang)) from None
     return {"ok": True}
 
 
